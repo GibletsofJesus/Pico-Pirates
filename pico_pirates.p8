@@ -133,7 +133,6 @@ function _draw()
 		if st_t>.8 and st_t <1.1 then
 			cls(0)
 			--"Loading"
-			print_str('4c6f6164696e67',76,128,1)
 			print_str('4c6f6164696e67',76,127,12)
 			for i=0,(t()*12)%4 do
 				pset(120+i*2,126,1)
@@ -142,10 +141,10 @@ function _draw()
 			smooth_wind_vectors()
 		end
 	end
-	--[[print("mem usage: "..stat(0),camx,camy+1,0)
-	print("mem usage: "..stat(0),camx,camy,7)
-	print("cpu usage: "..stat(1),camx,camy+9,0)
-	print("cpu usage: "..stat(1),camx,camy+8,7)]]--
+	print("mem usage: "..stat(0),camx,camy+17,0)
+	print("mem usage: "..stat(0),camx,camy+16,7)
+	print("cpu usage: "..stat(1),camx,camy+25,0)
+	print("cpu usage: "..stat(1),camx,camy+24,7)
 end
 
 function ______________________meta()
@@ -763,45 +762,58 @@ function print_s(_x,_y,_l,c)
 	--total_layers=4
 	--letters_per_layer=7
 	--letter size, 7*7
+
+	--Find index of letter to print and which colour layer to look at
 	local l=_l%7
 	local layer=(_l-l)/7
-	for x=0,6 do
-		for y=0,6 do
-			if (band(shl(sget((7*l)+x,16+y)),2^layer)>0) pset(_x+x,y-7+_y,c) pset(_x+x,y-6+_y,txt_shadow)
-		end
-	end
+
+	set_col_layer(txt_shadow,layer)
+	sspr(7*l,16,7,7,_x,_y-6)
+	set_col_layer(c,layer)
+	sspr(7*l,16,7,7,_x,_y-7)
+	pal()
 end
 
 function print_l(_x,_y,_l,c)
 	local l=_l%7
 	local layer=(_l-l)/7
-	for x=0,11 do
-		for y=0,10 do
-			if (band(shl(sget((12*l)+37+x,23+y)),2^layer)>0) pset(_x+x,y-10+_y,c) pset(_x+x,y-9+_y,txt_shadow)
-		end
-	end
+
+	set_col_layer(txt_shadow,layer)
+	sspr((12*l)+37,23,12,11,_x,_y-9)
+	set_col_layer(c,layer)
+	sspr((12*l)+37,23,12,11,_x,_y-10)
+	pal()
 end
 
-function print_xl(_x,_y,_l)
+function print_xl(_x,_y,_l,c)
 	local l=_l%3
 	local layer=(_l-l)/3
+
+
 	for x=0,11 do
 		local wiggle=sin(t()*-.33+((_x+x)*.018))*2
-		for y=0,20 do
-			if band(shl(sget((12*l)+x,23+y)),2^layer)>0 then
-				pset(_x+x,_y+y+wiggle+1,13)
-				pset(_x+x,_y+y+wiggle,7)
-			end
-		end
+		set_col_layer(13,layer)
+		sspr((12*l)+x,23,1,21,_x+x,_y+wiggle+1)
+		set_col_layer(c,layer)
+		sspr((12*l)+x,23,1,21,_x+x,_y+wiggle)
 	end
+	pal()
 end
 
 function print_str(str,x,y,c)
+	--decode hex string into ascii values to print (using base 2)
 	str=unhex(str,2)
-	local p=x--x position
+
+	--x position
+	local p=x
+
+	-- for each letter
 	for s=0,#str-1 do
+		--if ascii value > 96, lower case letter
 		if str[s+1]>96 then
 			print_s(p,y,str[s+1]-97,c)
+			--move cursor for x position over by slightly smaller amount
+			-- since lower case letters are smaller than upper case (duh)
 			p+=6
 		else
 			print_l(p,y,str[s+1]-65,c)
@@ -835,13 +847,13 @@ end
 
 
 function printlogo()
-	--big p
-	for x=36,59 do
-		local wiggle=sin(t()*-.33+((x)*.018))*2
-		for y=0,26 do
-			local c=sget(x-36,44+y)
-			if (c!=0) pset(x,4+y+wiggle,7) pset(x,5+y+wiggle,13)
-		end
+	--Big P
+	for x=0,23 do
+		pal(1,13)
+		local wiggle=sin(t()*-.33+((36+x)*.018))*2
+		sspr(x,44,1,27,x+36,5+wiggle)
+		pal(1,7)
+		sspr(x,44,1,27,x+36,4+wiggle)
 	end
 
 	--ico
@@ -850,13 +862,13 @@ function printlogo()
 		print_xl(xls[i],5,i-1,7)
 	end
 
-	--big p
-	for x=14,37 do
-		local wiggle=sin(t()*-.33+((x)*.018))*2
-		for y=0,26 do
-			local c=sget(x-14,44+y)
-				if (c!=0) pset(x,32+y+wiggle,7) pset(x,33+y+wiggle,13)
-		end
+	--big P
+	for x=0,23 do
+		pal(1,13)
+		local wiggle=sin(t()*-.33+((14+x)*.018))*2
+		sspr(x,44,1,27,x+14,33+wiggle)
+		pal(1,7)
+		sspr(x,44,1,27,x+14,32+wiggle)
 	end
 
 	--pirates
@@ -864,6 +876,17 @@ function printlogo()
 	local ls={0,3,4,5,7,8,9}
 	for i=1,#xls do
 		print_xl(xls[i],32,ls[i],7)
+	end
+end
+
+function set_col_layer(c,b)
+	b=2^b
+	for i=0,15 do
+		if (band(shl(i),b)>0) then
+			pal(i,c)
+		else
+			palt(i,true)
+		end
 	end
 end
 
