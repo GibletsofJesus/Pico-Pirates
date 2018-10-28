@@ -12,7 +12,7 @@ fillps={0b0101101001011010.1,
 	0b1111111111011111.1}
 --fillps={0b0000000000000000}
 
-state=0--change to 1 to skip intro
+state=2--change to 1 to skip intro
 --0 splash screen
 --1 gameplay
 --2 screen transition
@@ -62,7 +62,7 @@ function _update()
 		if (not player.draw)boat_update(boat)
 		--check if boat is outside cell range
 		checkboatpos()
-		if (cells[currentcellx][currentcelly].seed>island_prob) island.update()
+		if (cells[currentcellx][currentcelly].seed<island_prob) island.update()
 		if (cells[currentcellx][currentcelly].seed<wp_prob) wp_update()
 		lighthouse.update()
 		if (player.draw) player_update(player)
@@ -83,7 +83,7 @@ function _draw()
 		cls(12)
 
 		--draw island dark blue backdrop before waves
-		if cells[currentcellx][currentcelly].seed>island_prob then
+		if cells[currentcellx][currentcelly].seed<island_prob then
 		 	for b in all(island.beach) do
 				circfill(b.x,b.y,b.rad+16,1)
 			end
@@ -96,7 +96,7 @@ function _draw()
 		end
 
 		fillp()
-		if (cells[currentcellx][currentcelly].seed>island_prob) island.draw()
+		if (cells[currentcellx][currentcelly].seed<island_prob) island.draw()
 		if (cells[currentcellx][currentcelly].seed<wp_prob) wp_draw()
 
 	  boat_draw(boat)
@@ -109,7 +109,7 @@ function _draw()
 			rectfill(camx,camy,camx+127,camy+127,12)
 			for x=1,#cells do
 				for y=1,#cells[x] do
-					if (cells[x][y].seed>island_prob) circfill(camx+x*2,camy+y*2,0,15)
+					if (cells[x][y].seed<island_prob) circfill(camx+x*2,camy+y*2,0,15)
 					if (cells[x][y].seed<wp_prob) circfill(camx+x*2,camy+y*2,0,7)
 				end
 			end
@@ -151,8 +151,8 @@ function ______________________meta()
 		--remove me
 end
 
-island_prob=40000
-wp_prob=100
+island_prob=.15*4096
+wp_prob=10000
 
 function splash_screen()
 	cls(0)
@@ -352,7 +352,7 @@ function minimap()
 
 	rectfill(camx+111,camy,camx+127,camy+16,12)
 	rect(camx+111,camy,camx+127,camy+16,7)
-	if (cells[currentcellx][currentcelly].seed>island_prob) circfill(camx+119,camy+8,island.size/16,15)
+	if (cells[currentcellx][currentcelly].seed<island_prob) circfill(camx+119,camy+8,island.size/16,15)
 	if cells[currentcellx][currentcelly].seed<wp_prob then
 		fillp(fillps[1])
 		circfill(camx+119,camy+8,4,7)
@@ -416,7 +416,7 @@ end
 function setcell(x,y)
 	wp_ps={}
 	fps={}
-	if cells[x][y].seed>island_prob then
+	if cells[x][y].seed<island_prob then
 		createisland(cells[x][y].seed)
 	elseif cells[x][y].seed<wp_prob then
 		wp_init()
@@ -434,7 +434,7 @@ function clouds_init()
 	local _dy=1
 	if (rnd(1)>.5) _dx*=-1
 	if (rnd(1)>.5) _dy*=-1
-	for i=0,100 do
+	for i=0,50 do
 		local cloud={
 			x=camx+rnd(127),y=camy+rnd(127),
 			dx=rnd(3)*_dx,dy=rnd(3)*_dy,
@@ -449,10 +449,15 @@ function clouds_update()
 	for c in all(clouds) do
 		c.x+=cells[currentcellx][currentcelly].wind.wy*.5
 		c.y-=cells[currentcellx][currentcelly].wind.wx*.5
-		if (c.x+c.vx>camx+192) c.x-=192
-		if (c.y+c.vy>camy+192) c.y-=192
-		if (c.x+c.vx<camx-192) c.x+=256
-		if (c.y+c.vy<camy-192) c.y+=256
+		--[[if (c.x+c.vx>camx+160) c.x-=192
+		if (c.y+c.vy>camy+160) c.y-=192
+		if (c.x+c.vx<camx-160) c.x+=192
+		if (c.y+c.vy<camy-160) c.y+=192]]
+
+		if (c.x+c.vx>camx+128) c.x-=128
+		if (c.y+c.vy>camy+128) c.y-=128
+		if (c.x+c.vx<camx-0) c.x+=128
+		if (c.y+c.vy<camy-0) c.y+=128
 
 		c.vx=(c.x-camx-64)*c.z
 		c.vy=(c.y-camy-64)*c.z
@@ -521,11 +526,11 @@ end
 wp_ps={}--whilrpool points
 
 function wp_init()
-	local tot=128
+	local tot=48
 	for i=0,tot do
 		local _r=(192/tot)*i
 		local _o=rnd(2)
-		for j=0,10 do
+		for j=0,4 do
 			add(wp_ps,{x=0,y=0,r=_r,o=_o})
 		end
 	end
@@ -541,15 +546,18 @@ end
 
 function wp_draw()
 	--circfill(64,64,128,1)
-	fillp(fillps[1])
+	--fillp(fillps[1])
 	local _p;
   for p in all(wp_ps) do
-		circfill(p.x,p.y,p.r*.015625,7)
-		--if (_p and _p.r==p.r) line(p.x,p.y,_p.x,_p.y,7)
-		--_p=p
+		if (_p and _p.r==p.r and p.r > 8) then
+			line(p.x,p.y,_p.x,_p.y,7)
+		else
+			--circfill(p.x,p.y,p.r*.015625,7)
+		end
+		_p=p
     --pset(p.x,p.y,7)
   end
-	fillp(0)
+	--fillp(0)
 end
 
 function _________island_generation()
@@ -719,9 +727,15 @@ player={
 
 function	player_update(p)
 	if abs(p.x-boat.x) < 4 and abs(p.y-boat.y) < 4 then
-		 p.draw=false
-	 	boat.x-=sin(boat.r)*16
-	 	boat.y+=cos(boat.r)*16
+		p.draw=false
+		--push boat away from centre of island
+		--island always found at (0,0)
+		--vector topush boat away is same as position(normalised)
+		magnitude=sqrt((boat.x*boat.x) + (boat.y*boat.y))*.1
+	  boat.x+=boat.x/magnitude
+		boat.y+=boat.y/magnitude
+	 	--boat.x-=sin(boat.r)*16
+	 	--boat.y+=cos(boat.r)*16
 	end
 
 	if (btn(0)) p.x-=p.speed p.fp_dist+=1
