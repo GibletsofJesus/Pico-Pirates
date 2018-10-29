@@ -3,10 +3,9 @@ version 16
 __lua__
 
 --Current cart stats (29/10/18)
--- Token count 4860 / 8192
--- Char count 20285 / 65,536
+-- Token count 4758 / 8192
+-- Char count 19135 / 65,536
 
---4870 token start
 
 currentcellx=2+flr(rnd(20)) currentcelly=2+flr(rnd(20))
 camx=-64 camy=-64
@@ -69,8 +68,8 @@ function _update()
 		if (not player.draw)boat_update(boat)
 		--check if boat is outside cell range
 		checkboatpos()
-		if (currentcell.seed<island_prob) island.update()
-		if (currentcell.seed<wp_prob) wp_update()
+		if (cellseed<island_prob) island.update()
+		if (cellseed<wp_prob) wp_update()
 		lighthouse.update()
 		if (player.draw) player_update(player)
 		map = btn(4)
@@ -90,7 +89,7 @@ function _draw()
 		cls(12)
 
 		--draw island dark blue backdrop before waves
-		if currentcell.seed<island_prob then
+		if cellseed<island_prob then
 		 	for b in all(island.beach) do
 				circfill(b.x,b.y,b.rad+16,1)
 			end
@@ -103,8 +102,8 @@ function _draw()
 		end
 
 		fillp()
-		if (currentcell.seed<island_prob) island.draw()
-		if (currentcell.seed<wp_prob) wp_draw()
+		if (cellseed<island_prob) island.draw()
+		if (cellseed<wp_prob) wp_draw()
 
 	  boat_draw(boat)
 		clouds_draw()
@@ -168,11 +167,8 @@ function splash_screen()
 
 	printlogo() -- 42% CPU usage
 
-	--print_str('412067616d65206d616465206279',24,73,1)
 	print_str('412067616d65206d616465206279',24,72,7) --a game made by
-	--print_str('43726169672054696e6e6579',26,83,1)
 	print_str('43726169672054696e6e6579',26,82,7) --craig tinney
-	--print_str('7b4769626c6574736f664a65737573',16,95,1)
 	print_str('7b4769626c6574736f664a65737573',16,94,12) --@gibletsofjesus
 
 	--twitter handle shimmer 0.06% CPU usage
@@ -186,11 +182,8 @@ function splash_screen()
 	end
 
 	local py=112+sin(t()*.5)*4
-	--print_str('5072657373',16,py+1,1)
 	print_str('5072657373',16,py,7) --press
-	--print_str('58',52,py+1,2)
 	print_str('58',52,py,8) --red x
-	--print_str('746f207374617274',64,py+1,1)
 	print_str('746f207374617274',64,py,7) --to start
 	print(stat(1))
 end
@@ -235,8 +228,6 @@ morale=0
 
 function draw_morale()
 	--"Morale"
-	--print_str_o('4d6f72616c65a',camx+1,camy+12,1)
-	--print_str_o('4d6f72616c65a',camx+1,camy+11,0)
 	print_str('4d6f72616c65a',camx+1,camy+11,7)
 	local x=camx+42
 	local y=camy+1
@@ -253,8 +244,6 @@ function ___________top_down_boat()
 		--remove me
 end
 
-
-
 boat={
 	x=-192,y=-192,r=0,d=0,
 	mx=0,my=0,max=2.5--momentum x+y
@@ -268,8 +257,8 @@ function boat_update(b)
 	if(btn(0)) b.r=b.r%1+.01
 	if(btn(1)) b.r=b.r%1-.01
 
-	b.mx+=currentcell.wind.wy*.05
-	b.my-=currentcell.wind.wx*.05
+	b.mx+=cellwind.wy*.05
+	b.my-=cellwind.wx*.05
 
 	if btn(2) then
 		b.mx+=s*speed
@@ -326,9 +315,7 @@ function boat_draw(b)
 		player.draw=true
 		player.x=b.x+sin(b.r)*8
 		player.y=b.y-cos(b.r)*8
-		--stop()
-		b.mx=0
-		b.my=0
+		b.mx=0 b.my=0
 	end
 end
 
@@ -354,81 +341,63 @@ function minimap()
 	print(currentcelly,camx+116,camy+19,txt_shadow)
 	print(currentcellx,camx+102,camy+5,7)
 	print(currentcelly,camx+116,camy+18,7)
-	--print_s(camx+103,camy+12,currentcellx,7)
-	--print_s(camx+116,camy+24,currentcelly,7)
 
 	rectfill(camx+111,camy,camx+127,camy+16,12)
 	rect(camx+111,camy,camx+127,camy+16,7)
-	if (currentcell.seed<island_prob) circfill(camx+119,camy+8,island.size/16,15)
-	if currentcell.seed<wp_prob then
+	if (cellseed<island_prob) circfill(camx+119,camy+8,island.size/16,15)
+	if cellseed<wp_prob then
 		fillp(fillps[1])
 		circfill(camx+119,camy+8,4,7)
 		fillp()
 	end
 	pset(camx+112+flr(((boat.x+256)/512)*14),camy+1+flr(((boat.y+256)/512)*14),4)
-	draw_wind_indicator(currentcell.wind)
+	draw_wind_indicator(cellwind)
+end
+
+function cell_shift(x,y)
+	boat.x+=x boat.y+=y
+	for w in all(waves) do
+		w.x+=x w.y+=y
+	end
+	for c in all(clouds) do
+		c.x+=x c.y+=y
+	end
+	setcell()
 end
 
 function checkboatpos()
 	if (boat.x < -256) then
-		boat.x+=512
 		currentcellx-=1
 		if (currentcellx<1) currentcellx+=#cells
-		setcell()
-		for w in all(waves) do
-			w.x+=512
-		end
-		for c in all(clouds) do
-			c.x+=512
-		end
-	end
-	if (boat.x > 256) then
-		boat.x-=512
+		cell_shift(512,0)
+	elseif (boat.x > 256) then
 		currentcellx+=1
 		if (currentcellx>#cells) currentcellx=1
-		setcell()
-		for w in all(waves) do
-			w.x-=512
-		end
-		for c in all(clouds) do
-			c.x-=512
-		end
-	end
-	if (boat.y < -256) then
-		boat.y+=512
+		cell_shift(-512,0)
+	elseif (boat.y < -256) then
 		currentcelly-=1
 		if (currentcelly<1) currentcelly+=#cells[currentcellx]
-		setcell()
-		for w in all(waves) do
-			w.y+=512
-		end
-		for c in all(clouds) do
-			c.y+=512
-		end
-	end
-	if (boat.y > 256) then
-		boat.y-=512
+		cell_shift(0,512)
+	elseif (boat.y > 256) then
 		currentcelly+=1
 		if (currentcelly>#cells) currentcelly=1
-		setcell()
-		for w in all(waves) do
-			w.y-=512
-		end
-		for c in all(clouds) do
-			c.y-=512
-		end
+		cell_shift(0,-512)
 	end
 end
 
 currentcell={}
+cellwind={}
+cellseed={}
 
 function setcell()
 	wp_ps={}
 	fps={}
 	currentcell=cells[currentcellx][currentcelly]
-	if currentcell.seed<island_prob then
-		createisland(currentcell.seed)
-	elseif currentcell.seed<wp_prob then
+	cellwind=currentcell.wind
+	cellseed=currentcell.seed
+	if cellseed<island_prob then
+		createisland(cellseed)
+	elseif cellseed<wp_prob then
 		wp_init()
 	end
 end
@@ -459,10 +428,6 @@ function clouds_update()
 	for c in all(clouds) do
 		c.x+=cells[currentcellx][currentcelly].wind.wy*.5
 		c.y-=cells[currentcellx][currentcelly].wind.wx*.5
-		--[[if (c.x+c.vx>camx+160) c.x-=192
-		if (c.y+c.vy>camy+160) c.y-=192
-		if (c.x+c.vx<camx-160) c.x+=192
-		if (c.y+c.vy<camy-160) c.y+=192]]
 
 		if (c.x+c.vx>camx+128) c.x-=128
 		if (c.y+c.vy>camy+128) c.y-=128
@@ -483,9 +448,6 @@ function clouds_draw()
 	for c in all(clouds) do
 		fillp(fillps[2-flr(c.r/8)])
 		circfill(c.x+c.vx,c.y+c.vy,c.r,7)
-		--[[print(c.x+c.vx-camx,camx,camy+inc,7)
-		print(c.y+c.vy-camy,camx,camy+inc+6,7)
-		inc+=14]]--
 	end
 	fillp()
 end
@@ -507,7 +469,7 @@ end
 
 function draw_wind_indicator(v)
 	local smooth=20
-	local s=sin(atan2(flr(v.wx*smooth	)/smooth,flr(v.wy*smooth)/smooth))
+	local s=sin(atan2(flr(v.wx*smooth)/smooth,flr(v.wy*smooth)/smooth))
 	local c=cos(atan2(flr(v.wx*smooth)/smooth,flr(v.wy*smooth)/smooth))
 	--local s=v.vx
   --local c=v.vy
@@ -679,7 +641,7 @@ function newtree(x,y,s)
 	new_tree_section(x,y,z+1,11,s/2)
 	new_tree_section(x,y,z+.5,11,s/1.5,fillps[1])
 
-	--whie bitys
+	--white bitys
 	new_tree_section(x,y,z+1.5,7,s/5)
 	new_tree_section(x,y,z+1.25,7,s/4,fillps[1])
 end
