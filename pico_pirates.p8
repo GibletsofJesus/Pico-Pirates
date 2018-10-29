@@ -2,6 +2,12 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 
+--Current cart stats (29/10/18)
+-- Token count 4860 / 8192
+-- Char count 20285 / 65,536
+
+--4870 token start
+
 currentcellx=2+flr(rnd(20)) currentcelly=2+flr(rnd(20))
 camx=-64 camy=-64
 fillps={0b0101101001011010.1,
@@ -16,6 +22,7 @@ state=2--change to 1 to skip intro
 --0 splash screen
 --1 gameplay
 --2 screen transition
+--3 combat
 
 function _________built_in_funcitons()
 		--remove me
@@ -44,7 +51,7 @@ function _init()
 		end
 	end
 
-	setcell(currentcellx,currentcelly)
+	setcell()
 	lighthouse.init()
 	clouds_init()
 end
@@ -62,8 +69,8 @@ function _update()
 		if (not player.draw)boat_update(boat)
 		--check if boat is outside cell range
 		checkboatpos()
-		if (cells[currentcellx][currentcelly].seed<island_prob) island.update()
-		if (cells[currentcellx][currentcelly].seed<wp_prob) wp_update()
+		if (currentcell.seed<island_prob) island.update()
+		if (currentcell.seed<wp_prob) wp_update()
 		lighthouse.update()
 		if (player.draw) player_update(player)
 		map = btn(4)
@@ -83,7 +90,7 @@ function _draw()
 		cls(12)
 
 		--draw island dark blue backdrop before waves
-		if cells[currentcellx][currentcelly].seed<island_prob then
+		if currentcell.seed<island_prob then
 		 	for b in all(island.beach) do
 				circfill(b.x,b.y,b.rad+16,1)
 			end
@@ -96,8 +103,8 @@ function _draw()
 		end
 
 		fillp()
-		if (cells[currentcellx][currentcelly].seed<island_prob) island.draw()
-		if (cells[currentcellx][currentcelly].seed<wp_prob) wp_draw()
+		if (currentcell.seed<island_prob) island.draw()
+		if (currentcell.seed<wp_prob) wp_draw()
 
 	  boat_draw(boat)
 		clouds_draw()
@@ -152,7 +159,7 @@ function ______________________meta()
 end
 
 island_prob=.15*4096
-wp_prob=10000
+wp_prob=25
 
 function splash_screen()
 	cls(0)
@@ -261,8 +268,8 @@ function boat_update(b)
 	if(btn(0)) b.r=b.r%1+.01
 	if(btn(1)) b.r=b.r%1-.01
 
-	b.mx+=cells[currentcellx][currentcelly].wind.wy*.05
-	b.my-=cells[currentcellx][currentcelly].wind.wx*.05
+	b.mx+=currentcell.wind.wy*.05
+	b.my-=currentcell.wind.wx*.05
 
 	if btn(2) then
 		b.mx+=s*speed
@@ -352,14 +359,14 @@ function minimap()
 
 	rectfill(camx+111,camy,camx+127,camy+16,12)
 	rect(camx+111,camy,camx+127,camy+16,7)
-	if (cells[currentcellx][currentcelly].seed<island_prob) circfill(camx+119,camy+8,island.size/16,15)
-	if cells[currentcellx][currentcelly].seed<wp_prob then
+	if (currentcell.seed<island_prob) circfill(camx+119,camy+8,island.size/16,15)
+	if currentcell.seed<wp_prob then
 		fillp(fillps[1])
 		circfill(camx+119,camy+8,4,7)
 		fillp()
 	end
 	pset(camx+112+flr(((boat.x+256)/512)*14),camy+1+flr(((boat.y+256)/512)*14),4)
-	draw_wind_indicator(cells[currentcellx][currentcelly].wind)
+	draw_wind_indicator(currentcell.wind)
 end
 
 function checkboatpos()
@@ -367,7 +374,7 @@ function checkboatpos()
 		boat.x+=512
 		currentcellx-=1
 		if (currentcellx<1) currentcellx+=#cells
-		setcell(currentcellx,currentcelly)
+		setcell()
 		for w in all(waves) do
 			w.x+=512
 		end
@@ -379,7 +386,7 @@ function checkboatpos()
 		boat.x-=512
 		currentcellx+=1
 		if (currentcellx>#cells) currentcellx=1
-		setcell(currentcellx,currentcelly)
+		setcell()
 		for w in all(waves) do
 			w.x-=512
 		end
@@ -391,7 +398,7 @@ function checkboatpos()
 		boat.y+=512
 		currentcelly-=1
 		if (currentcelly<1) currentcelly+=#cells[currentcellx]
-		setcell(currentcellx,currentcelly)
+		setcell()
 		for w in all(waves) do
 			w.y+=512
 		end
@@ -403,7 +410,7 @@ function checkboatpos()
 		boat.y-=512
 		currentcelly+=1
 		if (currentcelly>#cells) currentcelly=1
-		setcell(currentcellx,currentcelly)
+		setcell()
 		for w in all(waves) do
 			w.y-=512
 		end
@@ -413,12 +420,15 @@ function checkboatpos()
 	end
 end
 
-function setcell(x,y)
+currentcell={}
+
+function setcell()
 	wp_ps={}
 	fps={}
-	if cells[x][y].seed<island_prob then
-		createisland(cells[x][y].seed)
-	elseif cells[x][y].seed<wp_prob then
+	currentcell=cells[currentcellx][currentcelly]
+	if currentcell.seed<island_prob then
+		createisland(currentcell.seed)
+	elseif currentcell.seed<wp_prob then
 		wp_init()
 	end
 end
@@ -974,6 +984,11 @@ lighthouse={
 			end
 	end
 }
+
+function ____________________combat()
+	--#RemoveMe
+end
+
 
 __gfx__
 00000000700000000000000770000000000000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

@@ -103,9 +103,7 @@ prevwpts={}
 
 --get corrected array value for water
 function pt(i)
-	if (i > #wpts-1) return wpts[#wpts-1]
-	if (i < 1) return wpts[1]
-	return wpts[i]
+	return wpts[mid(1,i,#wpts-1)]
 end
 
 --same as above but for indexing
@@ -191,8 +189,6 @@ boat={
 
 		boat.firecd=mid(boat.firecd-.0333,0,100)
 		boat.aim=mid(boat.aim,.1,1)
-
-		//floaty mcboaty
 		boat.y=((pt(boat.x+3)+pt(boat.x+4)+pt(boat.x+5))/3)+90
 	end
 }
@@ -225,13 +221,10 @@ function fire(_x,_y,_left)
 	proj={
 		x0=_x,y0=_y,x=_x,y=_y,
 		t=0,
-		vx=2,
-		vy=boat.aim,
+		vx=2,vy=boat.aim,
 		left=_left,
-		x2=0,
-		y2=-64,
-		x1=0,
-		y1=-64,
+		x2=0,y2=-64,
+		x1=0,y1=-64,
 	update=function(p)
 		p.t+=.666
 		if p.left then
@@ -244,9 +237,6 @@ function fire(_x,_y,_left)
 		if p.y > pt(flr(p.x))+96 then
 			del(comb_objs,p)
 			sfx(1,0)
-			print(p.x)
-			print(_pt(p.x))
-			print(wpts[_pt(p.x)])
 			wpts[_pt(p.x)]-=12
 			wpts[_pt(p.x+1)]-=10
 			wpts[_pt(p.x-1)]-=10
@@ -266,10 +256,8 @@ function fire(_x,_y,_left)
 			circfill(p.x1,p.y1,0,9)
 			circfill((p.x+p.x1)/2,(p.y1+p.y)/2,0,8)
 			circfill(p.x,p.y,0,0)
-			p.x2=p.x1
-			p.y2=p.y1
-			p.x1=p.x
-			p.y1=p.y
+			p.x2=p.x1 p.y2=p.y1
+			p.x1=p.x	p.y1=p.y
 	end}
 	add(comb_objs,proj)
 end
@@ -329,6 +317,7 @@ monster={
   	this.flashing=10
  end
 }
+
 __gfx__
 00000000fffffff4aaaaaaa900000000000000000000000000000000000000001111111100000111000111111111111111111111111111111111111111111111
 00000000f4444442a999999400000000000000000000000000000000000000001111111100000111000011111111111111111110111111111111111111111111
