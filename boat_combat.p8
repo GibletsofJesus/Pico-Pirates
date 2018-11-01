@@ -36,7 +36,7 @@ function comb_init()
 	add(comb_objs,bird)
 	for t in all(monster.tentacles) do
 		t.o=rnd(1)
-		t.w=3
+		t.w=5
 		t.h=24
 	end
 	for	i=0,128 do
@@ -81,6 +81,17 @@ function comb_draw()
 
  waterreflections()
  cannonlines(2+boat.x,5+boat.y)
+
+  ?"wATERY FIEND",4,114,0
+	 ?"wATERY FIEND",4,113,7
+
+	 rect(4,120,123,126,0)
+
+	 rectfill(5,119,60+sin(t()*.25)*50,124,8)
+	 rect(4,119,60+sin(t()*.25)*50,124,2)
+
+ --HP bar outline
+ rect(4,119,123,125,7)
 end
 
 function ___________________clouds()
@@ -179,16 +190,25 @@ end
 -->8
 --combat boat--
 boat={
- 	x=64,y=62,flipx=true,aim=0,firecd=0,
+ 	x=64,y=62,w=8,h=8,
+	flipx=true,aim=0,firecd=0,
+	txt_timer=0,
+	messages={
+		"aLL HANDS\nON DECK!",
+		"wHAT IS\nTHAT THING?",
+		"wE'RE GOING\nTO DIE!",
+		"pULL YOURSELF\nTOGETHER!",
+		"abandon\nship!"
+	}, message_index=1,
 	update=function(boat)
 		if (btn(0)) then
- 			boat.x-=1
+ 			boat.x=mid(0,boat.x-1,120)
 			boat.flipx=false
 			wpts[_pt(boat.x+7)]-=1
 			sfx(4,1)
 		end
 		if (btn(1)) then
-			boat.x+=1
+			boat.x=mid(0,boat.x+1,120)
  			boat.flipx=true
 			wpts[_pt(boat.x+2)]-=1
 			sfx(4,1)
@@ -200,18 +220,45 @@ boat={
 		if btn(4) and boat.firecd==0 then
 			boat.firecd=1
 			sfx(0,0)
-			fire(2+boat.x,5+boat.y,not boat.flipx)
+			fire_projectile(2+boat.x,5+boat.y,not boat.flipx)
 		end
 
 		boat.firecd=mid(boat.firecd-.0333,0,100)
 		boat.aim=mid(boat.aim,.1,1)
 		boat.y=((pt(boat.x+3)+pt(boat.x+4)+pt(boat.x+5))/3)+90
+
+		boat.txt_timer+=.033
 	end,
 	draw=function(boat)
 	  palt(11,true)
 		spr(128,boat.x,boat.y,1,1,boat.flipx,false)
+
+		boat_text(boat.messages[boat.message_index])
+		?boat.txt_timer,0,0,0
+		?#boat.messages[boat.message_index],0,6,0
+		if (boat.txt_timer*5>(#boat.messages[boat.message_index])) boat.txt_timer=0 boat.message_index+=1
 	end
 }
+
+--boat text plans
+
+--State system
+--nah fuck that, just have a timer number
+--
+--	idle, timer ticks up
+--		when maxed, print generic message,
+-- 		reset timer
+--
+--  HP falls below 25%, print negative
+--	messages as morale is low
+--
+-- enemy hit, print generic positive
+--	message
+function boat_text(s)
+	local text=sub(s,0,boat.txt_timerr*10)
+	?text,boat.x-12,boat.y-11,1
+	?text,boat.x-12,boat.y-12,7
+end
 
 function cannonlines(_x,_y)
  local ratio=boat.aim*5
@@ -240,7 +287,7 @@ function _________________projectile()
 end
 projectiles={}
 --fire cannon--
-function fire(_x,_y,_left)
+function fire_projectile(_x,_y,_left)
 	proj={
 		x0=_x,y0=_y,x=_x,y=_y,
 		w=1,h=1,
@@ -303,11 +350,11 @@ end
 --octodude--
 monster={
 	tentacles={
-		{x=120,y=120},
-		{x=113,y=116},
-		{x=88,y=114},
-		{x=80,y=112},
-		{x=74,y=121}
+		{x=119,y=96},
+		{x=112,y=92},
+		{x=87,y=90},
+		{x=79,y=88},
+		{x=73,y=97}
 	},
 	x=88,y=88,w=24,h=72,
 	flashing=0,
@@ -329,15 +376,16 @@ monster={
  	for t in all(this.tentacles) do
 		for y=0,24 do
 			local _x=t.x+2+(1.5*sin(time()+t.o+y*.1))
-			local _y=t.y-24+cos(time()+t.o*2)
+			local _y=t.y+cos(time()+t.o*2)
   		if (y==1)	wpts[flr(_x)]+=rnd(.25)
-			sspr(19,72+y,3,1,_x,_y+y)
+			sspr(19,72+y,3,1,_x+1,_y+y)
   	end
  	end
 	pal()
  end,
  hit=function(this)
-  	this.flashing=10
+	 flip()
+	 this.flashing=10
  end
 }
 
@@ -362,11 +410,6 @@ end
 --		and fires a rock or some shit (mb ink)
 
 -- Player collisions and flashing
-
--- Take work done for AABB collision
---	working fom pget() is fucking silly
--- 	and doesn't really translate well
---	into other entities (e.g. other ships)
 
 --Implentations of transiations to and
 --	from this state
@@ -542,4 +585,3 @@ __sfx__
 011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __music__
 00 05064344
-
