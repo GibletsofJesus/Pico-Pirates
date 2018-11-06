@@ -10,8 +10,8 @@ __lua__
 --cpu load: ~76%
 
 --current stats
---token count: 1430
---char count: 5090
+--token count: 2079
+--char count: 9206
 --cpu load: ~57.5%
 
 function _init()
@@ -26,7 +26,6 @@ function _draw()
 	 comb_draw()
 end
 
--->8
 --boat combat-
 function comb_init()
 	comb_objs={}
@@ -39,7 +38,7 @@ function comb_init()
 		t.w=5
 		t.h=24
 	end
-	for	i=0,128 do
+	for	i=0,160 do
 		add(wpts,0)
 		add(prevwpts,0)
 	end
@@ -49,9 +48,10 @@ function comb_init()
 		local y=rnd(32)+8
 		local r=rnd(8)+4
 		local vx=rnd(.5)
-		add(comb_clouds,newcloud(x,y,r+1,6,vx))
+		add(comb_clouds,newcloud(x+2,y+1,r+1,6,vx))
 		add(comb_clouds,newcloud(x,y,r,7,vx))
 	end
+	music(1)
 end
 
 function comb_update()
@@ -66,9 +66,10 @@ end
 
 function comb_draw()
  cls(12)
+ screenShake()
  circfill(124,8,24,10)
  for c in all(comb_clouds) do
- 	if(c.c==6) c.draw(c)
+ 	if(c.c!=7) c.draw(c)
  end
  for c in all(comb_clouds) do
   if(c.c==7)	c.draw(c)
@@ -77,21 +78,12 @@ function comb_draw()
 	for c in all(comb_objs) do
 	 c.draw(c)
 	end
-	drawupdatewater()
+	drawUpdateWater()
 
- waterreflections()
- cannonlines(2+boat.x,5+boat.y)
-
-  ?"wATERY FIEND",4,114,0
-	 ?"wATERY FIEND",4,113,7
-
-	 rect(4,120,123,126,0)
-
-	 rectfill(5,119,60+sin(t()*.25)*50,124,8)
-	 rect(4,119,60+sin(t()*.25)*50,124,2)
-
- --HP bar outline
- rect(4,119,123,125,7)
+ waterReflections()
+ cannonLines(2+boat.x,5+boat.y)
+	drawEnemyHP()
+	?stat(1),0,0,0
 end
 
 function ___________________clouds()
@@ -114,14 +106,14 @@ end
 function ___________________water()
 end
 
--->8
+
 --water--
 wpts={} --water points
 prevwpts={}
 
 --get corrected array value for water
 function pt(i)
-	return wpts[mid(1,i,#wpts-1)]
+	return wpts[mid(1,flr(i),#wpts-1)]
 end
 
 --same as above but for indexing
@@ -129,7 +121,7 @@ function _pt(i)
 	return mid(flr(i),1,#wpts)
 end
 
-function	drawupdatewater()
+function	drawUpdateWater()
 	for i=1,#wpts do
 		local vel = .975+(wpts[i]-prevwpts[i])*1.125
 		prevwpts[i] = wpts[i]
@@ -142,25 +134,25 @@ function	drawupdatewater()
 			+pt(i+4) + pt(i-4)	) *
 			(-8*wpts[i])
 
-		wpts[i] -= diff*0.004
+		wpts[i] -= diff*0.005
 
 		wpts[i]=mid(wpts[i],0,128)
 
-		line(i-1,127,i-1,wpts[i]+97,1)
+		line(i-16,160,i-16,wpts[i]+97,1)
 
 		if vel>1.25 or vel<-1.25 then
-			pset(i-1,wpts[i]+97,7)
+			pset(i-16,wpts[i]+97,7)
 		end
 	end
 end
 
-function waterreflections()
+function waterReflections()
 	for x=1,127 do
 		for y=0,48 do
 			local c=pget(x,103-y)
 			if c!=12 and c!=1 then
 				if 103+y/2>wpts[x]+97 then
-					pset(x+(sin(time()+(y*2))),103+y*.5,13)
+					pset(x+(sin(time()+(y/50))),103+y*.5,13)
 				end
 			end
 		end
@@ -180,6 +172,7 @@ update=function(b)
 end,
 draw=function(b)
 	palt(0,false)
+	palt(11,true)
 	spr(132+b.frame,b.x,b.y)
 end
 }
@@ -187,30 +180,23 @@ end
 function _______________player_ship()
 end
 
--->8
+
 --combat boat--
 boat={
- 	x=64,y=62,w=8,h=8,
+ 	x=64,y=62,w=8,h=8,vx=0,
 	flipx=true,aim=0,firecd=0,
-	txt_timer=0,
-	messages={
-		"aLL HANDS\nON DECK!",
-		"wHAT IS\nTHAT THING?",
-		"wE'RE GOING\nTO DIE!",
-		"pULL YOURSELF\nTOGETHER!",
-		"abandon\nship!"
-	}, message_index=1,
+	hp=100,flashing=0,
 	update=function(boat)
 		if (btn(0)) then
- 			boat.x=mid(0,boat.x-1,120)
+			boat.vx=mid(-1.5,boat.vx-0.1,1.5)
 			boat.flipx=false
-			wpts[_pt(boat.x+7)]-=1
+			wpts[_pt(boat.x+23)]-=.7
 			sfx(4,1)
 		end
 		if (btn(1)) then
-			boat.x=mid(0,boat.x+1,120)
  			boat.flipx=true
-			wpts[_pt(boat.x+2)]-=1
+			boat.vx=mid(-1.5,boat.vx+0.1,1.5)
+			wpts[_pt(boat.x+18)]-=.7
 			sfx(4,1)
 		end
 
@@ -220,23 +206,32 @@ boat={
 		if btn(4) and boat.firecd==0 then
 			boat.firecd=1
 			sfx(0,0)
-			fire_projectile(2+boat.x,5+boat.y,not boat.flipx)
+			fireProjectile(2+boat.x,5+boat.y,not boat.flipx,1,boat.aim)
 		end
 
+		if boat.flashing<=0 then
+			if (aabbOverlap(boat,monster)) hit(boat,12+rnd(5))
+			for t in all(monster.tentacles) do
+				if (aabbOverlap(boat,t)) hit(boat,12+rnd(5))
+			end
+		end
+		boat.vx*=.95
 		boat.firecd=mid(boat.firecd-.0333,0,100)
 		boat.aim=mid(boat.aim,.1,1)
+		boat.x=mid(0,boat.x+boat.vx,120)
 		boat.y=((pt(boat.x+3)+pt(boat.x+4)+pt(boat.x+5))/3)+90
-
-		boat.txt_timer+=.033
+		txt_timer+=.066
 	end,
-	draw=function(boat)
+	draw=function()
+		boat.flashing=flashSprite(boat.flashing)
 	  palt(11,true)
 		spr(128,boat.x,boat.y,1,1,boat.flipx,false)
-
-		boat_text(boat.messages[boat.message_index])
-		?boat.txt_timer,0,0,0
-		?#boat.messages[boat.message_index],0,6,0
-		if (boat.txt_timer*5>(#boat.messages[boat.message_index])) boat.txt_timer=0 boat.message_index+=1
+		pal()
+		--[[boat_text(messages[message_index])
+		if txt_timer*5>(#messages[message_index]) then
+			 if (message_index<#messages) txt_timer=0
+			 message_index=mid(1,message_index+1,#messages)
+		 end]]
 	end
 }
 
@@ -254,32 +249,44 @@ boat={
 --
 -- enemy hit, print generic positive
 --	message
+
+txt_timer=0
+
+messages={
+	"aLL HANDS\nON DECK!",
+	"wHAT IS\nTHAT THING?",
+	"wE'RE GOING\nTO DIE!",
+	"pULL YOURSELF\nTOGETHER!",
+	"abandon\nship!"
+}
+message_index=1
+
 function boat_text(s)
-	local text=sub(s,0,boat.txt_timerr*10)
-	?text,boat.x-12,boat.y-11,1
-	?text,boat.x-12,boat.y-12,7
+	local text=sub(s,0,txt_timer*10)
+	--?text,boat.x-12,boat.y-11,1
+	--?text,boat.x-12,boat.y-12,7
+
+	for i=1,txt_timer*10 do
+		?sub(s,i,i),boat.x-12+(i*4),boat.y-10+sin(t()+i/10)*2,1
+		?sub(s,i,i),boat.x-12+(i*4),boat.y-11+sin(t()+i/10)*2,7
+	end
 end
 
-function cannonlines(_x,_y)
- local ratio=boat.aim*5
- local _max=40
- local c = 11
- if boat.firecd > 0 then
- 	_max = 60*(1-boat.firecd)-20
- 	c=5
- end
-
- for i=1,_max do
- 	local x=_x
- 	local y=_y
+function cannonLines(x0,y0)
+ local c=11
+ if (boat.firecd > 0)	c=5
+ for i=1,50 do
+	local x=x0
+	local y=y0
  	if boat.flipx then
  		x+=i*2
  	else
 		x+=1
 		x-=i*2
  	end
- 	y+=(-ratio*i)+(0.125*(i^2))
- 	if (y<pt(x)+96)	pset(x,y,c)
+ 	y+=(0.125*(i^2))-(boat.aim*5*i)
+
+ 	if (y<103) pset(x,y,c)
  end
 end
 
@@ -287,34 +294,34 @@ function _________________projectile()
 end
 projectiles={}
 --fire cannon--
-function fire_projectile(_x,_y,_left)
+function fireProjectile(_x,_y,_left,_r,aim)
 	proj={
-		x0=_x,y0=_y,x=_x,y=_y,
-		w=1,h=1,
+		x0=_x,y0=_y,x=_x,y=_y,r=_r,
+		w=mid(1,_r*2,99),h=mid(1,_r*2,99),
 		t=0,
-		vx=2,vy=boat.aim,
+		vx=1.32+abs(boat.vx),vy=aim,
 		left=_left,
 		x2=0,y2=-64,
 		x1=0,y1=-64,
 	update=function(p)
-		p.t+=.666
+		p.t+=.66
 		if p.left then
-			p.x=p.x0-(p.t*p.vx)
+			p.x-=p.vx
 		else
-			p.x=p.x0+(p.t*p.vx)
+			p.x+=p.vx
 		end
-		p.y=p.y0+(-p.vy*5*p.t)+(0.125*(p.t^2))
-
-		if p.y > pt(flr(p.x))+96 then
+		--p.y+=(0.125*p.t)-(5*p.vy)
+		p.y=p.y0-(p.vy*5*p.t)+(0.125*p.t^2)
+		if p.y > 102 then
 			del(comb_objs,p)
 			sfx(1,0)
-			wpts[_pt(p.x)]-=12
-			wpts[_pt(p.x+1)]-=10
-			wpts[_pt(p.x-1)]-=10
+			for i=p.x+15,p.x+17 do
+				wpts[_pt(i)]-=10--move water
+			end
 		end
 
-		for t in all(monster.tentacles) do
-			if aabb_overlap(t,p) then
+		for t in all(monster.tentacles) do --tentacle collision
+			if aabbOverlap(t,p) then
 				del(comb_objs,p)
 				del(projectiles,p)
 				monster.hit(monster)
@@ -322,7 +329,7 @@ function fire_projectile(_x,_y,_left)
 				sfx(1,2)
 			end
 		end
-		if aabb_overlap(monster,p) then
+		if aabbOverlap(monster,p) then --octopos collision
 			del(comb_objs,p)
 			del(projectiles,p)
 			monster.hit(monster)
@@ -335,7 +342,7 @@ function fire_projectile(_x,_y,_left)
 			circfill((p.x1+p.x2)/2,(p.y1+p.y2)/2,0,10)
 			circfill(p.x1,p.y1,0,9)
 			circfill((p.x+p.x1)/2,(p.y1+p.y)/2,0,8)
-			circfill(p.x,p.y,0,0)
+			circfill(p.x,p.y,p.r,0)
 			p.x2=p.x1 p.y2=p.y1
 			p.x1=p.x	p.y1=p.y
 	end}
@@ -346,7 +353,41 @@ end
 function __________________octopus()
 end
 
--->8
+-- octopus in various states
+-- 	idle, current implementation
+-- 	tentacle attack, duck below surface
+--  	and tentacles come up and hit player
+--	projectile attack, octopus head ducks
+-- 		below surface, comes up a moment later
+--		and fires a rock or some shit (mb ink)
+
+hpTimer=0
+prevhp=100
+function drawEnemyHP()
+	?"wATERY FIEND",4,114,0
+	?"wATERY FIEND",4,113,7
+	rect(4,120,123,126,0)
+	local barLength0=monster.hp*1.18
+	local barLength1=prevhp*1.18
+	if hpTimer>0 then
+		 hpTimer-=0.066
+		 if (hpTimer<=1) prevHp=monster.hp barLength1=lerp(barLength0,barLength1,hpTimer)
+	else
+		prevhp=monster.hp
+		barLength1=barLength0
+	end
+
+	rectfill(5,119,5+barLength1,124,14)
+
+	--true hp bar
+	rectfill(5,119,5+barLength0,124,8)
+
+	rect(4,119,5+barLength1,124,2)
+
+	--HP bar outline
+	rect(4,119,123,125,7)
+end
+
 --octodude--
 monster={
 	tentacles={
@@ -356,43 +397,103 @@ monster={
 		{x=79,y=88},
 		{x=73,y=97}
 	},
+	hp=100,
 	x=88,y=88,w=24,h=72,
 	flashing=0,
-	flash=false,
+	timer=1,
+	stepIndex=1,
+	steps=
+	{
+		function(o) --sink below surface
+			o.y+=.5
+			for t in all(o.tentacles) do
+				t.y+=.5
+			end
+			if o.y>104 and o.hp>0then
+				o.stepIndex+=1
+			end
+		end,
+		function(o) --rise above surface
+			o.y-=.5
+			for t in all(o.tentacles) do
+				t.y-=.5
+			end
+			if o.y<88 then
+				o.stepIndex=1
+			end
+		end,
+		function(o)
+			fireProjectile(o.x,o.y,true,3,boat.aim)
+		end,
+		function(o)
+
+		end
+	},
 	update=function(o)
-		o.y=88+cos(t())*2
+		o.y+=cos(t())*.25
+		if (o.hp<=0) o.stepIndex=1
+		o.steps[o.stepIndex](o)
 	end,
 	draw=function(this)
- 	if this.flashing > 0 then
- 		this.flashing-=1
- 		this.flash=not this.flash
- 	else
- 		this.flash=false
- 	end
-	if (this.flash) pal_all(7)
-  palt(0,true)
-	sspr(24,72,33,24,this.x,this.y)
- 	--draw tentacles
- 	for t in all(this.tentacles) do
-		for y=0,24 do
-			local _x=t.x+2+(1.5*sin(time()+t.o+y*.1))
-			local _y=t.y+cos(time()+t.o*2)
-  		if (y==1)	wpts[flr(_x)]+=rnd(.25)
-			sspr(19,72+y,3,1,_x+1,_y+y)
-  	end
- 	end
-	pal()
- end,
- hit=function(this)
-	 flip()
-	 this.flashing=10
- end
+		this.flashing=flashSprite(this.flashing)
+	  palt(0,true)
+		sspr(24,72,33,24,this.x,this.y)
+		for i=this.x,this.x+33 do
+			if (this.hp>0) wpts[flr(i+16)]+=rnd(.25)
+		end
+	 	--draw tentacles
+	 	for t in all(this.tentacles) do
+			for y=0,24 do
+				local _x=t.x+2+(1.5*sin(time()+t.o+y*.1))
+				local _y=t.y+cos(time()+t.o*2)
+	  		if (y==1 and this.hp>0)	wpts[flr(_x+16)]+=rnd(.25)
+				sspr(19,72+y,3,1,_x+1,_y+y)
+	  	end
+	 	end
+		pal()
+	 end,
+
+	 hit=function(this)
+		 hpTimer=2
+		 hit(this,30+rnd(6))
+	 end
 }
 
-function _________________new_shit()
+function flashSprite(flashTimer)
+ 	if flashTimer > 0 then
+ 		flashTimer-=1
+		if (flashTimer%2==0) pal_all(0)
+ 	else
+		pal()
+ 	end
+	return flashTimer
 end
 
-function aabb_overlap(a,b)
+function hit(this,dmg)
+	flip()
+	this.hp=mid(0,this.hp-dmg,1000)
+	shakeTimer=1
+	this.flashing=10
+end
+
+function ___________________helpers()
+end
+
+shakeTimer=0
+shakeAmount=4
+shakeX=0 shakeY=0
+function screenShake()
+	if shakeTimer > 0 then
+		shakeX=rnd(shakeAmount*2)-shakeAmount
+		shakeY=rnd(shakeAmount*2)-shakeAmount
+		shakeTimer-=0.33
+	else
+		shakeX=0 shakeY=0
+	end
+	camera(shakeX,shakeY)
+end
+
+function aabbOverlap(a,b)
 	return ((a.x+a.w > b.x)
 					and (a.x < b.x+b.w))
 		and ((a.y+a.h > b.y)
@@ -400,15 +501,6 @@ function aabb_overlap(a,b)
 end
 
 --combat plans
-
--- octopus in various states
--- 	idle, current implementation
--- 	tentacle attack, duck below surface
---  	and tentacles come up and hit player
---	projectile attack, octopus head ducks
--- 		below surface, comes up a moment later
---		and fires a rock or some shit (mb ink)
-
 -- Player collisions and flashing
 
 --Implentations of transiations to and
@@ -424,6 +516,10 @@ function pal_all(c)
 	for i=0,15 do
 		pal(i,c)
 	end
+end
+
+function lerp(a,b,t)
+ return b*t+(a*(1-t))
 end
 
 __gfx__
@@ -574,14 +670,19 @@ __map__
 080808082b2a290000393a3b0808080800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
 010a00003565329650186500060100601006010060100601006010060100601006010060100601006010060100601006010060100601006010060100601006010060100601006010060100601006000060000600
-000500003162334650326502f6502b640256401f64017630116300d6300b6300e630126301562014620106200d6100c6100b6100e61010610106100b6100a610096100b6100b6100b61008610056100461003600
+010400003142334453324732f4732b473254731f47317463114530d4430b4330e423124131540314403104030d4030c4030b4030e40310403104030b4030a403094030b4030b4030b40308403054030440303403
 010100001335110371213012f3012e301133011a3013a3012f301113011a3013f3011330125301293012e3013030131301313012b301123010c3010b3010c3010e3010030112301163011930118301133010c301
 0003000016a701da701ba6017a600aa500da5013a4019a4008a300ba3013a2018a200ca1014a102ba0022a001aa0019a0019a001aa001ca001ba0018a0014a000fa000ca0009a0007a0006a0004a0002a0001a00
 000100000d6100b6100b6100c6100d6100b6100b6100c6100d6100d61000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00100c101205014050160501205014050160501205014050160501405012050110500a05016050120500905001000000000000000000000000000000000000000000000000000000000000000000000000000000
 000800003564300003306430c603356433064300000000003564300003306430c6033564330643000000000035643000033064300003356430000330643000033564300003306433660335643306430000000000
 000a00100b350286001735000000113501a3000b3501530018350333000b350183500b350193500c35000000113001d300000001630016300123000e3000e3000000000000000000000000000000000000000000
-010f00101335313300153501535313300133531330015350153550000013350103530000012350143530000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000f00101335313300153501535313300133531330015350153550000013350103530000012350143530000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0014000005153295531f6502955300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+011000000c752007000c752007000c752007000c752107520c752157520c7521a7520c75006750007000070000700007000070000700007000070000700007000070000700007000070000700007000070000700
+011200181875300703187530c75318753007030c753187530c7531875308753007031875300703187530c75318753007030c753187530c7531875308753087530070300703007030070300703007030070300703
+001200180e0300b0301603011030180300c0300c03004030120301203002030140300e03015030140301603019030160300903003030020301203004030130302400019000000000000000000000000000000000
+000400003132534355323752f3752b375253751f37517365113550d345253252835526375233751f37519375133750b3650535501345193251c3551a37517375133750d375073750530504305000000000000000
 __music__
-00 05064344
+02 05064344
+03 0b4c4344
