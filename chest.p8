@@ -1,20 +1,6 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
---boat'n vidya gam--
---by craig tinney--
-
---start stats
---token count: 1615
---char count: 5927
---cpu load: ~76%
-
---current stats
---token count: 1975
---char count: 8917
---cpu load: ~57.5%
-
-
 state=2--change to 1 to skip intro
 --0 splash screen
 --1 gameplay
@@ -22,445 +8,75 @@ state=2--change to 1 to skip intro
 --3 combat
 
 function _init()
-	comb_init()
+	for x=0,8 do
+		for y=3.5,8 do
+			add(staticSand,{x*8,y*8,6+rnd(3.5),15})
+		end
+	end
+	for y=0,4 do
+		for x=-4,4 do
+			if (y%2==0) x*=-1
+			local r=3+rnd(3)
+			local c=13
+			if (y>3) c=4
+			newGrainOfSand(32+x*2,28+y*2,r)
+			--add(staticSand,{32+x*2,28+y*2,r,c})
+			if (y%2==0) x*=-1
+		end
+	end
 end
+
+index=1
 
 function _update()
-		comb_update()
+	poke(0x5f2c,3)
+	if index<#sand+1 and btn(4) then
+		local grain=sand[index]
+		grain.moving=true
+		grain.vy-=6+rnd(2)
+		grain.vx=1+rnd(2)
+		if (rnd(1)>.5) grain.vx*=-1
+		index+=1
+		chestPos-=0.2
+	end
+	for s in all(sand) do
+		s.update(s)
+	end
 end
+
+chestPos=35
 
 function _draw()
-	 comb_draw()
-end
-
---boat combat-
-function comb_init()
-	comb_objs={}
-	comb_clouds={}
-	monster=newOctopus()
-	add(comb_objs,monster)
-	add(comb_objs,boat)
-	for t in all(monster.tentacles) do
-		t.o,t.w,t.h=rnd(1),5,24
+	cls(12)
+	for s in all(staticSand) do
+		circfill(s[1],s[2],s[3],s[4])
 	end
-	for	i=0,160 do
-		add(wpts,0)
-		add(prevwpts,0)
+	w=15
+	h=11
+	sspr(64,53,15,11,32-w/2,chestPos-h/2,w,h)
+	for s in all(sand) do
+		s.draw(s)
 	end
-	clouds={}
-	for i=0,25 do
-		local x,y=rnd(127),rnd(32)+8
-		local r,vx=rnd(8)+4,rnd(.5)
-		add(comb_clouds,newcloud(x+2,y+1,r+1,6,vx))
-		add(comb_clouds,newcloud(x,y,r,7,vx))
-	end
-	music(1)
 end
 
-function comb_update()
-	camera(0,0)
-	for c in all(comb_objs) do
-		c.update(c)
- 	end
-	for c in all(comb_clouds) do
-		c.update(c)
- 	end
-end
-
-function comb_draw()
- cls(12)
- screenShake()
- circfill(124,8,24,10)
- for c in all(comb_clouds) do
- 	if(c.c!=7) c.draw(c)
- end
- for c in all(comb_clouds) do
-  if(c.c==7)	c.draw(c)
- end
-  palt(0,false)
-	for c in all(comb_objs) do
-	 c.draw(c)
-	end
-	drawUpdateWater()
-
- waterReflections()
- cannonLines(2+boat.x,5+boat.y)
-	drawEnemyHP()
-	?stat(1),0,0,0
-end
-
-function ___________________clouds()
-end
-
-function newcloud(_x,_y,_r,_c,_vx)
-	local c={
-		x=_x,y=_y,r=_r,c=_c,vx=_vx,
-		update=function(c)
-			c.x+=c.vx
- 		if (c.x>140) c.x -= 160
+sand={}
+staticSand={}
+function newGrainOfSand(_x,_y,_r)
+	local grain={
+		x=_x, y=_y,
+		vx=0, vy=0,
+		r=_r,moving=false,
+		update=function(s)
+			if (s.moving) s.r-=0.1 s.vy+=0.5
+			--if (s.r<-3) del(sand,s)
+			s.x+=s.vx
+			s.y+=s.vy
 		end,
-	draw=function(c)
-		circfill(c.x,c.y,c.r,c.c)
-	end
+		draw=function(s)
+			circfill(s.x,s.y,s.r,15)
+		end
 	}
-	return c
-end
-
-function ___________________water()
-end
-
-
---water--
-wpts={} --water points
-prevwpts={}
-
---get corrected array value for water
-function pt(i)
-	return wpts[mid(1,flr(i),#wpts-1)]
-end
-
---same as above but for indexing
-function _pt(i)
-	return mid(flr(i),1,#wpts)
-end
-
-function	drawUpdateWater()
-	for i=1,#wpts do
-		local vel = .975+(wpts[i]-prevwpts[i])*1.125
-		prevwpts[i] = wpts[i]
-		wpts[i]+=vel
-
-
-		local surroundingPoints=0
-		for j=-4,4 do
-			surroundingPoints+=pt(i+j)
-		end
-		local diff=-.095*surroundingPoints*
-			(-8*wpts[i])
-
-		wpts[i] -= diff*0.005
-
-		wpts[i]=mid(wpts[i],0,128)
-
-		line(i-16,160,i-16,wpts[i]+97,1)
-
-		if vel>1.25 or vel<-1.25 then
-			pset(i-16,wpts[i]+97,7)
-		end
-	end
-end
-
-function waterReflections()
-	for x=1,127 do
-		for y=0,48 do
-			local c=pget(x,103-y)
-			if c!=12 and c!=1 then
-				if 103+y/2>wpts[x]+97 then
-					pset(x+(sin(time()+(y/50))),103+y*.5,13)
-				end
-			end
-		end
-	end
-end
-
-function _______________player_ship()
-end
-
---combat boat--
-boat={
- 	x=64,y=62,w=8,h=8,vx=0,
-	flipx=true,aim=0,firecd=0,
-	hp=100,flashing=0,
-	update=function(b)
-		if (btn(0)) then
-			b.vx=mid(-1.5,b.vx-0.1,1.5)
-			b.flipx=false
-			wpts[_pt(b.x+23)]-=.7
-			sfx(4,1)
-		end
-		if (btn(1)) then
- 			b.flipx=true
-			b.vx=mid(-1.5,b.vx+0.1,1.5)
-			wpts[_pt(b.x+18)]-=.7
-			sfx(4,1)
-		end
-
-		if (btn(2))	b.aim+=0.025
-		if (btn(3)) b.aim-=0.025
-
-		if btn(4) and b.firecd==0 then
-			b.firecd=1
-			sfx(0,0)
-			fireProjectile(2+b.x,5+b.y,not b.flipx,1,b.aim)
-		end
-
-		if b.flashing<=0 then
-			if (aabbOverlap(boat,monster)) hit(boat,12+rnd(5))
-			for t in all(monster.tentacles) do
-				if (aabbOverlap(boat,t)) hit(boat,12+rnd(5))
-			end
-		end
-		if boat.hp<=0 then
-			?""
-			state=4
-		end
-		b.vx*=.95
-		b.firecd=max(b.firecd-.0333,0)
-		b.aim=mid(b.aim,.1,1)
-		b.x=mid(0,b.x+b.vx,120)
-		b.y=((pt(b.x+3)+pt(b.x+4)+pt(b.x+5))/3)+90
-		txt_timer+=.066
-	end,
-	draw=function(b)
-		dmgFlash(b)
-	  palt(11,true)
-		spr(128,b.x,b.y,1,1,b.flipx,false)
-		pal()
-		--[[boat_text(messages[message_index])
-		if txt_timer*5>(#messages[message_index]) then
-			 if (message_index<#messages) txt_timer=0
-			 message_index=mid(1,message_index+1,#messages)
-		 end]]
-	end
-}
-
---boat text plans
-
---State system
---nah fuck that, just have a timer number
---
---	idle, timer ticks up
---		when maxed, print generic message,
--- 		reset timer
---
---  HP falls below 25%, print negative
---	messages as morale is low
---
--- enemy hit, print generic positive
---	message
-
-txt_timer=0
-
-messages={
-	"aLL HANDS\nON DECK!",
-	"wHAT IS\nTHAT THING?",
-	"wE'RE GOING\nTO DIE!",
-	"pULL YOURSELF\nTOGETHER!",
-	"abandon\nship!"
-}
-message_index=1
-
-function boat_text(s)
-	local text=sub(s,0,txt_timer*10)
-	--?text,boat.x-12,boat.y-11,1
-	--?text,boat.x-12,boat.y-12,7
-
-	for i=1,txt_timer*10 do
-		?sub(s,i,i),boat.x-12+(i*4),boat.y-10+sin(t()+i/10)*2,1
-		?sub(s,i,i),boat.x-12+(i*4),boat.y-11+sin(t()+i/10)*2,7
-	end
-end
-
-function cannonLines(x0,y0)
- local c=11
- if (boat.firecd > 0)	c=5
- --for i=1,50 do
- for i=0,50-boat.firecd*75 do
-	local x,y=x0,y0
- 	if boat.flipx then
- 		x+=i*2
- 	else
-		x+=1
-		x-=i*2
- 	end
- 	y+=(0.125*(i^2))-(boat.aim*5*i)
-
- 	if (y<103) pset(x,y,c)
- end
-end
-
-function _________________projectile()
-end
-projectiles={}
---fire cannon--
-function fireProjectile(_x,_y,_left,_r,aim)
-	proj={
-		x0=_x,y0=_y,x=_x,y=_y,r=_r,
-		w=mid(1,_r*2,99),h=mid(1,_r*2,99),
-		t=0,
-		vx=1.32+abs(boat.vx),vy=aim,
-		left=_left,
-		x2=0,y2=-64,
-		x1=0,y1=-64,
-	update=function(p)
-		p.t+=.66
-		if p.left then
-			p.x-=p.vx
-		else
-			p.x+=p.vx
-		end
-		--p.y+=(0.125*p.t)-(5*p.vy)
-		p.y=p.y0-(p.vy*5*p.t)+(0.125*p.t^2)
-		if p.y > 102 then
-			del(comb_objs,p)
-			sfx(1,0)
-			for i=p.x+15,p.x+17 do
-				wpts[_pt(i)]-=10
-			end
-		end
-
-		for t in all(monster.tentacles) do --tentacle collision
-			if aabbOverlap(t,p) then
-				del(comb_objs,p)
-				del(projectiles,p)
-				monster.hit(monster)
-				sfx(3,3)
-				sfx(1,2)
-			end
-		end
-		if aabbOverlap(monster,p) then --octopos collision
-			del(comb_objs,p)
-			del(projectiles,p)
-			monster.hit(monster)
-			sfx(3,3)
-			sfx(1,2)
-		end
-	end,
-	draw=function(p)
-			pset(p.x2,p.y2,7)
-			pset((p.x1+p.x2)/2,(p.y1+p.y2)/2,10)
-			pset(p.x1,p.y1,9)
-			pset((p.x+p.x1)/2,(p.y1+p.y)/2,8)
-			circfill(p.x,p.y,p.r,0)
-			p.x2=p.x1 p.y2=p.y1
-			p.x1=p.x	p.y1=p.y
-	end}
-	add(comb_objs,proj)
-	add(projectiles,proj)
-end
-
-function dmgFlash(e)
-	e.flashing-=1
-	if (t()%.01>.005 and e.flashing>0) pal_all(7)
-end
-
-function __________________octopus()
-end
-
--- octopus in various states
--- 	idle, current implementation
--- 	tentacle attack, duck below surface
---  	and tentacles come up and hit player
---	projectile attack, octopus head ducks
--- 		below surface, comes up a moment later
---		and fires a rock or some shit (mb ink)
-
-hpTimer=0
-prevhp=100
-function drawEnemyHP()
-	?"wATERY FIEND",4,114,0
-	?"wATERY FIEND",4,113,7
-	rect(4,120,123,126,0)
-	local barLength0=monster.hp*1.18
-	local barLength1=prevhp*1.18
-	if hpTimer>0 then
-		 hpTimer-=0.066
-		 if (hpTimer<=1) prevHp=monster.hp barLength1=lerp(barLength0,barLength1,hpTimer)
-	else
-		prevhp=monster.hp
-		barLength1=barLength0
-	end
-
-	rectfill(5,119,5+barLength1,124,14)
-
-	--true hp bar
-	rectfill(5,119,5+barLength0,124,8)
-
-	rect(4,119,5+barLength1,124,2)
-
-	--HP bar outline
-	rect(4,119,123,125,7)
-end
-
---octodude--
-function newOctopus()
-	local monster={
-		tentacles={
-			{x=119,y=96},
-			{x=112,y=92},
-			{x=87,y=90},
-			{x=79,y=88},
-			{x=73,y=97}
-		},
-		hp=100,
-		x=88,y=88,w=24,h=72,
-		flashing=0,
-		timer=1,
-		stepIndex=4,
-		steps=
-		{
-			function(o) --sink below surface
-				o.y+=.5
-				for t in all(o.tentacles) do
-					t.y+=.5
-				end
-				if o.y>104 and o.hp>0then
-					o.stepIndex+=1
-				end
-			end,
-			function(o) --rise above surface
-				o.y-=.5
-				for t in all(o.tentacles) do
-					t.y-=.5
-				end
-				if o.y<88 then
-					o.stepIndex=1
-				end
-			end,
-			function(o)
-				fireProjectile(o.x,o.y,true,3,boat.aim)
-			end,
-			function(o)
-
-			end
-		},
-		update=function(o)
-			o.y+=cos(t())*.25
-			if (o.hp<=0) o.stepIndex=1
-			o.steps[o.stepIndex](o)
-		end,
-		draw=function(o)
-			dmgFlash(o)
-		  palt(0,true)
-			sspr(24,72,33,24,o.x,o.y)
-			for i=o.x,o.x+33 do
-				if (o.hp>0) wpts[flr(i+16)]+=rnd(.25)
-			end
-		 	--draw tentacles
-		 	for t in all(o.tentacles) do
-				for y=0,24 do
-					local _x=t.x+2+(1.5*sin(time()+t.o+y*.1))
-					local _y=t.y+cos(time()+t.o*2)
-		  		if (y==1 and o.hp>0)	wpts[flr(_x+16)]+=rnd(.25)
-					sspr(19,72+y,3,1,_x+1,_y+y)
-		  	end
-		 	end
-			pal()
-		 end,
-
-		 hit=function(o)
-			 hpTimer=2
-			 hit(o,30+rnd(6))
-		 end
-	}
-	return monster
-end
-
-function hit(this,dmg)
-	flip()
-	this.hp=mid(0,this.hp-dmg,1000)
-	shakeTimer=1
-	this.flashing=10
+	add(sand,grain)
 end
 
 function ___________________helpers()
@@ -661,3 +277,4 @@ __sfx__
 __music__
 02 05064344
 03 0b4c4344
+
