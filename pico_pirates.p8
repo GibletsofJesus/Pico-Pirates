@@ -40,7 +40,12 @@ function _init()
 			if (rnd(1)>.5) _wx*=-1
 			local _wy=rnd(0.75)+.25
 			if (rnd(1)>.5) _wy*=-1
-			add(subcell,{item={},seed=rnd(4096),wind={wx=_wx,wy=_wy}})
+			local cell={
+				treasure=,
+				seed=rnd(4096),
+				wind={wx=_wx,wy=_wy}
+			}
+			add(subcell,cell)
 		end
 	end
 	setcell()
