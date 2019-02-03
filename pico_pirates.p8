@@ -2,9 +2,9 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 
---Current cart stats (9/1/18)
--- Token count 5609 / 8192
--- Char count 22,650 / 65,536
+--Current cart stats (3/2/18)
+-- Token count 5529 / 8192
+-- Char count 22,595 / 65,536
 
 currentcellx=2+flr(rnd(20)) currentcelly=2+flr(rnd(20))
 camx=-64 camy=-64
@@ -18,7 +18,7 @@ fillps={0b0101101001011010.1,
 
 printStats=false
 
-state=0--change to 1 to skip intro
+state=2--change to 1 to skip intro
 --0 splash screen
 --1 gameplay
 --2 screen transition
@@ -29,41 +29,22 @@ function _________built_in_funcitons()
 end
 
 function _init()
-	cells={}
-	srand(rnd(100))
-	for cx=0,63 do
-		local subcell={}
-		add(cells,subcell)
-		for cy=0,63 do
-			--random wind vectors
-			local _wx=rnd(0.75)+.25
-			if (rnd(1)>.5) _wx*=-1
-			local _wy=rnd(0.75)+.25
-			if (rnd(1)>.5) _wy*=-1
-			local cell={
-				treasure=,
-				seed=rnd(4096),
-				wind={wx=_wx,wy=_wy}
-			}
-			add(subcell,cell)
-		end
-	end
-	setcell()
+	--srand(rnd(100))
+	srand(1)
+	world_init()
 	clouds_init()
 end
 
 st_t=0--screen transition timer
 function _update()
-	menuitem(1, "tree dith "..(treedith and 'true' or 'false'), toggletreedithering)
-
 	if state==0 then
-		if (btnp(5)) state=2
+		if (btnp(5)) state=2 st_t=0
 	elseif state==1 then
 		if (not player.draw) boat.update(boat)
 		--check if boat is outside cell range
 		checkboatpos()
-		if (cellseed<island_prob) island.update()
-		if (cellseed<wp_prob) wp_update()
+		if (celltype=="island") island.update()
+		if (celltype=="whirlpool") wp_update()
 		--lighthouse.update()
 		if (player.draw) player_update(player)
 		map = btn(4)
@@ -73,10 +54,10 @@ function _update()
 			c.update(c)
 		end
 	elseif state==2 then
-		st_t+=0.016666--1/60
 	elseif state==3 then
 		comb_update()
 	end
+	st_t+=0.016666--1/60
 end
 
 function _draw()
@@ -86,50 +67,38 @@ function _draw()
 	if state==1 then
 		camera(camx,camy)
 		cls(12)
-
-		--draw island dark blue backdrop before waves
-		if cellseed<island_prob then
-		 	for b in all(island.beach) do
-				circfill(b.x,b.y,b.rad+16,1)
-			end
-		end
-
-		--draw waves from ship
-		fillp(fillps[4])
-		for w in all(waves) do
-			w.draw(w)
-		end
-		fillp()
-
-		if (cellseed<island_prob) island.draw()
-		if (cellseed<wp_prob) wp_draw()
-
-	  boat.draw(boat) 	--60% CPU usage
-		for c in all(clouds) do
-			c.draw(c)
-		end
-		fillp()
-		hud.draw(hud)
-		--draw map of world over entire screen
 		if map then
-			rectfill(camx,camy,camx+127,camy+127,12)
-			for x=1,#cells do
-				for y=1,#cells[x] do
-					if (cells[x][y].seed<island_prob) circfill(camx+x*2,camy+y*2,0,15)
-					if (cells[x][y].seed<wp_prob) circfill(camx+x*2,camy+y*2,0,7)
+			draw_map()
+			else
+			--draw island dark blue backdrop before waves
+			if celltype=="island" then
+			 	for b in all(island.beach) do
+					circfill(b.x,b.y,b.rad+16,1)
 				end
 			end
-			if (flr(t()*4)%2>0) pset(camx+currentcellx*2,camy+currentcelly*2,4)
+
+			--draw waves from ship
+			fillp(fillps[4])
+			for w in all(waves) do
+				w.draw(w)
+			end
+			fillp()
+
+			if (celltype=="island") island.draw()
+			if (celltype=="whirlpool") wp_draw()
+
+		  boat.draw(boat) 	--60% CPU usage
+			for c in all(clouds) do
+				c.draw(c)
+			end
+			hud.draw(hud)
 		end
 	elseif state==2 then
 		if st_t>0 and st_t<.8 then
 			st_horizbars_out()
-		elseif st_t>0 then
-			cls(12)
-			sspr(8,0,5,14,62,54)
-			st_vertbars_in()
 		end
-		if (st_t>2.2) state=1
+		--2.2
+		if (st_t>1) state=1
 		--this is very messy, but basically runs the vector smoothing function
 		-- 9 times whilst the screen is completely black during the splash
 		-- screen being off screen and just before the vertical bars start
@@ -145,6 +114,10 @@ function _draw()
 		end
 	elseif state==3 then
 		comb_draw()
+	end
+
+	if st_t>.8  and st_t < 2.5 then
+		st_vertbars_in()
 	end
 
 	if printStats then
@@ -171,6 +144,19 @@ hud={
 	end
 }
 
+function draw_map()
+	rectfill(camx,camy,camx+127,camy+127,12)
+	for x=1,#cells do
+		for y=1,#cells[x] do
+			local c = 12
+			if (cells[x][y].type=="island") c=15
+			if (cells[x][y].type=="whirlpool") c=7
+			circfill(-1+camx+x*2,-1+camy+y*2,0,c)
+		end
+	end
+	if (flr(t()*4)%2>0) pset(camx-1+currentcellx*2,camy-1+currentcelly*2,4)
+end
+
 function minimap_draw()
 	print(currentcellx,camx+102,camy+6,txt_shadow)
 	print(currentcelly,camx+116,camy+19,txt_shadow)
@@ -179,8 +165,8 @@ function minimap_draw()
 
 	rectfill(camx+111,camy,camx+127,camy+16,12)
 	rect(camx+111,camy,camx+127,camy+16,7)
-	if (cellseed<island_prob) circfill(camx+119,camy+8,island.size/16,15)
-	if cellseed<wp_prob then
+	if (celltype=="island") circfill(camx+119,camy+8,island.size/16,15)
+	if celltype=="whirlpool" then
 		fillp(fillps[1])
 		circfill(camx+119,camy+8,4,7)
 		fillp()
@@ -206,9 +192,6 @@ end
 function ______________________meta()
 		--remove me
 end
-
-island_prob=.15*4096
-wp_prob=25
 
 function splash_screen()
 	cls(0)
@@ -261,15 +244,17 @@ end
 
 function st_vertbars_in()
 	for x=0,127 do
+		local _x=x+camx
+		local _y=camy
 		if x%2==0 then
-			line(x,-1,x,(2.2*120)-st_t*120,0)
+			line(_x,-1+_y,_x,_y+(2.2*120)-st_t*120,0)
 		else
-			line(x,128,x,127-((2.2*120)-st_t*120),0)
- 	end
+			line(_x,128+_y,_x,127-((2.2*120)-st_t*120)+_y,0)
+ 		end
 	end
 end
 
-function ___________pirate_crew()
+function _______________pirate_crew()
 		--remove me
 end
 
@@ -280,7 +265,7 @@ function ___________top_down_boat()
 end
 
 boat={
-	x=-192,y=-192,r=0,d=0,
+	x=-160,y=-160,r=0,d=0,
 	mx=0,my=0,max=2.5,--momentum x+y
 	update=function(b)
 		local speed=0.05
@@ -374,6 +359,40 @@ function _______world_management()
 		--remove me
 end
 
+function world_init()
+	cells={}
+	for cx=0,63 do
+		local subcell={}
+		add(cells,subcell)
+		for cy=0,63 do
+			--random wind vectors
+			local _wx=rnd(0.75)+.25
+			if (rnd(1)>.5) _wx*=-1
+			local _wy=rnd(0.75)+.25
+			if (rnd(1)>.5) _wy*=-1
+
+			local _type=""
+			if rnd(1)>island_prob then
+				 _type="island"
+			elseif rnd(1)>wp_prob then
+				 _type="whirlpool"
+			else
+				_type="sea"
+			end
+
+			local cell={
+				type=_type,
+				treasure={},
+				seed=rnd(4096),
+				wind={wx=_wx,wy=_wy}
+			}
+
+			add(subcell,cell)
+		end
+	end
+	setcell()
+end
+
 function cell_shift(x,y)
 	boat.x+=x boat.y+=y
 	for w in all(waves) do
@@ -407,7 +426,8 @@ end
 
 currentcell={}
 cellwind={}
-cellseed={}
+cellseed=0
+celltype=""
 
 function setcell()
 	wp_ps={}
@@ -415,141 +435,20 @@ function setcell()
 	currentcell=cells[currentcellx][currentcelly]
 	cellwind=currentcell.wind
 	cellseed=currentcell.seed
-	if cellseed<island_prob then
+	celltype=currentcell.type
+	if celltype=="island" then
 		createisland(cellseed)
-	elseif cellseed<wp_prob then
+	elseif celltype=="whirlpool" then
 		wp_init()
 	end
-end
-
-
-function _____________clouds_n_wind()
-		--remove me
-end
-
-function clouds_init()
-	clouds={}
-	local _dx=1
-	local _dy=1
-	if (rnd(1)>.5) _dx*=-1
-	if (rnd(1)>.5) _dy*=-1
-	for i=0,50 do
-		newCloud(_dx,_dy)
-	end
-end
-
-function newCloud(_dx,_dy)
-	local cloud={
-		x=camx+rnd(127),y=camy+rnd(127),
-		dx=rnd(3)*_dx,dy=rnd(3)*_dy,
-		r=4+rnd(10),
-		z=1.5+rnd(.5),vx=0,vy=0,
-		update=function(c)
-			c.x+=cells[currentcellx][currentcelly].wind.wy*.5
-			c.y-=cells[currentcellx][currentcelly].wind.wx*.5
-
-			if (c.x+c.vx>camx+128) c.x-=128
-			if (c.y+c.vy>camy+128) c.y-=128
-			if (c.x+c.vx<camx-0) c.x+=128
-			if (c.y+c.vy<camy-0) c.y+=128
-
-			c.vx=(c.x-camx-64)*c.z
-			c.vy=(c.y-camy-64)*c.z
-
-			c.vx=mid(-128,c.vx,128)
-			c.vy=mid(-128,c.vy,128)
-		end,
-		draw=function(c)
-			fillp(fillps[2-flr(c.r/8)])
-			circfill(c.x+c.vx,c.y+c.vy,c.r,7)
-		end
-	}
-	add(clouds,cloud)
-end
-
-function smooth_wind_vectors()
-	for _x=1,#cells do
-		for _y=1,#cells[_x] do
-			local up=cells[_x][mid(1,_y+1,#cells[_x]-1)].wind
-			local down=cells[_x][mid(1,_y+1,#cells[_x]-1)].wind
-			local left=cells[mid(1,_x-1,#cells-1)][_y].wind
-			local right=cells[mid(1,_x+1,#cells-1)][_y].wind
-			local self=cells[_x][_y].wind
-
-			self.wx=(right.wx+left.wx+up.wx+down.wx+self.wx)/5
-			self.wy=(right.wy+left.wy+up.wy+down.wy+self.wy)/5
-		end
-	end
-end
-
-wind_arrow={
-	sm=20,--smoothing value
-  w=5.657,--sqrt(4^2*2)
-	c=0,s=0,_b=0,
-	update=function(wa,v)
-		wa.s=sin(atan2(flr(v.wx*wa.sm)/wa.sm,flr(v.wy*wa.sm)/wa.sm))
-		wa.c=cos(atan2(flr(v.wx*wa.sm)/wa.sm,flr(v.wy*wa.sm)/wa.sm))
-		wa._b=wa.s*wa.s+wa.c*wa.c
-	end,
-	draw=function(wa)
-	  for y=-wa.w,wa.w do
-	    for x=-wa.w,wa.w do
-	      local ox=( wa.s*y+wa.c*x)/wa._b+4
-	      local oy=(-wa.s*x+wa.c*y)/wa._b+4
-	      local col=sget(ox+28,oy+4)
-	      if col>0 then
-	 				pset(camx+120+x,camy+42+y+1,txt_shadow)
-					pset(camx+120+x,camy+42+y,7)
-	      end
-	    end
-	  end
-	end
-}
-
-function ________________whirlpools()
-		--remove me
-end
-
-wp_ps={}--whilrpool points
-
-function wp_init()
-	local tot=48
-	for i=0,tot do
-		local _r=(192/tot)*i
-		local _o=rnd(2)
-		for j=0,4 do
-			add(wp_ps,{x=0,y=0,r=_r,o=_o})
-		end
-	end
-end
-
-function wp_update()
-	for p in all(wp_ps) do
-		local t_=t()+p.o-rnd(.4)
-		p.x=64+(sin(t_*(15/p.r))*p.r)+rnd(p.r*.03125)
-		p.y=64-(cos(t_*(15/p.r))*p.r)+rnd(p.r*.03125)
-	end
-end
-
-function wp_draw()
-	--circfill(64,64,128,1)
-	--fillp(fillps[1])
-	local _p;
-  for p in all(wp_ps) do
-		if (_p and _p.r==p.r and p.r > 8) then
-			line(p.x,p.y,_p.x,_p.y,7)
-		else
-			--circfill(p.x,p.y,p.r*.015625,7)
-		end
-		_p=p
-    --pset(p.x,p.y,7)
-  end
-	--fillp(0)
 end
 
 function _________island_generation()
 		--remove me
 end
+
+island_prob= 0--.925
+wp_prob=.99
 
 island={
 	update=function()
@@ -584,15 +483,21 @@ island={
 		if (island.size > 16) circfill(0,0,island.size*.35,9)
 		fillp()
 		--draw trees
-		for t in all(island.trees) do
-			if(t.c<2)t.draw(t)
+		if drawTrees then
+			for t in all(island.trees) do
+				if(t.c<2) t.draw(t)
+			end
 		end
+
 		for f in all(fps) do
 			f.draw(f) --draw footprints
 		end
+
 		if (player.draw) player_draw(player)
-		for t in all(island.trees) do
-			if(t.c>1)t.draw(t)
+		if drawTrees then
+			for t in all(island.trees) do
+				if(t.c>1)t.draw(t)
+			end
 		end
 	end
 }
@@ -603,7 +508,7 @@ function createisland(seed)
 	island.size=rnd(64)+6
 	local size=island.size
 	--create the various circles required to create this island
- 	local totalcircs=size/2
+ 	local totalcircs=max(size/8,5)
 	island.beach={}
 	island.wetsand={}
 	island.waves={}
@@ -620,82 +525,69 @@ function createisland(seed)
 
 	--now for some trees
 	island.trees={}
-	if size > 16 then
-		size*=.66
-	 	local totalcircs=size/2
+	if size > 24 then
+		size*=.5
 		for i=0,size/2 do
 			local r=i/(size/2)
 			sz=rnd(4)+8
-			newtree((rnd(10)-5)+cos(r)*size,(rnd(10)-5)-sin(r)*size,sz)
+			newtree({(rnd(10)-5)+cos(r)*size,(rnd(10)-5)-sin(r)*size},sz)
 		end
 		for i=0,size/4 do
 			local r=i/(size/4)
 			sz=rnd(2)+10
-			newtree((rnd(10)-5)+(rnd(1)-.5)*size,(rnd(10)-5)-(rnd(1)-.5)*size,sz)
+			newtree({(rnd(10)-5)+(rnd(1)-.5)*size,(rnd(10)-5)-(rnd(1)-.5)*size},sz)
 		end
 		--sort trees by z value
 		sorttrees(island.trees)
 	end
 end
 
-treedith=false
-
-function toggletreedithering()
-	treedith = not treedith
+drawTrees=true
+function toggletrees()
+	drawTrees = not drawTrees
 end
-menuitem(1, "tree dith "..(treedith and 'true' or 'false'), toggletreedithering())
 
-function newtree(x,y,s)
+function toggleStats()
+	printStats = not printStats
+end
+
+menuitem(1, "trees "..(drawTrees and 'on' or 'off'), toggletrees)
+menuitem(2, "print stats "..(printStats and 'on' or 'off'), toggleStats)
+
+function newtree(xy,s)
 	local z=rnd(.5)+1
 	--trunk
 	local trunksections=0
 	for i=0,trunksections do
-		new_tree_section(x,y,(z/trunksections)*i,4,s*.25)
+		new_tree_section(xy,(z/trunksections)*i,4,s*.25)
 	end
 	--shadow
-	new_tree_section(x,y,0,1,s,fillps[3])
-	new_tree_section(x,y,0,1,s*1.1,fillps[1])
+	new_tree_section(xy,0,1,s,fillps[3])
+	new_tree_section(xy,0,1,s*1.1,fillps[1])
 	--dark green leaves
-	new_tree_section(x,y,z,3,s*.8)
-	new_tree_section(x,y,z-.15,3,s*.9,fillps[1])
-	new_tree_section(x,y,z-.25,3,s,fillps[2])
+	new_tree_section(xy,z,3,s*.8)
+	new_tree_section(xy,z-.15,3,s*.9,fillps[1])
+	new_tree_section(xy,z-.25,3,s,fillps[2])
 	--light green leaves (slightly smaller)
-	new_tree_section(x,y,z+1,11,s/2)
-	new_tree_section(x,y,z+.5,11,s/1.5,fillps[1])
+	new_tree_section(xy,z+1,11,s/2)
+	new_tree_section(xy,z+.5,11,s/1.5,fillps[1])
 
 	--white bitys
-	new_tree_section(x,y,z+1.5,7,s/5)
-	new_tree_section(x,y,z+1.25,7,s/4,fillps[1])
+	new_tree_section(xy,z+1.5,7,s/5)
+	new_tree_section(xy,z+1.25,7,s/4,fillps[1])
 end
 
-function new_tree_section(_x,_y,_z,_c,_r,palette)
+function new_tree_section(xy,_z,_c,_r,palette)
 	local tree={
-		x=_x,y=_y,z=_z*.1,vx=0,vy=0,c=_c,r=_r,
+		x=xy[1],y=xy[2],z=_z*.1,vx=0,vy=0,c=_c,r=_r,
 		update=function(t)
 			t.vx=(t.x-camx-64)*t.z
 			t.vy=(t.y-camy-64)*t.z
 		end,
 		draw=function(t)
-			if (palette and treedith) fillp(palette,-camx,-camy)
-		 circfill(t.x+t.vx,t.y+t.vy,t.r,t.c)
-		 fillp()
-		end
-	}
-	add(island.trees,tree)
-end
-
-function new_tree_section_h(_x,_y,_z,_c,_r,palette)
-	local tree={
-		x=_x,y=_y,z=_z*.1,vx=0,vy=0,c=_c,r=_r,
-		update=function(t)
-			t.vx=(t.x-camx-64)*t.z
-			t.vy=(t.y-camy-64)*t.z
-			t.vx+=t.x t.vy+=t.y
-		end,
-		draw=function(t)
-		 fillp(palette)
-		 circ(t.vx,t.vy,t.r,t.c)
-		 fillp()
+			if (palette) fillp(palette,-camx,-camy)
+		  circfill(t.x+t.vx,t.y+t.vy,t.r,t.c)
+		  fillp()
 		end
 	}
 	add(island.trees,tree)
@@ -711,13 +603,13 @@ function sorttrees(a)
 	end
 end
 
-function ________walk_about_islands()
+function _________walk_about_islands()
 		--remove me
 end
 
 player={
 	x=0,y=0,draw=false,speed=1,
-	fp_dist=0
+	fp_dist=0, dir=0
 }
 
 function	player_update(p)
@@ -744,8 +636,13 @@ end
 
 function	player_draw(p)
 	p.speed=1
-	if (pget(p.x,p.y)==12) p.speed=.1
-	if (pget(p.x,p.y)==15 and p.fp_dist>2) new_footprint(p.x,p.y) p.fp_dist=0
+	local c=pget(p.x,p.y)
+	if (c==12) p.speed=.1
+	if p.fp_dist>2 then
+		if (c==15) new_footprint(p.x,p.y) sfx(1)
+		if (c!=15) sfx(2)
+		p.fp_dist=0
+	end
 	circfill(p.x,p.y,1,0)
 end
 
@@ -905,6 +802,131 @@ function newGrainOfSand(_x,_y,_r)
 		end
 	}
 	add(sand,grain)
+end
+
+function _____________clouds_n_wind()
+		--remove me
+end
+
+function clouds_init()
+	clouds={}
+	local _dx=1
+	local _dy=1
+	if (rnd(1)>.5) _dx*=-1
+	if (rnd(1)>.5) _dy*=-1
+	for i=0,50 do
+		newCloud(_dx,_dy)
+	end
+end
+
+function newCloud(_dx,_dy)
+	local cloud={
+		x=camx+rnd(127),y=camy+rnd(127),
+		dx=rnd(3)*_dx,dy=rnd(3)*_dy,
+		r=4+rnd(10),
+		z=1.5+rnd(.5),vx=0,vy=0,
+		update=function(c)
+			c.x+=currentcell.wind.wy*.5
+			c.y-=currentcell.wind.wx*.5
+
+			if (c.x+c.vx>camx+128) c.x-=128
+			if (c.y+c.vy>camy+128) c.y-=128
+			if (c.x+c.vx<camx-0) c.x+=128
+			if (c.y+c.vy<camy-0) c.y+=128
+
+			c.vx=(c.x-camx-64)*c.z
+			c.vy=(c.y-camy-64)*c.z
+
+			c.vx=mid(-128,c.vx,128)
+			c.vy=mid(-128,c.vy,128)
+		end,
+		draw=function(c)
+			fillp(fillps[2-flr(c.r/8)])
+			circfill(c.x+c.vx,c.y+c.vy,c.r,7)
+			fillp()
+		end
+	}
+	add(clouds,cloud)
+end
+
+function smooth_wind_vectors()
+	for _x=1,#cells do
+		for _y=1,#cells[_x] do
+			local up=cells[_x][mid(1,_y+1,#cells[_x]-1)].wind
+			local down=cells[_x][mid(1,_y+1,#cells[_x]-1)].wind
+			local left=cells[mid(1,_x-1,#cells-1)][_y].wind
+			local right=cells[mid(1,_x+1,#cells-1)][_y].wind
+			local self=cells[_x][_y].wind
+
+			self.wx=(right.wx+left.wx+up.wx+down.wx+self.wx)/5
+			self.wy=(right.wy+left.wy+up.wy+down.wy+self.wy)/5
+		end
+	end
+end
+
+wind_arrow={
+	sm=20,--smoothing value
+  w=5.657,--sqrt(4^2*2)
+	c=0,s=0,_b=0,
+	update=function(wa,v)
+		wa.s=sin(atan2(flr(v.wx*wa.sm)/wa.sm,flr(v.wy*wa.sm)/wa.sm))
+		wa.c=cos(atan2(flr(v.wx*wa.sm)/wa.sm,flr(v.wy*wa.sm)/wa.sm))
+		wa._b=wa.s*wa.s+wa.c*wa.c
+	end,
+	draw=function(wa)
+	  for y=-wa.w,wa.w do
+	    for x=-wa.w,wa.w do
+	      local ox=( wa.s*y+wa.c*x)/wa._b+4
+	      local oy=(-wa.s*x+wa.c*y)/wa._b+4
+	      local col=sget(ox+28,oy+4)
+	      if col>0 then
+	 				pset(camx+120+x,camy+42+y+1,txt_shadow)
+					pset(camx+120+x,camy+42+y,7)
+	      end
+	    end
+	  end
+	end
+}
+
+function ________________whirlpools()
+		--remove me
+end
+
+wp_ps={}--whilrpool points
+
+function wp_init()
+	local tot=48
+	for i=0,tot do
+		local _r=(192/tot)*i
+		local _o=rnd(2)
+		for j=0,4 do
+			add(wp_ps,{x=0,y=0,r=_r,o=_o})
+		end
+	end
+end
+
+function wp_update()
+	for p in all(wp_ps) do
+		local t_=t()+p.o-rnd(.4)
+		p.x=64+(sin(t_*(15/p.r))*p.r)+rnd(p.r*.03125)
+		p.y=64-(cos(t_*(15/p.r))*p.r)+rnd(p.r*.03125)
+	end
+end
+
+function wp_draw()
+	--circfill(64,64,128,1)
+	--fillp(fillps[1])
+	local _p;
+  for p in all(wp_ps) do
+		if (_p and _p.r==p.r and p.r > 8) then
+			line(p.x,p.y,_p.x,_p.y,7)
+		else
+			--circfill(p.x,p.y,p.r*.015625,7)
+		end
+		_p=p
+    --pset(p.x,p.y,7)
+  end
+	--fillp(0)
 end
 
 function _________________fancy_text()
@@ -1090,40 +1112,6 @@ function fillp(pattern,x,y)
     return _fillp_original(bxor(pattern,add_bits))
 end
 
-lighthouse={
-	bits={},
-	init=function()
-		local r=12
-		for i=0,6,.25 do
-			local c=8
-			if (flr(i)%2==0) c=7
-			r-=0.1
-			new_tree_section(-32,-64,i,c,r)
-		end
-		new_tree_section(-32,-64,6,6,r)
-		new_tree_section_h(-32,-64,6.2,5,r)
-		r*=.5
-		for i=6,6.5,.1 do
-			new_tree_section(-32,-64,i,13,r)
-		end
-		r*=1.1
-		for i=6.5,7,.1 do
-			r-=0.1
-			new_tree_section(-32,-64,i,5,r)
-		end
-	end,
-	update=function()
-		for b in all(bits) do
-			b.update(b)
-		end
-	end,
-	draw=function()
-			for b in all(bits) do
-				b.draw(b)
-			end
-	end
-}
-
 function ____________________combat()
 	--#RemoveMe
 end
@@ -1280,6 +1268,7 @@ __gff__
 0000000000000000000000000000000000000000000000000000000000001000000000000000000000000000010000000000000000000000000000000101010000000000000000040a09000000000000000000000000000000000001010101000000000000000000000000010000000000000000000000000000000101010100
 __sfx__
 0003000004610066101f6001d6001d6001c6001c60000600006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600
-01080000213500f300133530f300133532e300133530f300133500f300133530f300133532e300133530030013350000000f3001f3541f3552e3001f35400000000001f354000000f30000000000000000000000
+000100000661005650076503460037600236003e6003f6003f6003f6003c600346002b600236001b600126000d6000c6000c6000d60011600166001b600236002d6003360033600316002e60028600236001c600
+00010000060100505007050340001f000230003e0003f0003f0003f0003c000340002b000230001b000120000d0000c0000c0000d00011000160001b000230002d0003300033000310002e00028000230001c000
 __music__
 00 01424344
