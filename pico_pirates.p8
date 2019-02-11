@@ -3,8 +3,12 @@ version 16
 __lua__
 
 --Current cart stats (3/2/18)
--- Token count 5529 / 8192
--- Char count 22,595 / 65,536
+-- Token count 6155 / 8192
+-- Char count 25,258 / 65,536
+
+--boat combat total tokens, 1962
+
+--total token count: 8117
 
 currentcellx=2+flr(rnd(20)) currentcelly=2+flr(rnd(20))
 camx=0 camy=0
