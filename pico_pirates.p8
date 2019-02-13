@@ -3,18 +3,26 @@ version 16
 __lua__
 
 --Current cart stats (12/2/18)
--- Token count 7775 / 8192
---	remaining tokens:	 417
---									 94.9%
+-- Token count 7672 / 8192
+--	remaining tokens:	 520
+--									 93.6%
+
+function stringToArray(str)
+	local a,l={},0
+	while l<#str do
+		l+=1
+		if sub(str,l,l)=="," then
+ 		add(a,tonum(sub(str,1,l-1)))
+ 		str,l=sub(str,l+1),0
+		end
+	end
+	return a
+end
 
 camx,camy,cellseed,currentcell,cellwind,celltype=0,0,0,{},{},""
-fillps={
-	0b0101101001011010.1,
-	0b111111111011111.1,
-	0b1010010110100101.1,
-}
+fillps=stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★"
 
-printStats=false
+printStats,drawClouds=false,true
 
 state,nextState=0,1--change to 1 to skip intro
 --0 splash screen
@@ -75,7 +83,7 @@ function _update()
 		if (celltype=="whirlpool") wp_update()
 		if celltype=="monster" then
 			for i=0,4 do
-				local r=rnd1()
+				local r=rnd"1"
 				local d=rnd(i*32)
 			 	newWave(sin(r)*d,-cos(r)*d)
 			end
@@ -124,11 +132,13 @@ function _draw()
 		if (celltype=="island") island.draw()
 		if (celltype=="whirlpool") wp_draw()
 		if celltype=="monster" then
-			if (abs(boat.x) < 96 and abs(boat.y) < 96) state=2 st_t=0 nextState=3
+			if (abs(boat.x) < 64 and abs(boat.y) < 64) state,nextState,st_t=2,3,0
 		end
-		 boat.draw(boat) 	--60% CPU usage
-		for c in all(clouds) do
-			c.draw(c)
+		boat.draw(boat) 	--60% CPU usage
+		if drawClouds then
+			for c in all(clouds) do
+				c.draw(c)
+			end
 		end
 		hud.draw(hud)
 		if (mapPos<127) draw_map()
@@ -191,7 +201,7 @@ hud={
 		draw_minimap()
 		draw_morale_bar()
 		wind_arrow.draw(wind_arrow,cellwind)
-		print("wIND",camx+112,camy+31,txt_shadow)
+		print("wIND",camx+112,camy+31,1)
 		print("wIND",camx+112,camy+30,7)
 	end
 }
@@ -231,7 +241,7 @@ function draw_map()
 			elseif cells[x][y].type=="whirlpool" and cells[x][y].visited  then
 				_circfill(_x+x*3,_y+y*3,1,7)
 			elseif cells[x][y].type!="sea" then
-				_circfill(_x+x*3,_y+y*3,0,8)
+				_circfill(_x+x*3,_y+y*3,0,13)
 			end
 		end
 	end
@@ -241,8 +251,8 @@ function draw_map()
 end
 
 function draw_minimap()
-	print(currentcellx,camx+102,camy+6,txt_shadow)
-	print(currentcelly,camx+116,camy+19,txt_shadow)
+	print(currentcellx,camx+102,camy+6,1)
+	print(currentcelly,camx+116,camy+19,1)
 	print(currentcellx,camx+102,camy+5,7)
 	print(currentcelly,camx+116,camy+18,7)
 
@@ -266,7 +276,7 @@ function draw_morale_bar()
 	local _x=x+57
 	local _y=y+10
 	--Drawing morale bar
-	_rectfill(x,y,_x,_y+1,txt_shadow)
+	_rectfill(x,y,_x,_y+1,1)
 	_rectfill(x+1,y+1,_x-29,_y-1,8)-- -sin(t()*.1)*29,_y-1,8)
 	_rect(x,y,_x-29,_y-1,2)-- -sin(t()*.1)*29,_y-1,2)
 	_rect(x,y,_x,_y,7)
@@ -332,24 +342,15 @@ function splash_screen()
 
 	printlogo() -- 42% CPU usage
 
-	print_str('412067616d65206d616465206279',24,72,7) --a game made by
-	print_str('43726169672054696e6e6579',26,82,12) --craig tinney
-	--print_str('7b4769626c6574736f664a6573757',16,94,12) --@gibletsofjesus
-
-	--twitter handle shimmer 0.06% CPU usage
-	--[[for x=17,111 do
-		for y=85,94 do
-			if pget(x,y)!=0 then
-				local start=((t()*45)-y*.5)%192
-				if (x>start and x<start+4) _pset(x,y,7)
-			end
-		end
-	end]]
-
-	local py=112+sin(t()*.5)*4
-	print_str('5072657373',16,py,7) --press
-	print_str('58',52,py,8) --red x
-	print_str('746f207374617274',64,py,7) --to start
+	local x=stringToArray"24,26,16,52,64,★"
+	local y=stringToArray"72,82,112,112,112,★"
+	local c=stringToArray"7,12,7,8,7,★"
+	local strs={'412067616d65206d616465206279','43726169672054696e6e6579','5072657373','58','746f207374617274'}
+	for i=1,5 do
+		local _y=y[i]
+		if (i>2) _y+=sin(t()*.5)*4
+		print_str(strs[i],x[i],_y,c[i])
+	end
 end
 
 --screen transition
@@ -379,9 +380,9 @@ function st_vertbars_in()
 		local _x=x+camx
 		local _y=camy
 		if x%2==0 then
-			_line(_x,-1+_y,_x,_y+(2.2*120)-st_t*120,0)
+			_line(_x,-1+_y,_x,_y+264-(st_t*120),0)
 		else
-			_line(_x,128+_y,_x,127-((2.2*120)-st_t*120)+_y,0)
+			_line(_x,128+_y,_x,_y+(st_t*120)-137,0)
  		end
 	end
 end
@@ -422,9 +423,7 @@ boat={
 		b.d+=sc
 		if (flr(b.d)>2) newWave(b.x-sin(b.r)*4,b.y+cos(b.r)*4) b.d=0
 
-		b.x+=b.mx
-		b.y+=b.my
-		b.x,b.y=flr(b.x*2)/2,flr(b.y*2)/2
+		b.x,b.y=flr((b.x+b.mx)*2)/2,flr((b.y+b.my)*2)/2
 
 		camx,camy=flr(boat.x-64),flr(boat.y-64)
 		if checklandcol(b.x,b.y,b.r) and not map and not player.draw then
@@ -464,7 +463,7 @@ boat={
 
 --check land collision
 function checklandcol(x,y,r)
-	local j={-r*2,0,.75,.25}
+	local j=stringToArray"-r*2,0,.75,.25,★"
 	local bool=false
 	for i in all(j) do
 		bool=bool or pget(x-sin(r+i)*8,y+cos(r+i)*8)==15
@@ -497,16 +496,16 @@ function world_init()
 		for cy=0,31 do
 			--random wind vectors
 			local _wx=rrnd(.25,1)
-			if (rnd1()>.5) _wx*=0xffff
+			if (rnd"1">.5) _wx*=0xffff
 			local _wy=rrnd(0.25,1)
-			if (rnd1()>.5) _wy*=0xffff
+			if (rnd"1">.5) _wy*=0xffff
 
 			local _type=""
-			if rnd1()>0 then
+			if rnd"1">.925 then
 				 _type="island"
-			elseif rnd1()>.7 then
+			elseif rnd"1">.7 then
 				 _type="monster"
-			elseif rnd1()>.99 then
+			elseif rnd"1">.99 then
 				 _type="whirlpool"
 			else
 				_type="sea"
@@ -616,10 +615,8 @@ island={
 		if (island.size > 16) _circfill(0,0,island.size*.35,9)
 		fillp()
 		--draw trees
-		if drawTrees then
-			for t in all(island.trees) do
-				if(t.c<2) t.draw(t)
-			end
+		for t in all(island.trees) do
+			if(t.c<2) t.draw(t)
 		end
 
 		for f in all(fps) do
@@ -627,7 +624,7 @@ island={
 		end
 
 		--draw treasure cross
-		if island.treasure!=0 then
+		if currentcell.treasure!=0 then
 			local sx=1+sin(t())*2
 			local crossX=sin(currentcell.seed/4096)*island.size-sx/2
 			local crossY=cos(currentcell.seed/4096)*island.size-sx/2
@@ -636,10 +633,8 @@ island={
 		end
 
 		if (player.draw) player_draw(player)
-		if drawTrees then
-			for t in all(island.trees) do
-				if(t.c>1)t.draw(t)
-			end
+		for t in all(island.trees) do
+			if(t.c>1)t.draw(t)
 		end
 	end
 }
@@ -651,9 +646,7 @@ function createisland(seed)
 	local size=island.size
 	--create the various _circles required to create this island
  	local total_circs=max(size/8,5)
-	island.beach={}
-	island.wetsand={}
-	island.waves={}
+	island.beach,island.wetsand,island.waves={},{},{}
 	for i=0,total_circs do
 		--offset around the overall island _circle to place this new _circle to be drawn
 		local r=i/total_circs
@@ -676,8 +669,8 @@ function createisland(seed)
 		end
 		for i=0,size/4 do
 			local r=i/(size/4)
-			sz=rnd2()+10
-			newtree(rrnd(0xfffb,5)+(rnd1()-.5)*size,rrnd(0xfffb,5)-(rnd1()-.5)*size,sz)
+			sz=rnd"2"+10
+			newtree(rrnd(0xfffb,5)+(rnd"1"-.5)*size,rrnd(0xfffb,5)-(rnd"1"-.5)*size,sz)
 		end
 
 		--sort trees by z value
@@ -692,38 +685,26 @@ function createisland(seed)
 	end
 end
 
-drawTrees=true
-function toggletrees()
-	drawTrees = not drawTrees
+function toggleClouds()
+	drawClouds = not drawClouds
 end
 
 function toggleStats()
 	printStats = not printStats
 end
 
-menuitem(1, "trees "..(drawTrees and 'on' or 'off'), toggletrees)
-menuitem(2, "print stats "..(printStats and 'on' or 'off'), toggleStats)
+menuitem(1, "toggle clouds", toggleClouds)
+menuitem(2, "toggle stats ", toggleStats)
 menuitem(3, "do a flip()!", putAFlipInIt)
 
 function newtree(_x,_y,s)
 	local z=rrnd(1,1.5)
 
-	local z_array={0	,0	,0		,z-.25	,z-.15	,z		,z+.5		,z+1	,z+1.25	,z+1.5}
-	local c_array={4	,1	,1		,3			,3			,3		,11			,11		,7			,7		}
-	local r_array={.25,1	,1.1	,1			,.9			,.8		,.667		,.5		,.25		,.2		}
-	local fillp_array={
-		0x0000,
-		0b1010010110100101.1,
-		0b0101101001011010.1,
-		0b111111111011111.1,
-		0b0101101001011010.1,
-		0x0000,
-		0b0101101001011010.1,
-		0x0000,
-		0b0101101001011010.1,
-		0x0000
-	}
-	for i=1,#z_array do
+	local z_array={0,0,0,z-.25,z-.15,z,z+.5,z+1,z+1.25,z+1.5}
+	local c_array=stringToArray"4,1,1,3,3,3,11,11,7,7,★"
+	local r_array=stringToArray".25,1,1.1,1,.9,.8,.667,.5,.25,.2,★"
+	local fillp_array=stringToArray"0x0000,0b1010010110100101.1,0b0101101001011010.1,0b111111111011111.1,0b0101101001011010.1,0x0000,0b0101101001011010.1,0x0000,0b0101101001011010.1,0x0000,★"
+	for i=1,10 do
 		local tree={
 			x=_x,y=_y,z=z_array[i]*.1,
 			vx=0,vy=0,
@@ -803,18 +784,15 @@ end
 
 function init_island_chest_view()
 	camera(0,0)
+	camx,camy=0,0
 	poke(0x5f2c,3)
-	sand={}
-	staticSand={}
-	chestClouds={}
-	circTrans_start=t()
-	circTrans_end=0
+	sand,staticSand,chestClouds,circTrans_start,circTrans_end,sandIndex={},{},{},t(),0,1
 	for i=0,15 do
 		add(chestClouds,{x=rnd(72),y=rnd(4),r=rrnd(1,4)})
 	end
 	for _x=0,8,0.5 do
 		for _y=1,3 do
-			add(staticSand,{x=_x*8,y=_y*8+(48-_x^1.05),r=6,c=15})
+			add(staticSand,{x=_x*8,y=_y*8+(48-_x^1.05),r=6})
 		end
 	end
 	srand(3)
@@ -841,26 +819,23 @@ end
 
 function circTransition(x,y,t)
 	for i=72,t-16,-1 do
-		local a={0,1,0xffff}
-		for _a in all(a) do
-			circ(x,_a,i,0)
+		for _a in all(stringToArray"0,1,0xffff,★") do
+			circ(x,y+_a,i,0)
 		end
 	end
 end
 
-sandIndex=1
-
 function update_island_chest_view()
 	if flr(chestPos)>44 and btnp(4) then
-		sfx(7-rnd2())
+		sfx(7-rnd"2")
 		for i=0,9 do
 			if sandIndex<#sand+1then
 				circTrans_end=t()
 				local grain=sand[sandIndex]
-				grain.vy-=4	+rnd2()
-				grain.vx=.5+rnd1()
+				grain.vy-=4+rnd(2)
+				grain.vx=.5+rnd(1)
 				grain.r-=1.5
-				if (rnd1()>.5) grain.vx*=0xffff
+				if (rnd"1">.5) grain.vx*=0xffff
 				sandIndex+=1
 				chestPos-=0.1
 				if (flr(chestPos)==44) sfx(7)
@@ -874,10 +849,10 @@ end
 
 chestPos,chestCol=53,4
 chestCols={
-	{8,9,10,2,4,5,1},--red
-	{4,13,6,2,5,5,1},--grey
-	{3,9,10,1,4,5,0},--green
-	{13,4,9,1,2,2,1}--13 = orange
+	stringToArray"8,9,10,2,4,5,1,★",--red
+	stringToArray"4,13,6,2,5,5,1,★",--grey
+	stringToArray"3,9,10,1,4,5,0,★",--green
+	stringToArray"13,4,9,1,2,2,1,★"--13 = orange
 }
 
 function draw_island_chest_view()
@@ -896,13 +871,13 @@ function draw_island_chest_view()
 	local _pals={7,13,15}
 	local p=sin(t()*.5)
 	local w=4+p*2.5
-	local r={w,w+1,0}
+	local r={w+1,w,0}
 	local x={1+p,1+p,0}
 
 	for i=1,3 do
-		pal(15,_pals)
+		pal(15,_pals[i])
 		for s in all(staticSand) do
-			circfill(s.x+x[i],s.y,s.r+r[i],s.c)
+			circfill(s.x+x[i],s.y,s.r+r[i],15)
 		end
 	end
 
@@ -934,10 +909,8 @@ function draw_island_chest_view()
 			--exit treasure chest state
 			cls(0)
 			poke(0x5f2c,0)
-			nextState=1
-			state=2
-			st_t=1
-			island.treasure=0
+			nextState,state,st_t=1,2,1
+			currentcell.treasure=0
 		end
 	else
 		circTransition(32,32,(t()-circTrans_start)*50)
@@ -979,7 +952,7 @@ wind_arrow={
 	      local oy=(-wa.s*x+wa.c*y)/wa._b+4
 	      local col=sget(ox+28,oy+4)
 	      if col>0 then
-	 				_pset(camx+120+x,camy+42+y+1,txt_shadow)
+	 				_pset(camx+120+x,camy+42+y+1,1)
 					_pset(camx+120+x,camy+42+y,7)
 	      end
 	    end
@@ -997,7 +970,7 @@ function wp_init()
 	local tot=48
 	for i=0,tot do
 		local _r=(192/tot)*i
-		local _o=rnd2()
+		local _o=rnd"2"
 		for j=0,4 do
 			add(wp_ps,{x=0,y=0,r=_r,o=_o})
 		end
@@ -1032,8 +1005,6 @@ function _________________fancy_text()
 		--remove me
 end
 
-txt_shadow=1
-
 function print_s(_x,_y,_l,c)
 	--total_layers=4
 	--letters_per_layer=7
@@ -1043,7 +1014,7 @@ function print_s(_x,_y,_l,c)
 	local l=_l%7
 	local layer=(_l-l)/7
 
-	set_col_layer(txt_shadow,layer)
+	set_col_layer(1,layer)
 	_sspr(7*l,16,7,7,_x,_y-6)
 	set_col_layer(c,layer)
 	_sspr(7*l,16,7,7,_x,_y-7)
@@ -1054,7 +1025,7 @@ function print_l(_x,_y,_l,c)
 	local l=_l%7
 	local layer=(_l-l)/7
 
-	set_col_layer(txt_shadow,layer)
+	set_col_layer(1,layer)
 	_sspr((12*l)+37,23,12,11,_x,_y-9)
 	set_col_layer(c,layer)
 	_sspr((12*l)+37,23,12,11,_x,_y-10)
@@ -1098,33 +1069,28 @@ function print_str(str,x,y,c)
 end
 
 function printlogo()
-	--Big P
-	for x=0,23 do
-		pal(1,13)
-		local wiggle=sin(t()*-.33+((36+x)*.018))*2
-		_sspr(x,44,1,26,x+36,5+wiggle)
-		pal(1,7)
-		_sspr(x,44,1,26,x+36,4+wiggle)
-	end
-
 	--ico
-	local xls={59,69,81}
+	local xls=stringToArray"59,69,81,★"
 	for i=1,#xls do
 		print_xl(xls[i],5,i-1,7)
 	end
 
-	--big P
-	for x=0,23 do
-		pal(1,13)
-		local wiggle=sin(t()*-.33+((14+x)*.018))*2
-		_sspr(x,44,1,26,x+14,33+wiggle)
-		pal(1,7)
-		_sspr(x,44,1,26,x+14,32+wiggle)
+	local wx_array=stringToArray"14,14,36,36,★"
+	local y_array=stringToArray"33,32,5,4,★"
+	local pal_array=stringToArray"13,7,13,7,★"
+
+	--big Ps
+	for i=1,4 do
+		for x=0,23 do
+			pal(1,pal_array[i])
+			local a=x+wx_array[i]
+			_sspr(x,44,1,26,a,y_array[i]+sin(t()*-.33+(a*.018))*2)
+		end
 	end
 
 	--pirates
-	xls={37,47,60,72,80,92,104}
-	local ls={0,3,4,5,7,8,9}
+	xls=stringToArray"37,47,60,72,80,92,104,★"
+	local ls=stringToArray"0,3,4,5,7,8,9,★"
 	for i=1,#xls do
 		print_xl(xls[i],32,ls[i],7)
 	end
@@ -1203,11 +1169,11 @@ end
 --comb_boat combat-
 function comb_init()
 	camera(0,0)
-	camx,camy,comb_objs,comb_clouds,monster,comb_boat=0,0,{},{},newOctopus(),newcomb_boat()
+	camx,camy,comb_objs,comb_clouds,monster,comb_boat,victory=0,0,{},{},newOctopus(),newcomb_boat(),false
 	add(comb_objs,monster)
 	add(comb_objs,comb_boat)
 	for t in all(monster.tentacles) do
-		t.o,t.w,t.h=rnd1(),5,24
+		t.o,t.w,t.h=rnd"1",5,24
 	end
 	for	i=0,160 do
 		add(wpts,0)
@@ -1286,7 +1252,6 @@ end
 function _______water()
 end
 
-
 --water--
 wpts,prevwpts={},{}
 
@@ -1364,7 +1329,7 @@ function newcomb_boat()
 
 			if btn(4) and b.firecd==0 then
 				b.firecd=1
-				sfx(0)
+				sfx(9)
 				fireProjectile(2+b.x,5+b.y,b.flipx,1,b.aim)
 			end
 
@@ -1524,7 +1489,7 @@ end
 
 function dmgFlash(e)
 	e.flashing-=1
-	if (t()%.01>.005 and e.flashing>0) pal_all(7)
+	if (t()%.01>.005 and e.flashing>0) pal_all"7"
 end
 
 function ______octopus()
@@ -1656,12 +1621,10 @@ end
 function ___________________helpers()
 end
 
-shakeTimer=0
-shakeX=0 shakeY=0
+shakeX,shakeY,shakeTimer=0,0,0
 function screenShake()
 	if shakeTimer > 0 then
-		shakeX=rrnd(0xfffc,4)
-		shakeY=rrnd(0xfffc,4)
+		shakeX,shakeY=rrnd(0xfffc,4),rrnd(0xfffc,4)
 		shakeTimer-=.33
 	else
 		shakeX,shakeY=0,0
@@ -1684,14 +1647,6 @@ end
 
 function lerp(a,b,t)
  return b*t+(a*(1-t))
-end
-
-function rnd1()
-	return rnd(1)
-end
-
-function rnd2()
-	return rnd(2)
 end
 
 function rrnd(min,max)
@@ -1839,3 +1794,6 @@ __sfx__
 00040000137531c753107530070000700007000070000700007000070000700007000070000700007000070000700007000070000700007000070000700007000070000700007000070000700007000070000700
 000c0000205551b5551d55521555005001b5552655500505005050050500500005000050000500005000050000500005000050000500005000050000500005000050000500005000050000500005000050000500
 00100000145550f55511555155550c5050f5550d5051a5551a5001a5001a500005000050000500005000050000500005000050000500005000050000500005000050000500005000050000500005000050000500
+010a00003565329650186500060100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001000010000100001
+010400003145334453324532f4532b453254531f45317453114530d4430b4330e4231241300400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0103000016a701da701ba6017a600aa500da5013a4019a4008a3006a3013a2018a200ca1014a1000a0000a0000a0000a0000a0000a0000a0000a0000a0000a0000a0000a0000a0000a0000000000000000000000
