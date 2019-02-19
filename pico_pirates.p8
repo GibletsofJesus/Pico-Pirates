@@ -2,8 +2,8 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 --Current cart stats (17/2/18)
--- Token count 7809 / 8192
---	remaining tokens:	 403
+-- Token count 7853 / 8192
+--	remaining tokens:	 339
 -- 21 func ___name instances = 63 tokens that acn be reallocated
 
 function stringToArray(str)
