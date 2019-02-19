@@ -2,10 +2,9 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 --Current cart stats (17/2/18)
--- Token count 7662 / 8192
---	remaining tokens:	 530
+-- Token count 7809 / 8192
+--	remaining tokens:	 403
 -- 21 func ___name instances = 63 tokens that acn be reallocated
---									 93.6%
 
 function stringToArray(str)
 	local a,l={},0
@@ -204,7 +203,7 @@ function _draw()
 	 	 celltype="sea"
 	 	 currentcell.type="sea"
 	 	 if (t()-victory_time > 3) state=2 st_t=0 nextState =1
-	  else
+	  elseif morale>0 then
 	 	 cannonLines(2+comb_boat.x,5+comb_boat.y)
 	 	 drawEnemyHP()
 	 	end
@@ -305,17 +304,30 @@ function draw_minimap()
 	_pset(camx+112+flr(((boat.x+256)/512)*14),camy+1+flr(((boat.y+256)/512)*14),4)
 end
 
+playerHpTimer=0
+prevMorale=100
 function draw_morale_bar()
 	--"Morale"
 	print_str('4d6f72616c65a',camx+1,camy+11,7)
 	local x=camx+42
 	local y=camy+1
 	local _x=x+57
+	local l=lerp(57,0,morale/100)
+	local _l=lerp(57,0,prevMorale/100)
 	local _y=y+10
-	--Drawing morale bar
+
+  if playerHpTimer>0 then
+     playerHpTimer=max(0,playerHpTimer-.1)
+     if (playerHpTimer<=1) _l=lerp(l,_l,playerHpTimer)
+  else
+    prevMorale=morale
+    _l=l
+  end
+  --Drawing morale bar
 	_rectfill(x,y,_x,_y+1,1)
-	_rectfill(x+1,y+1,_x-lerp(57,0,morale/100),_y-1,8)
-	_rect(x,y,_x-lerp(57,0,morale/100),_y-1,2)
+	_rectfill(x,y,_x-_l,_y,14)
+	_rectfill(x+1,y+1,_x-l,_y-1,8)
+	_rect(x,y,_x-_l,_y-1,2)
 	_rect(x,y,_x,_y,7)
 end
 
@@ -1335,10 +1347,26 @@ function newComb_boat()
 				end
 			end
 			if comb_boat.hp<=0 then
-				?""
-				?"do this bit next"
+				comb_boat.update=function(b)
+					b.y+=0.1
+				end
+
+				comb_boat._draw=comb_boat.draw
+				comb_boat.draw=function(b)
+					b._draw(b)
+					if b.y>100 then
+						print_str('47414d45204f564552',24,40,8)
+					end
+					if b.y>105 then
+						print_str('596f75722063726577206162616e646f6e6564',8,56,7)
+						print_str('7468652073696e6b696e672073686970',20,64,7)
+					end
+					if b.y>115 then
+						print_str('596f752077657265206e6f74',28,80,7)
+						print_str('736f20636f776172646c79',32,88,7)
+					end
+				end
 				--todo: work on me!
-				stop()
 			end
 			b.vx*=.95
 			b.firecd=max(b.firecd-.0333,0)
@@ -1353,9 +1381,8 @@ function newComb_boat()
 		end,
 		draw=function(b)
 			dmgFlash(b)
-		  palt(11,true)
-			palt(0,false)
-			sspr(27,50,8,8,b.x,b.y,8,8,b.flipx,false)
+			pal(1,0)
+			spr(12,b.x,b.y,1,1,b.flipx,false)
 			pal()
 			--[[comb_boat_text(messages[message_index])
 			if txt_timer*5>(#messages[message_index]) then
@@ -1460,7 +1487,7 @@ function fireProjectile(_x,_y,_left,_r,aim)
 				if aabbOverlap(t,p) then
 					del(comb_objs,p)
 					del(projectiles,p)
-					monster.hit(monster)
+					hit(monster,rrnd(8,14))
 					sfx(10)
 					sfx(11)
 				end
@@ -1468,7 +1495,7 @@ function fireProjectile(_x,_y,_left,_r,aim)
 			if aabbOverlap(monster,p) then --octopos collision
 				del(comb_objs,p)
 				del(projectiles,p)
-				monster.hit(monster)
+				hit(monster,rrnd(12,18))
 				sfx(10)
 				sfx(11)
 			end
@@ -1503,23 +1530,22 @@ end
 -- 		below surface, comes up a moment later
 --		and fires a rock or some shit (mb ink)
 
-hpTimer=0
-prevhp=100
+enemyHpTimer=0
+enemyPrevHp=100
 enemyName=""
 function drawEnemyHP()
 	?enemyName,4,114,0
 	?enemyName,4,113,7
 	rect(4,120,123,126,0)
-	local barLength0=monster.hp*1.18
-	local barLength1=prevhp*1.18
-	if hpTimer>0 then
-		 hpTimer-=0.066
-		 if (hpTimer<=1) prevHp=monster.hp barLength1=lerp(barLength0,barLength1,hpTimer)
+	local barLength0=lerp(0,118,monster.hp/100)
+	local barLength1=lerp(0,118,enemyPrevHp/100)
+	if enemyHpTimer>0 then
+		 enemyHpTimer=max(0,enemyHpTimer-.075)
+		 if (enemyHpTimer<=1) barLength1=lerp(barLength0,barLength1,enemyHpTimer)
 	else
-		prevhp=monster.hp
+		enemyPrevHp=monster.hp
 		barLength1=barLength0
 	end
-
 	rectfill(5,119,5+barLength1,124,14)
 
 	--true hp bar
@@ -1606,11 +1632,6 @@ function newOctopus()
 		  	end
 		 	end
 			pal()
-		 end,
-
-		 hit=function(o)
-			 hpTimer=2
-			 hit(o,rrnd(6,36))
 		 end
 	}
 	return monster
@@ -1619,7 +1640,11 @@ end
 function hit(this,dmg)
 	flip()
 	this.hp,this.flashing,shakeTimer=max(0,this.hp-dmg),10,1
-	if (this.isPlayer) morale=this.hp this.flashing=25
+	if this.isPlayer then
+		morale,this.flashing,playerHpTimer=this.hp,25,2
+	else
+		enemyHpTimer=2
+	end
 end
 
 function ___________________helpers()
@@ -1657,14 +1682,14 @@ function rrnd(min,max)
 	return rnd(max-min)+min
 end
 __gfx__
-0000000000000000000000007000000000000007000000000000000000000000000000000000000000007c0007c000000000000000000008800000800ddf0d00
-00000000000000000000000000000000000000000000000000000000000000000000000000000000008cb9a07a8a00000000000000000088880008880dff0fd0
-0070070000000000000000000000000660000000000000000000000000000000000000000000000007b9a897c9ab00000000000000000018888088880dff0fd0
-00077000000000000000000000000066660000000000000000000000000000009999999999940000c9ac797a9ac900000000000000000001888888810dff0fd0
-000770000000000000000000000006666660000000000000000000000000000955555555559240009b7a9c9ba99000000000000000000000188888100ddf0fdd
-007007000000000000000000000066666666000000aaaaaaaaaaa900000000955555555559224000000000000000000000000000000000008888810000df0ffd
-00000000000000000000000000000066660000000a22222222229240000009999999999999224000000000000000000000000000000000088888880000df0ffd
-0000000000000000000000000000006666000000a2888888888922400000a1111111111114440000000000000000000000000000000000888818888000df0ffd
+0000000000000000000000007000000000000007000000000000000000000000000000000000000000007c0007c000000040000000000008800000800ddf0d00
+00000000000000000000000000000000000000000000000000000000000000000000000000000000008cb9a07a8a00007777000000000088880008880dff0fd0
+0070070000000000000000000000000660000000000000000000000000000000000000000000000007b9a897c9ab00000777700000000018888088880dff0fd0
+00077000000000000000000000000066660000000000000000000000000000009999999999940000c9ac797a9ac900000777700000000001888888810dff0fd0
+000770000000000000000000000006666660000000000000000000000000000955555555559240009b7a9c9ba99000007777000000000000188888100ddf0fdd
+007007000000000000000000000066666666000000aaaaaaaaaaa900000000955555555559224000000000000000000040400440000000008888810000df0ffd
+00000000000000000000000000000066660000000a22222222229240000009999999999999224000000000000000000041414400000000088888880000df0ffd
+0000000000000000000000000000006666000000a2888888888922400000a1111111111114440000000000000000000044444000000000888818888000df0ffd
 01249af777fa0000000000000000006666000000a2888aa288892440000a1111111111114400000000000000000000000000000000000088810188880ddf0fdd
 012499aaa9900000000000000000006666000000aaaaa11999994240000aaaaaaaaaaa942400000000000000000000000000000000000018100018810dff0fd0
 0000000000000000000000000000006666000000a222a11922292240000a222a119222922400000000000000000000000000000000000001000001100dff0fd0
@@ -1825,4 +1850,3 @@ __sfx__
 __music__
 03 19464344
 03 07194344
-
