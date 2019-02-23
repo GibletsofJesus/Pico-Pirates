@@ -46,6 +46,9 @@ function _init()
 	for i=0,10 do
 		add(clouds,{x=rnd(127),y=(127),dx=rnd(3)*_dx,dy=rnd(3)*_dy,r=4+rnd(10)})
 	end
+	for i=0,100 do
+		update_vectors()
+	end
 end
 
 function _update()
@@ -63,22 +66,20 @@ end
 
 function _draw()
 	cls(12)
-	if (btn(4)) _init()
-	print(stat(1))
 	--[[local smooth=1000
 	if #wind_ps>1 then
 		for i=2,#smooth do
 			pset(lerp(wind_ps[i].x,wind_ps[i-1].x,(1/smooth)*(1+i)),
 				lerp(wind_ps[i].y,wind_ps[i-1].y,(1/smooth)*(1+i)),7)
 		end
-	end]]--
+	end]]
 	--draw_wind()
-	--draw_vectors()
-	for c in all(clouds) do
+	draw_vectors()
+	--[[for c in all(clouds) do
 		fillp(fillps[2])
 		circfill(c.x,c.y,c.r,7)
 	end
-	fillp()
+	fillp()]]
 end
 
 function ______________________whind()
@@ -172,11 +173,11 @@ function draw_vectors()
 				local _x=8+v.x*16
 				local _y=8+v.y*16
 
-				local smooth=20
+				local smooth=10000
 
 				if (_x>8 and _x<120 and _y>8 and _y<120) then
 					--circfill(_x,_y,1,2)
-					--line(_x,_y,_x+v.vx*16,_y+v.vy*16,8)
+					--line(_x,_y,_x+v.x*16,_y+v.y*16,8)
 
 					local s=sin(atan2(flr(v.vx*smooth	)/smooth,flr(v.vy*smooth)/smooth))
 					local c=cos(atan2(flr(v.vx*smooth)/smooth,flr(v.vy*smooth)/smooth))
@@ -192,7 +193,7 @@ function draw_vectors()
 				      local col=sget(ox+28,oy+4)
 				      if col>0 then
 							 			pset(_x+x,_y+y+1,6)
-				       pset(_x+x,_y+y,7)
+				       pset(_x+x,_y+y,_b*15)
 				      end
 				    end
 				  end

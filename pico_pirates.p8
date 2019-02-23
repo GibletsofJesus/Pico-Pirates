@@ -2,9 +2,18 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 --Current cart stats (17/2/18)
--- Token count 7721 / 8192
---	remaining tokens:	 471
+-- Token count 7450 / 8192
+--	remaining tokens:	 726
 -- 21 func ___name instances = 63 tokens that acn be reallocated
+
+state,nextState,st_t=3,3,5
+--0 splash screen
+--1 top down exploration
+--2 screen transition
+--3 side view combat
+--4 treasure view
+
+printStats,drawClouds=false,true
 
 function stringToArray(str)
 	local a,l={},0
@@ -21,22 +30,13 @@ end
 camx,camy,cellseed,currentcell,cellwind,celltype=0,0,0,{},{},""
 fillps=stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★"
 
-printStats,drawClouds=true,true
-
-state,nextState=3,1--change to 1 to skip intro
---0 splash screen
---1 top down exploration
---2 screen transition
---3 side view combat
---4 treasure view
-
 function _________built_in_funcitons()
 		--remove me
 end
 
 function _init()
-	currentcellx,currentcelly=flr(rrnd(2,30)),flr(rrnd(2,30))
 	srand(1)
+	currentcellx,currentcelly=flr(rrnd(2,30)),flr(rrnd(2,30))
 	world_init()
 	comb_init()
 	clouds={}
@@ -46,8 +46,8 @@ function _init()
 			r=4+rnd(10),z=rrnd(1.5,2),vx=0,vy=0,
 			update=function(c)
 				local x,y,vx,vy=c.x,c.y,c.vx,c.vy
-				x+=cellwind.wy
-				y-=cellwind.wx
+				x+=cellwindy
+				y-=cellwindx
 				if (x+vx>camx+128) x-=128
 				if (y+vy>camy+128) y-=128
 				if (x+vx<camx-0) x+=128
@@ -68,9 +68,9 @@ function _init()
 		}
 		add(clouds,cloud)
 	end
+	setcell()
 end
 
-st_t=0--screen transition timer
 function _update()
 	if state==0 then
 		if (btnp(5)) state=2 st_t=0
@@ -88,8 +88,7 @@ function _update()
 			end
 		end
 		if (player.draw) player_update(player)
-		map=btn(4)
-		wind_arrow.update(wind_arrow,cellwind)
+		map=btn"4"
 		--4% CPU usage
 		for c in all(clouds) do
 			c.update(c)
@@ -144,8 +143,16 @@ function _draw()
 		end
 		draw_minimap()
 		draw_morale_bar()
-		wind_arrow.draw(wind_arrow,cellwind)
+		local r =atan2(cellwindx,cellwindy)
+		for c=0,1 do
+			pal(6,7^c)
+			spr_rot(26,2,12,camx+120,camy+44-c,r,0)
+			pal()
+		end
+
 		print_u("wIND",camx+112,camy+30)
+		--print_u("wx: "..cellwindx,camx+64,camy+48)
+		--print_u("wx: "..cellwindy,camx+64,camy+56)
 		if (mapPos<127) draw_map()
 	elseif state==2 then
 		if st_t>0 and st_t<.8 then
@@ -164,7 +171,22 @@ function _draw()
 					_pset(120+i*2,126,1)
 					_pset(120+i*2,125,12)
 				end
-				smooth_wind_vectors()
+
+				--smooth wind vectors for cells
+				for _x=1,#cells do
+					for _y=1,#cells[_x] do
+						local xs=stringToArray"1,-1,0,0"
+						local ys=stringToArray"0,0,1,-1"
+						local self=cells[_x][_y]
+						for i=1,#xs do
+							local adjCell=cells[mid(1,flr(_x+xs[i]),#cells-1)][mid(1,flr(_y+ys[i]),#cells[_x]-1)]
+							self.windx+=adjCell.windx
+							self.windy+=adjCell.windy
+						end
+						self.windx/=5
+						self.windy/=5
+					end
+				end
 			end
 		end
 
@@ -184,8 +206,21 @@ function _draw()
 	 	end
 	 	drawUpdateWater()
 
-	  --waterReflections()
-		reflect_mem()
+		--water reflections
+		memcpy(0x2000-(24*64),0x6000+(77*64),64*24)
+		palt(12,true)
+		palt(1,true)
+		pal_all(13)
+		for y=0,16 do
+			sspr(0,127-y,128,1,sin(t()+y/20)*y/10,102+y)
+		end
+		for x=0,127 do
+			local c=sget(x,127)
+			if (pget(x,101)==1 and c!=12 and c!=7 and c!=1) pset(x,101,c)
+		end
+
+		pal()
+
 	  if victory then
 	 	 local cols={}
 	 	 pal(15,sget(min((t()-victory_time)*15,4),9))
@@ -434,12 +469,12 @@ boat={
 		local sc=(s*s)+(c*c)
 
 		if(btn(0)) b.r=b.r%1+.01
-		if(btn(1)) b.r=b.r%1-.01
+		if(btn"1") b.r=b.r%1-.01
 
-		b.mx+=cellwind.wy*.05
-		b.my-=cellwind.wx*.05
+		b.mx+=cellwindy*.05
+		b.my-=cellwindx*.05
 
-		if btn(2) then
+		if btn"2" then
 			b.mx+=s*speed
 			b.my-=c*speed
 			sfx(0)
@@ -468,25 +503,8 @@ boat={
 			newWave(b.x-sin(b.r)*4,
 			b.y+cos(b.r)*4)
 		end
-		--This draw method is presonsible for
-		-- ~20% CPU usage, which is better than
-		-- the unoptimized 60% it was previously
-		local s=sin(b.r)
-		local c=cos(b.r)
-		local _b=s*s+c*c
-		local w = sqrt(8^2*2)
-		for y=-w,w do
-			for x=-w,w do
-				local ox=(s*y+c*x)/_b+8
-				local oy=(-s*x+c*y)/_b+8
-				if ox<16 and oy<16 and ox>0 and oy>0 then
-					for i=0,7 do
-						local col=sget(ox+(i*16-4),oy+114)
-						if (col>0) _pset(flr(b.x)+x,flr(b.y-i)+y,col)
-					end
-				end
-			end
-		end
+		pal(0,5)
+		spr_rot(-4,91,13,flr(b.x),flr(b.y),b.r,6)
 	end
 }
 
@@ -524,10 +542,10 @@ function world_init()
 		add(cells,subcell)
 		for cy=0,31 do
 			--random wind vectors
-			local _wx=rrnd(.25,1)
-			if (rnd"1">.5) _wx*=0xffff
-			local _wy=rrnd(0.25,1)
-			if (rnd"1">.5) _wy*=0xffff
+			local wx=rrnd(.25,1)
+			if (rnd"1">.5) wx*=0xffff
+			local wy=rrnd(0.25,1)
+			if (rnd"1">.5) wy*=0xffff
 
 			local _type=""
 			if rnd"1">0 then
@@ -539,19 +557,9 @@ function world_init()
 			else
 				_type="sea"
 			end
-
-			local cell={
-				type=_type,
-				treasure=1,
-				seed=rnd(4096),
-				wind={wx=_wx,wy=_wy},
-				visited=false
-			}
-
-			add(subcell,cell)
+			add(subcell,{type=_type,treasure=1,seed=rnd(4096),windx=wx,windy=wy,visited=false})
 		end
 	end
-	setcell()
 end
 
 function cell_shift(x,y)
@@ -593,7 +601,8 @@ function setcell()
 	fps={}
 	currentcell=cells[currentcellx][currentcelly]
 	currentcell.visited=true
-	cellwind=currentcell.wind
+	cellwindx=currentcell.windy
+	cellwindy=currentcell.windx
 	cellseed=currentcell.seed
 	celltype=currentcell.type
 	if celltype=="island" then
@@ -775,9 +784,9 @@ function	player_update(p)
 	end
 
 	if (btn(0)) p.x-=p.speed p.fp_dist+=1
-	if (btn(1)) p.x+=p.speed p.fp_dist+=1
-	if (btn(2)) p.y-=p.speed p.fp_dist+=1
-	if (btn(3)) p.y+=p.speed p.fp_dist+=1
+	if (btn"1") p.x+=p.speed p.fp_dist+=1
+	if (btn"2") p.y-=p.speed p.fp_dist+=1
+	if (btn"3") p.y+=p.speed p.fp_dist+=1
 
 	camx,camy=player.x-64,player.y-64
 end
@@ -795,6 +804,7 @@ function	player_draw(p)
 		end
 		p.fp_dist=0
 	end
+
 	_circfill(p.x,p.y,1,0)
 end
 
@@ -941,49 +951,6 @@ function draw_island_chest_view()
 		circTransition(32,32,(t()-circTrans_start)*50)
 	end
 end
-
-function _____________clouds_n_wind()
-		--remove me
-end
-
-function smooth_wind_vectors()
-	for _x=1,#cells do
-		for _y=1,#cells[_x] do
-			local up=cells[_x][mid(1,_y+1,#cells[_x]-1)].wind
-			local down=cells[_x][mid(1,_y+1,#cells[_x]-1)].wind
-			local left=cells[mid(1,_x-1,#cells-1)][_y].wind
-			local right=cells[mid(1,_x+1,#cells-1)][_y].wind
-			local self=cells[_x][_y].wind
-
-			self.wx=(right.wx+left.wx+up.wx+down.wx+self.wx)/5
-			self.wy=(right.wy+left.wy+up.wy+down.wy+self.wy)/5
-		end
-	end
-end
-
-wind_arrow={
-	sm=20,--smoothing value
-  w=5.657,--sqrt(4^2*2)
-	c=0,s=0,_b=0,
-	update=function(wa,v)
-		wa.s=sin(atan2(flr(v.wx*wa.sm)/wa.sm,flr(v.wy*wa.sm)/wa.sm))
-		wa.c=cos(atan2(flr(v.wx*wa.sm)/wa.sm,flr(v.wy*wa.sm)/wa.sm))
-		wa._b=wa.s*wa.s+wa.c*wa.c
-	end,
-	draw=function(wa)
-	  for y=-wa.w,wa.w do
-	    for x=-wa.w,wa.w do
-	      local ox=( wa.s*y+wa.c*x)/wa._b+4
-	      local oy=(-wa.s*x+wa.c*y)/wa._b+4
-	      local col=sget(ox+28,oy+4)
-	      if col>0 then
-	 				_pset(camx+120+x,camy+42+y+1,1)
-					_pset(camx+120+x,camy+42+y,7)
-	      end
-	    end
-	  end
-	end
-}
 
 function ________________whirlpools()
 		--remove me
@@ -1132,52 +1099,6 @@ function set_col_layer(c,b)
 	end
 end
 
-function ________experimental_tings()
-		--remove me
-end
-
-function spr_rot(sx,sy,swh,dx,dy,rot)
-  local s=sin(rot)
-  local c=cos(rot)
-  local size = swh/2
-  local _b=(s*s+c*c)+size
-  local w = sqrt(size^2*2)
-  for y=-w,w do
-    for x=-w,w do
-      local ox=(s*y+c*x)/_b
-      local oy=(-s*x+c*y)/_b
-      if ox<swh and oy<swh and ox>0 and oy>0 then
-        local col=sget(ox+sx,oy+sy)
-        if (col>0) _pset(dx+x,dy+y,col)
-      end
-    end
-  end
-end
-
---https://www.lexaloffle.com/bbs/?tid=30518
-_fillp_original=fillp
-
---local fill pattern
-function fillp(pattern,x,y)
-    local add_bits=band(pattern,0x0000.ffff)
-    pattern=band(pattern,0xffff)
-    y=flr(y)%4
-    if(y~=0)then
-        local r={0xfff0,0xff00,0xf000}
-        local l={0x000f,0x00ff,0x0fff}
-        pattern=bxor(lshr(band(pattern,r[y]),y*4),shl(band(pattern,l[y]),(4-y)*4))
-    end
-
-    x=flr(x)%4
-    if(x~=0)then
-        local r={0xeeee,0xcccc,0x8888}
-        local l={0x1111,0x3333,0x7777}
-        pattern=bxor(lshr(band(pattern,r[x]),x),shl(band(pattern,l[x]),4-x))
-    end
-
-    return _fillp_original(bxor(pattern,add_bits))
-end
-
 function ____________________COMBAT()
 	--#RemoveMe
 end
@@ -1264,49 +1185,19 @@ function	drawUpdateWater()
 	end
 end
 
-function waterReflections()
-
-		rect(0,103,127,127,8)
-			rect(0,103,127,103-48,15)
-
-	for x=1,127 do
-		for y=0,48 do
-			local c=pget(x,103-y)
-			if c!=12 and c!=1 then
-				if 103+y/2>wpts[x]+97 then
-					pset(x+(sin(time()+(y/50))),103+y*.5,13)
-				end
-			end
-		end
-	end
-end
-
-function reflect_mem(x,y,h)
-	--Get screen memory data at rect specified in function parameters
-	--Save this data to the spritesheet
-	memcpy(0x0+(89*128),0x6000+(64*48),128*55)
-	sset(0,89,8)
-	--Go line by line on the spritesheet and push this data to screen
-	--	upside-down
-	for i=26,26,-1 do
-		local wiggle=sin(t()*.5+i/9)*(10-i/2)
-		wiggle=0
-		palt(12,true)
-		sspr(0,58+i,127,1,wiggle,180-i,127,1)
-	end
-	sspr(0,64,128,64,0,16,128,64)
-end
-
 function _________player_ship()
 end
+
+btn4=false
 
 --combat comb_boat--
 function newComb_boat()
 	local comb_boat={
 	 	x=16,y=62,w=8,h=8,vx=0,
-		flipx=false,aim=.5,firecd=0,
+		flipx=false,aim=.1,firecd=0,
 		hp=100,flashing=0,isPlayer=false,
 		update=function(b)
+			b.firecd=max(b.firecd-.0333,0)
 			if b.isPlayer then
 				if (btn(0)) then
 					b.vx=mid(-1.5,b.vx-0.1,1.5)
@@ -1314,21 +1205,25 @@ function newComb_boat()
 					wpts[mid(1,flr(b.x+23),160)]-=.7
 					sfx(0)
 				end
-				if (btn(1)) then
+				if (btn"1") then
 		 			b.flipx=false
 					b.vx=mid(-1.5,b.vx+0.1,1.5)
 					wpts[mid(1,flr(b.x+18),160)]-=.7
 					sfx(0)
 				end
 
-				if (btn(2))	b.aim+=0.025
-				if (btn(3)) b.aim-=0.025
+				if (btn"4" and b.firecd==0) b.aim+=0.025
 
-				if btn(4) and b.firecd==0 then
+				if btn4 and not btn"4" and b.firecd==0 or b.aim>1 then
 					b.firecd=1
 					sfx(9)
-					fireProjectile(2+b.x,5+b.y,b.flipx,1,b.aim)
+					fireProjectile(2+b.x,5+b.y,b.flipx,1,b.vx,b.aim)
+					b.aim=.1
+					b.vx-=1
+					if (b.flipx) b.vx+=2
 				end
+
+				btn4=btn"4"
 			end
 
 			if b.flashing<=0 and monster!=null then
@@ -1364,8 +1259,6 @@ function newComb_boat()
 				--todo: work on me!
 			end
 			b.vx*=.95
-			b.firecd=max(b.firecd-.0333,0)
-			b.aim=mid(b.aim,.1,1)
 			b.x=mid(0,b.x+b.vx,120)
 			local j=0
 			for i=3,5 do
@@ -1378,6 +1271,7 @@ function newComb_boat()
 			pal(1,0)
 			spr(12,b.x,b.y,1,1,b.flipx,false)
 			pal()
+			if (b.firecd>0.9 and b.firecd<1.3) circfill(b.x+4,b.y+5,1,b.firecd*25)
 			comb_boat_text(boat_message)
 		end
 	}
@@ -1436,12 +1330,12 @@ function ___________projectile()
 end
 projectiles={}
 --fire cannon--
-function fireProjectile(_x,_y,_left,_r,aim)
+function fireProjectile(_x,_y,_left,_r,_vx,_vy)
 	proj={
 		x0=_x,y0=_y,x=_x,y=_y,r=_r,
 		w=mid(1,_r*2,99),h=mid(1,_r*2,99),
 		t=0,
-		vx=1.32+abs(comb_boat.vx),vy=aim,
+		vx=1.32+abs(_vx),vy=_vy,
 		left=_left,
 		x2=0,y2=-64,
 		x1=0,y1=-64,
@@ -1584,7 +1478,7 @@ function newOctopus()
 				end
 			end,
 			function(o)
-				fireProjectile(o.x,o.y,true,3,comb_boat.aim)
+				--fireProjectile(o.x,o.y,true,3,comb_boat.aim)
 			end,
 			function(o)
 
@@ -1628,6 +1522,50 @@ function hit(this,dmg)
 end
 
 function ___________________helpers()
+end
+
+function spr_rot(sx,sy,swh,dx,dy,rot,depth)
+  local s=sin(rot)
+  local c=cos(rot)
+  local size = swh/2
+  local _b=(s*s+c*c)
+  local w = sqrt(size^2*2)
+  for y=-w,w do
+    for x=-w,w do
+      local ox=(s*y+c*x)/_b+size
+      local oy=(-s*x+c*y)/_b+size
+      if ox<swh and oy<swh and ox>0 and oy>0 then
+				for d=0,depth do
+	        local col=sget(ox+sx+(d*16),oy+sy)
+	        if (col>0) _pset(dx+x,dy+y-d,col)
+				end
+      end
+    end
+  end
+end
+
+--https://www.lexaloffle.com/bbs/?tid=30518
+_fillp_original=fillp
+
+--local fill pattern
+function fillp(pattern,x,y)
+    local add_bits=band(pattern,0x0000.ffff)
+    pattern=band(pattern,0xffff)
+    y=flr(y)%4
+    if(y~=0)then
+        local r={0xfff0,0xff00,0xf000}
+        local l={0x000f,0x00ff,0x0fff}
+        pattern=bxor(lshr(band(pattern,r[y]),y*4),shl(band(pattern,l[y]),(4-y)*4))
+    end
+
+    x=flr(x)%4
+    if(x~=0)then
+        local r={0xeeee,0xcccc,0x8888}
+        local l={0x1111,0x3333,0x7777}
+        pattern=bxor(lshr(band(pattern,r[x]),x),shl(band(pattern,l[x]),4-x))
+    end
+
+    return _fillp_original(bxor(pattern,add_bits))
 end
 
 function print_u(s,x,y)
@@ -1714,7 +1652,7 @@ aae5fba057770008eff908ff7daa0bffd9005dddd046617760000000000000000000000000000000
 0001111100001000100000000000040000000000028888888888888200000000000000000000000000000000000000028888888282888200000000000ddf0fdd
 0011111110001011111000000200077000000000028888888888882000000000000000000000000000000000000000298888882888888200000000000dff0fd0
 01000011110011111111000028800400000000000288888888888282000000000000000000000000000000000000002a9888888888888200000000000dff0fd0
-00000001110110000111100028e0f4000000000028888888888228820000000000000000000000000000000000000029a988899998888200000000000dff0fd0
+00000001110110000111100028e0f4000000000028888888888228820000000000000000000000000000000000000029a988899998888200000000000dff0fcc
 00000001111010000011110028844444400000028888888882288288200000000000000000000000000000000000002898889aaa98888200000000000ddf0fdd
 00000001110010000001111028e44444000000288888888828828288200000000000000000000000000000000000002888889999888820000000000000df0ffd
 000000111100100000001110288bb4bbbbb002888228828828828288200000000000000000000000000000000000002888888888888820000000000000df0ffd
@@ -1759,45 +1697,54 @@ fff000ffffff00ffff000ffffff0000ffff000fffff00fff000ff000000ff00000ffff00fff00ff0
 00000000000000000000000000000000000000f0f000ff0000000000000000000000000000000000000000000000000000000000000000000000000000df0fd0
 000000000000000000000000000000000000000000000ff000000000000000000000000000000000000000000000000000000000000000000000000000df0fd0
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000df0fd0
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ddf0d00
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0fd0
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0fd0
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0fd0
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ddf0fdd
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0ffd
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0ffd
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0ffd
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ddf0fdd
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0fd0
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0fd0
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0fd0
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000004000000000000000400000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000040000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000
-000040000000000000044400000000000004f4000000000000040400000000000000000000000000000000000000000000000000000000000000000000000000
-00004000000000000004440000000000004fff400000000000400040000000000000000000000000000000000000000000000000000000000000000000000000
-00004000000000000004440000000000004fff400000000000400040000000000000000000000000000777000000000000007000000000000000000000000000
-00004000000000000004440000000000004fff400000000000404040000000000000400000000000000040000000000000004000000000000000000000000000
-00004000000000000004440000000000004fff400000000000400040000000000000000000000000000000000000000000000000000000000000000000000000
-00004000000000000004440000000000004fff400000000000400040000000000000000000000000007777700000000000777770000000000000000000000000
-00004000000000000004440000000000004fff400000000000404040000000000040404000000000000040000000000000004000000000000000400000000000
-00004000000000000004440000000000004fff400000000000490940000000000040004000000000000000000000000000000000000000000000000000000000
-00000000000000000004440000000000004444400000000000499940000000000040004000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000444000000000000044400000000000004440000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000004000000000000000400000000000000000000000000000000000000000000000000000000000000000000ddf0d00
+0000000000000000000040000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0fd0
+00044400000000000004f4000000000000040400000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0fd0
+0004440000000000004fff400000000000400040000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0fd0
+0004440000000000004fff400000000000400040000000000000000000000000000777000000000000007000000000000000000000000000000000000ddf0fdd
+0004440000000000004fff400000000000404040000000000000400000000000000040000000000000004000000000000000000000000000000000000dff0ffd
+0004440000000000004fff400000000000400040000000000000000000000000000000000000000000000000000000000000000000000000000000000dff0ffd
+0004440000000000004fff400000000000400040000000000000000000000000007777700000000000777770000000000000000000000000000000000dff0ffd
+0004440000000000004fff400000000000404040000000000040404000000000000040000000000000004000000000000000400000000000000000000ddf0fdd
+0004440000000000004fff400000000000490940000000000040004000000000000000000000000000000000000000000000000000000000000000000dff0fd0
+0004440000000000004444400000000000499940000000000040004000000000000000000000000000000000000000000000000000000000000000000dff0fd0
+0000000000000000000444000000000000044400000000000004440000000000000000000000000000000000000000000000000000000000000000000dff0fd0
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccc777c77cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccc777ccccccccccccccccc717c717ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccc717ccccccccccccc7c7c777c7c7ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccc777c7ccc7ccccccc7c7c717c7c7ccccccccccccccccccccccccccccccccccccccccccccccc2cccccccccccccccccc22222cccccccccccccccccccccc
+cccccccc717c7ccc7ccccccc777c1c1c1c1ccccccccccccccccccccccccccccccccccccccccccccccc288cccccccccccccc228888822cccccccccccccccccccc
+cccccccc7c7c7ccc7ccccccc717cccccccccccccccccccccccccccccccccccccccccccccccccccccccc28eccccc2ccccc228888282882ccccccccccccccccccc
+cccccccc1c1c777c777ccccc1c1cccccccccccccccccccccccccccccccccccccccccccccccccccccccc288ccccc288cc28888888288882cccccccccccccccccc
+cccccccccccc111c111cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc28eccccc28ec288888882828882cccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc288ccccc288c2988888828888882ccccccc2cccccccccc
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc28ecccccc28ec2a98888888888882ccccc288cccccccccc
+cccccccccccccccccc4ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc288cccccc288cc29a9888999988882cccc28eccccccccccc
+cccccccccccccccc7777cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc28eccccc28eccc2898889aaa988882ccc288cccccccccccc
+ccccccccccccccccc7777ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc288ccccc288ccc288888999988882cccc28eccccc2cccccc
+ccccccccccccccccc7777cccccccccccccccccccccccccccccccccccccccccccccccccccccc2ccccc28eccccc28ecc288888888888882cccc288ccccc288cccc
+cccccccccccccccc7777cccccccccccccccccccccccccccccccccccccccccccccccccccccc288ccccc288cccc288cc28888888888882cccccc28eccccc28eccc
+cccccccccccccccc4c4cc44ccccccccccccccccccccccccccccccccccccccccccccccccccc28ecccccc28ecccc28ec288888888888282cccccc288ccccc288cc
+cccccccccccccccc404044ccccccccccccccccccccccccccccccccccccccccccccccccccccc188c1ccc288cc1cc288888888888822882ccccccc28ecccc28ecc
 __gff__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000000000000000000000001000000000000000000000000000010000000000000000000000000000000101010000000000000000040a09000000000000000000000000000000000001010101000000000000000000000000010000000000000000000000000000000101010100
+0000000000000000000000000000000000000000000000000000000000001000000000000000000000000000010000000000000000000000000000000101010000000000000000000001000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+__map__
+cccccccccccccccc040444ccd4cccccccccccccccccccccccccccccccccccccccccccccccc2ce8cc82c1cccc2ce8828888888822888228cc2c88cccc82c8cccc11111111111111111111111111111111111111111111111111111111111111111111c111c111181182c111711228878188111118128128112c18c1cc1ce81c11
+11111111111111111111111111111111111111111111111111111111111111111111111171111e1171111111117111111111111811111111711771111711111111111111111111111111111111111111111111111111111111111111111111111111111111111711111111111111111111111111111111111111111111111111
+1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 __sfx__
 0003000004610066101f6001d6001d6001c6001c60000600006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600006000060000600
 000100000661005650076503460037600236003e6003f6003f6003f6003c600346002b600236001b600126000d6000c6000c6000d60011600166001b600236002d6003360033600316002e60028600236001c600
