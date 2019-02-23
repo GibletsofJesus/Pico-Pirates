@@ -2,8 +2,8 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 --Current cart stats (17/2/18)
--- Token count 7450 / 8192
---	remaining tokens:	 726
+-- Token count 7709 / 8192
+--	remaining tokens:	 483
 -- 21 func ___name instances = 63 tokens that acn be reallocated
 
 state,nextState,st_t=3,3,5
@@ -13,7 +13,7 @@ state,nextState,st_t=3,3,5
 --3 side view combat
 --4 treasure view
 
-printStats,drawClouds=false,true
+printStats,drawClouds,projectiles=false,true,{}
 
 function stringToArray(str)
 	local a,l={},0
@@ -38,7 +38,7 @@ function _init()
 	srand(1)
 	currentcellx,currentcelly=flr(rrnd(2,30)),flr(rrnd(2,30))
 	world_init()
-	comb_init()
+	comb_init(1)
 	clouds={}
 	for i=0,50 do
 		local cloud={
@@ -80,7 +80,7 @@ function _update()
 		checkboatpos()
 		if (celltype=="island") island.update()
 		if (celltype=="whirlpool") wp_update()
-		if celltype=="monster" then
+		if celltype=="enemy" then
 			for i=0,4 do
 				local r=rnd"1"
 				local d=rnd(i*32)
@@ -132,7 +132,7 @@ function _draw()
 		fillp()
 		if (celltype=="island") island.draw()
 		if (celltype=="whirlpool") wp_draw()
-		if celltype=="monster" then
+		if celltype=="enemy" then
 			if (abs(boat.x) < 64 and abs(boat.y) < 64) state,nextState,st_t=2,3,0
 		end
 		boat.draw(boat) 	--60% CPU usage
@@ -200,19 +200,21 @@ function _draw()
 	elseif state==3 then
 		cls(12)
 	  screenShake()
-	  circfill(124,8,24,10)
+	  _circfill(124,8,24,10)
 	  for c in all(comb_objs) do
 	 	 c.draw(c)
 	 	end
 	 	drawUpdateWater()
 
 		--water reflections
-		memcpy(0x2000-(24*64),0x6000+(77*64),64*24)
+		local h=32
+		if (morale>0) h=24
+		memcpy(0x2000-(h*64),0x6000+((101-h)*64),64*h)
 		palt(12,true)
 		palt(1,true)
 		pal_all(13)
-		for y=0,16 do
-			sspr(0,127-y,128,1,sin(t()+y/20)*y/10,102+y)
+		for y=1,h-1 do
+			sspr(0,127-y,128,1,sin(t()+y/20)*(y/5),101+y)
 		end
 		for x=0,127 do
 			local c=sget(x,127)
@@ -233,7 +235,8 @@ function _draw()
 	 	 currentcell.type="sea"
 	 	 if (t()-victory_time > 3) state=2 st_t=0 nextState =1
 	  elseif morale>0 then
-	 	 cannonLines(2+comb_boat.x,5+comb_boat.y)
+	 	 cannonLines(2+comb_boat.x,5+comb_boat.y,comb_boat)
+ 	 	 if (not enemy.isPlayer) cannonLines(2+enemy.x,5+enemy.y,enemy)
 	 	 drawEnemyHP()
 	 	end
 		draw_morale_bar()
@@ -388,6 +391,11 @@ end
 function _rectfill(x1,y1,x2,y2,c)
 	if (tempFlip) flip()
 	rectfill(x1,y1,x2,y2,c)
+end
+
+function _spr(n,x,y,tx,ty)
+	if (tempFlip) flip()
+	spr(n,x,y,tx,ty)
 end
 
 function _sspr(sx,sy,sw,sh,dx,dy)
@@ -551,7 +559,7 @@ function world_init()
 			if rnd"1">0 then
 				 _type="island"
 			elseif rnd"1">.7 then
-				 _type="monster"
+				 _type="enemy"
 			elseif rnd"1">.99 then
 				 _type="whirlpool"
 			else
@@ -1104,23 +1112,9 @@ function ____________________COMBAT()
 end
 
 --comb_boat combat-
-function comb_init()
+function comb_init(enemyType)
+	camx,camy,comb_objs,victory=0,0,{},false
 	camera(0,0)
-	camx,camy,comb_objs,monster,comb_boat,victory=0,0,{},newOctopus(),newComb_boat(),false
-	comb_boat.hp=morale
-	comb_boat.isPlayer=true
-	boat_message="aLL HANDS\nON DECK!"
-	txt_timer=0xfffa
-	add(comb_objs,monster)
-	add(comb_objs,comb_boat)
-	for t in all(monster.tentacles) do
-		t.o,t.w,t.h=rnd"1",5,24
-	end
-	for	i=0,159 do
-		add(wpts,0)
-		add(prevwpts,0)
-	end
-	clouds={}
 	for j=1,0,0xffff do
 		srand"1"
 		for i=0,25 do
@@ -1128,6 +1122,32 @@ function comb_init()
 			local r,vx=rrnd(4,12),rnd(.5)
 			newCombCloud(x+j*2,y+j,r+j,7-j,vx)
 		end
+	end
+	comb_boat=newComb_boat()
+	comb_boat.hp=morale
+	comb_boat.isPlayer=true
+	boat_message="aLL HANDS\nON DECK!"
+	txt_timer=0xfffa
+	add(comb_objs,comb_boat)
+
+	if enemyType==0 then
+		enemyName="wATERY FIEND"
+		enemy=newOctopus()
+		for t in all(enemy.tentacles) do
+			t.o,t.w,t.h=rnd"1",5,24
+		end
+			add(comb_objs,enemy)
+	else
+		enemyName="aN BOAT"
+		enemy=newComb_boat()
+		enemy.isPlayer=false
+		enemy.x=114
+	end
+	add(comb_objs,enemy)
+
+	for	i=0,159 do
+		add(wpts,0)
+		add(prevwpts,0)
 	end
 	music(0,0)
 end
@@ -1143,8 +1163,7 @@ function newCombCloud(_x,_y,_r,_c,_vx)
  		if (c.x>140) c.x -= 160
 		end,
 	draw=function(c)
-		circfill(c.x,c.y,c.r,c.c)
-		--if (c.c==7) circ(c.x,c.y,c.r,6)
+		_circfill(c.x,c.y,c.r,c.c)
 	end
 	}
 	add(comb_objs,c)
@@ -1177,10 +1196,10 @@ function	drawUpdateWater()
 
 		wpts[i]=mid(wpts[i],0,128)
 
-		line(i-16,160,i-16,wpts[i]+97,1)
+		_line(i-16,160,i-16,wpts[i]+97,1)
 
 		if vel>1.25 or vel<-1.25 then
-			pset(i-16,wpts[i]+97,7)
+			_pset(i-16,wpts[i]+97,7)
 		end
 	end
 end
@@ -1190,6 +1209,26 @@ end
 
 btn4=false
 
+function comb_boat_move(b,left)
+	local x=.1
+	if (left) x*=0xffff
+	b.vx=mid(-1.5,b.vx+x,1.5)
+	b.flipx=left
+	x=18
+	if (left) x=23
+	wpts[mid(1,flr(b.x+x),160)]-=.7
+	sfx(0)
+end
+
+function comb_boat_fire_projectile(b)
+	b.firecd=1
+	sfx(9)
+	fireProjectile(2+b.x,5+b.y,b.flipx,1,b.vx,b.aim,b)
+	b.aim=.1
+	b.vx-=1
+	if (b.flipx) b.vx+=2
+end
+
 --combat comb_boat--
 function newComb_boat()
 	local comb_boat={
@@ -1198,62 +1237,68 @@ function newComb_boat()
 		hp=100,flashing=0,isPlayer=false,
 		update=function(b)
 			b.firecd=max(b.firecd-.0333,0)
+
+			--combat boat movement/firing
 			if b.isPlayer then
-				if (btn(0)) then
-					b.vx=mid(-1.5,b.vx-0.1,1.5)
-					b.flipx=true
-					wpts[mid(1,flr(b.x+23),160)]-=.7
-					sfx(0)
-				end
-				if (btn"1") then
-		 			b.flipx=false
-					b.vx=mid(-1.5,b.vx+0.1,1.5)
-					wpts[mid(1,flr(b.x+18),160)]-=.7
-					sfx(0)
-				end
-
+				if (btn"0") comb_boat_move(b,true)
+				if (btn"1") comb_boat_move(b,false)
 				if (btn"4" and b.firecd==0) b.aim+=0.025
-
-				if btn4 and not btn"4" and b.firecd==0 or b.aim>1 then
-					b.firecd=1
-					sfx(9)
-					fireProjectile(2+b.x,5+b.y,b.flipx,1,b.vx,b.aim)
-					b.aim=.1
-					b.vx-=1
-					if (b.flipx) b.vx+=2
-				end
-
+				if (btn4 and not btn"4" and b.firecd==0 or b.aim>1) comb_boat_fire_projectile(b)
 				btn4=btn"4"
+			elseif morale>0 then
+				b.flipx=true
+				if (abs(comb_boat.x-b.x) < 48) comb_boat_move(b,false)
+				if (abs(comb_boat.x-b.x) > 72 or b.x>114) comb_boat_move(b,true)
+				if (b.x>125) b.flipx=true
+
+				local target=(abs(comb_boat.x-b.x)-4)/80
+
+				local a=0.01
+				if (b.aim>target) a*=0xffff
+				b.aim+=a
+				if (b.firecd==0 and abs(b.aim-target)<0.1 and b.flipx) comb_boat_fire_projectile(b)
 			end
 
-			if b.flashing<=0 and monster!=null then
-				if (aabbOverlap(b,monster)) hit(b,rrnd(12,17)) sfx(13)
-				for t in all(monster.tentacles) do
+			if b.flashing<=0 then
+				if b.isPlayer then
+					if (aabbOverlap(b,enemy)) hit(b,rrnd(12,17)) sfx(13)
+				end
+				for t in all(enemy.tentacles) do
 					if (aabbOverlap(b,t)) hit(b,rrnd(12,17)) sfx(13)
 				end
 			end
-			if comb_boat.hp<=0 then
+			if b.hp<=0 then
 				sfx(27)
 				music(2)
-				comb_boat.update=function(b)
+				b.update=function(b)
 					b.y+=0.1
+					if not b.isPlayer and b.y>103 then
+						victory=true
+						sfx(29,0)
+						sfx(30,1)
+						music(2)
+						victory_time=t()+0.01
+						b.update=function()end
+					end
 				end
 
-				boat_message="abandon ship!"
+				if b.isPlayer then
+					boat_message,txt_timer="abandon ship!",0
 
-				comb_boat._draw=comb_boat.draw
-				comb_boat.draw=function(b)
-					b._draw(b)
-					if b.y>100 then
-						print_str('47414d45204f564552',24,40,8)
-					end
-					if b.y>105 then
-						print_str('596f75722063726577206162616e646f6e6564',8,56,7)
-						print_str('7468652073696e6b696e672073686970',20,64,7)
-					end
-					if b.y>115 then
-						print_str('596f752077657265206e6f74',28,80,7)
-						print_str('736f20636f776172646c79',32,88,7)
+					b._draw=comb_boat.draw
+					b.draw=function(b)
+						b._draw(b)
+						if b.y>100 then
+							print_str('47414d45204f564552',24,40,8)
+						end
+						if b.y>105 then
+							print_str('596f75722063726577206162616e646f6e6564',8,56,7)
+							print_str('7468652073696e6b696e672073686970',20,64,7)
+						end
+						if b.y>115 then
+							print_str('596f752077657265206e6f74',28,80,7)
+							print_str('736f20636f776172646c79',32,88,7)
+						end
 					end
 				end
 				--todo: work on me!
@@ -1269,10 +1314,12 @@ function newComb_boat()
 		draw=function(b)
 			dmgFlash(b)
 			pal(1,0)
-			spr(12,b.x,b.y,1,1,b.flipx,false)
+			local s=27
+			if (b.isPlayer) s=12
+			spr(s,b.x,b.y,1,1,b.flipx,false)
 			pal()
-			if (b.firecd>0.9 and b.firecd<1.3) circfill(b.x+4,b.y+5,1,b.firecd*25)
-			comb_boat_text(boat_message)
+			if (b.firecd>0.9 and b.firecd<1.3) _circfill(b.x+4,b.y+5,1,b.firecd*25)
+			if (b.isPlayer) comb_boat_text(boat_message)
 		end
 	}
 	return comb_boat
@@ -1305,34 +1352,24 @@ function comb_boat_text(s)
 	end
 end
 
-function cannonLines(x0,y0)
- local c=11
- if (comb_boat.firecd > 0)	c=5
- --for i=1,50 do
- for i=0,50-comb_boat.firecd*75 do
-	local x,y=x0,y0
- 	if comb_boat.flipx then
-		x+=1
- 		x-=i*2
- 	else
-		x+=i*2
- 	end
- 	y+=(.125*(i^2))-(comb_boat.aim*5*i)
+function cannonLines(x0,y0,b)
+	local c=11
+	if (b.firecd > 0)	c=5
 
- 	if (y<103) pset(x,y,c)
- end
-end
-
-function ___________enemy_ship()
+	for x=0,84,2 do
+		local y=y0+((x^2)-(b.aim*80*x))/32
+		local _x=x
+		if (b.flipx) _x*=0xffff
+		if (y<103) _pset(x0+_x,y,c)
+	end
 end
 
 function ___________projectile()
 end
-projectiles={}
---fire cannon--
-function fireProjectile(_x,_y,_left,_r,_vx,_vy)
+
+function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 	proj={
-		x0=_x,y0=_y,x=_x,y=_y,r=_r,
+		x0=_x,y0=_y,x=_x,y=_y,r=_r,owner=_owner,
 		w=mid(1,_r*2,99),h=mid(1,_r*2,99),
 		t=0,
 		vx=1.32+abs(_vx),vy=_vy,
@@ -1356,31 +1393,39 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy)
 			end
 		end
 
-		if monster!=null then
-			for t in all(monster.tentacles) do --tentacle collision
+		if p.owner.isPlayer then
+			for t in all(enemy.tentacles) do --tentacle collision
 				if aabbOverlap(t,p) then
 					del(comb_objs,p)
 					del(projectiles,p)
-					hit(monster,rrnd(8,14))
+					hit(enemy,rrnd(8,14))
 					sfx(10)
 					sfx(11)
 				end
 			end
-			if aabbOverlap(monster,p) then --octopos collision
+			if aabbOverlap(enemy,p) then --enemy collision
 				del(comb_objs,p)
 				del(projectiles,p)
-				hit(monster,rrnd(12,18))
+				hit(enemy,rrnd(12,18))
+				sfx(10)
+				sfx(11)
+			end
+		else
+			if aabbOverlap(comb_boat,p) then --player collision
+				del(comb_objs,p)
+				del(projectiles,p)
+				hit(comb_boat,rrnd(10,14))
 				sfx(10)
 				sfx(11)
 			end
 		end
 	end,
 	draw=function(p)
-			pset(p.x2,p.y2,7)
-			pset((p.x1+p.x2)/2,(p.y1+p.y2)/2,10)
-			pset(p.x1,p.y1,9)
-			pset((p.x+p.x1)/2,(p.y1+p.y)/2,8)
-			circfill(p.x,p.y,p.r,0)
+			_pset(p.x2,p.y2,7)
+			_pset((p.x1+p.x2)/2,(p.y1+p.y2)/2,10)
+			_pset(p.x1,p.y1,9)
+			_pset((p.x+p.x1)/2,(p.y1+p.y)/2,8)
+			_circfill(p.x,p.y,p.r,0)
 			p.x2=p.x1 p.y2=p.y1
 			p.x1=p.x	p.y1=p.y
 	end}
@@ -1411,30 +1456,29 @@ function drawEnemyHP()
 	?enemyName,4,114,0
 	?enemyName,4,113,7
 	rect(4,120,123,126,0)
-	local barLength0=lerp(0,118,monster.hp/100)
+	local barLength0=lerp(0,118,enemy.hp/100)
 	local barLength1=lerp(0,118,enemyPrevHp/100)
 	if enemyHpTimer>0 then
 		 enemyHpTimer=max(0,enemyHpTimer-.075)
 		 if (enemyHpTimer<=1) barLength1=lerp(barLength0,barLength1,enemyHpTimer)
 	else
-		enemyPrevHp=monster.hp
+		enemyPrevHp=enemy.hp
 		barLength1=barLength0
 	end
-	rectfill(5,119,5+barLength1,124,14)
+	_rectfill(5,119,5+barLength1,124,14)
 
 	--true hp bar
-	rectfill(5,119,5+barLength0,124,8)
+	_rectfill(5,119,5+barLength0,124,8)
 
-	rect(4,119,5+barLength1,124,2)
+	_rect(4,119,5+barLength1,124,2)
 
 	--HP bar outline
-	rect(4,119,123,125,7)
+	_rect(4,119,123,125,7)
 end
 
 --octodude--
 function newOctopus()
-	enemyName="wATERY FIEND"
-	local monster={
+	local enemy={
 		tentacles={
 			{x=119,y=96},
 			{x=112,y=92},
@@ -1463,8 +1507,8 @@ function newOctopus()
 						sfx(30,1)
 						music(2)
 						victory_time=t()+0.01
-						del(comb_objs,monster)
-						monster=null
+						del(comb_objs,enemy)
+						enemy=null
 					end
 				end
 			end,
@@ -1492,7 +1536,7 @@ function newOctopus()
 		draw=function(o)
 			dmgFlash(o)
 		  palt(0,true)
-			spr(91,o.x,o.y,3,3)
+			_spr(91,o.x,o.y,3,3)
 			for i=o.x,o.x+33 do
 				if (o.hp>0) wpts[flr(i+16)]+=rnd(.25)
 			end
@@ -1502,13 +1546,13 @@ function newOctopus()
 					local _x=t.x+2+(1.5*sin(time()+t.o+y*.1))
 					local _y=t.y+cos(time()+t.o*2)
 		  		if (y==1 and o.hp>0)	wpts[flr(_x+16)]+=rnd(.25)
-					sspr(24,45+y,3,1,_x+1,_y+y)
+					_sspr(24,45+y,3,1,_x+1,_y+y)
 		  	end
 		 	end
 			pal()
 		 end
 	}
-	return monster
+	return enemy
 end
 
 function hit(this,dmg)
@@ -1613,14 +1657,14 @@ __gfx__
 007007000000000000000000000066666666000000aaaaaaaaaaa900000000955555555559224000000000000000000040400440000000008888810000df0ffd
 00000000000000000000000000000066660000000a22222222229240000009999999999999224000000000000000000041414400000000088888880000df0ffd
 0000000000000000000000000000006666000000a2888888888922400000a1111111111114440000000000000000000044444000000000888818888000df0ffd
-01249af777fa0000000000000000006666000000a2888aa288892440000a1111111111114400000000000000000000000000000000000088810188880ddf0fdd
-012499aaa9900000000000000000006666000000aaaaa11999994240000aaaaaaaaaaa942400000000000000000000000000000000000018100018810dff0fd0
-0000000000000000000000000000006666000000a222a11922292240000a222a119222922400000000000000000000000000000000000001000001100dff0fd0
-0000000000000000000000000000006666000000a288a11928892240000a288a119288922400000000000000000000000000000000000000000000000dff0fd0
-0000000000000000000000000000006666000000a288899288892240000a2888992888922400000000000000000000000000000000000000000000000ddf0fdd
-0000000000000000000000000000000000000000a288888888892240000a2888888888922400000000000000000000000000000000000000000000000dff0ffd
-0000000000000000000000000000000000000000a288888888892400000a2888888888924000000000000000000000000000000000000000000000000dff0ffd
-0000000000000000000000007000000000000007a999999999994000000a9999999999940000000000000000000000000000000000000000000000000dff0ffd
+01249af777fa0000000000000000006666000000a2888aa288892440000a1111111111114400000000000000000400000040000000000088810188880ddf0fdd
+012499aaa9900000000000000000006666000000aaaaa11999994240000aaaaaaaaaaa94240000000000000007670000ffff000000000018100018810dff0fd0
+0000000000000000000000000000006666000000a222a11922292240000a222a119222922400000000000000007670000ffff00000000001000001100dff0fd0
+0000000000000000000000000000006666000000a288a11928892240000a288a119288922400000000000000006767000ffff00000000000000000000dff0fd0
+0000000000000000000000000000006666000000a288899288892240000a288899288892240000000000000006767000ffff000000000000000000000ddf0fdd
+0000000000000000000000000000000000000000a288888888892240000a2888888888922400000000000000200400222040022000000000000000000dff0ffd
+0000000000000000000000000000000000000000a288888888892400000a2888888888924000000000000000221212202121220000000000000000000dff0ffd
+0000000000000000000000007000000000000007a999999999994000000a9999999999940000000000000000222222002222200000000000000000000dff0ffd
 0000000000000000000000000000000000000000002200000000000000000000000000000000000000000000000000000000000000000000000000000ddf0fdd
 aae5fba057770008eff908ff7daa0bffd9005dddd04661776000000000000000000000000000000000000000000000000000000000000000000000000dff0ffd
 0e501e088528d804d284008700f00c708500e14ad00632060000000000000000000000000000000000000000000000000000000000000000000000000dff0ffd
