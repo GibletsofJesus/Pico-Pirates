@@ -2,8 +2,8 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 --Current cart stats (17/2/18)
--- Token count 7709 / 8192
---	remaining tokens:	 483
+-- Token count 7909 / 8192
+--	remaining tokens:	 283
 -- 21 func ___name instances = 63 tokens that acn be reallocated
 
 state,nextState,st_t=3,3,5
@@ -38,7 +38,7 @@ function _init()
 	srand(1)
 	currentcellx,currentcelly=flr(rrnd(2,30)),flr(rrnd(2,30))
 	world_init()
-	comb_init(1)
+	comb_init(0)
 	clouds={}
 	for i=0,50 do
 		local cloud={
@@ -236,7 +236,7 @@ function _draw()
 	 	 if (t()-victory_time > 3) state=2 st_t=0 nextState =1
 	  elseif morale>0 then
 	 	 cannonLines(2+comb_boat.x,5+comb_boat.y,comb_boat)
- 	 	 if (not enemy.isPlayer) cannonLines(2+enemy.x,5+enemy.y,enemy)
+ 	 	 if (enemy.tentacles==null) cannonLines(2+enemy.x,5+enemy.y,enemy)
 	 	 drawEnemyHP()
 	 	end
 		draw_morale_bar()
@@ -254,7 +254,6 @@ function _draw()
 		print_u("mEMORY: "..stat(0),camx+2,camy+16)
 		print_u("cPU: "..stat(1),camx+2,camy+24)
 	end
-
 	tempFlip=false
 end
 
@@ -1133,9 +1132,6 @@ function comb_init(enemyType)
 	if enemyType==0 then
 		enemyName="wATERY FIEND"
 		enemy=newOctopus()
-		for t in all(enemy.tentacles) do
-			t.o,t.w,t.h=rnd"1",5,24
-		end
 			add(comb_objs,enemy)
 	else
 		enemyName="aN BOAT"
@@ -1421,13 +1417,15 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 		end
 	end,
 	draw=function(p)
+		if p.owner.tentacles==null then
 			_pset(p.x2,p.y2,7)
 			_pset((p.x1+p.x2)/2,(p.y1+p.y2)/2,10)
 			_pset(p.x1,p.y1,9)
 			_pset((p.x+p.x1)/2,(p.y1+p.y)/2,8)
+		end
 			_circfill(p.x,p.y,p.r,0)
-			p.x2=p.x1 p.y2=p.y1
-			p.x1=p.x	p.y1=p.y
+			p.x2,p.y2=p.x1,p.y1
+			p.x1,p.y1=p.x,p.y
 	end}
 	add(comb_objs,proj)
 	add(projectiles,proj)
@@ -1476,20 +1474,29 @@ function drawEnemyHP()
 	_rect(4,119,123,125,7)
 end
 
+function init_tentacles(b)
+	local tentacles={
+		{x=119,y=96},
+		{x=112,y=92},
+		{x=87,y=90},
+		{x=79,y=88},
+		{x=73,y=97}
+	}
+	for t in all(tentacles) do
+		t.o,t.w,t.h=rnd"1f",5,24
+		if (b)t.y+=16
+	end
+	return tentacles
+end
+
 --octodude--
 function newOctopus()
 	local enemy={
-		tentacles={
-			{x=119,y=96},
-			{x=112,y=92},
-			{x=87,y=90},
-			{x=79,y=88},
-			{x=73,y=97}
-		},
+		tentacles=init_tentacles(false),
 		hp=100,
 		x=88,y=88,w=24,h=72,
 		flashing=0,
-		timer=1,
+		timer=0,
 		stepIndex=4,
 		steps=
 		{
@@ -1500,7 +1507,11 @@ function newOctopus()
 				end
 				if o.y>104 then
 					if o.hp>0 then
-						o.stepIndex+=1
+						if rnd"1">.5 then
+							o.stepIndex=3
+						else
+							o.stepIndex,o.timer=5,0
+						end
 					else
 						victory=true
 						sfx(29,0)
@@ -1518,17 +1529,40 @@ function newOctopus()
 					t.y-=.5
 				end
 				if o.y<88 then
-					o.stepIndex=1
+					o.stepIndex,o.timer=4,0
 				end
 			end,
 			function(o)
-				--fireProjectile(o.x,o.y,true,3,comb_boat.aim)
+				local target=(abs(comb_boat.x-o.x)-4)/80
+				local ta={-rnd".2",0,rnd".2"}
+				for i=1,3 do
+					fireProjectile(o.x,o.y,true,2,ta[i],target+ta[i],o)
+				end
+				o.stepIndex=2--shoot at player
 			end,
-			function(o)
-
-			end
+			function(o)--idle, exit after 5 seconds
+				if (o.timer>3) o.stepIndex=1 o.timer=0
+			end,
+			function(o)--attack with tentacles
+				for i=1,#o.tentacles do
+					local noodle = o.tentacles[i]
+					if  noodle.x==init_tentacles(true)[i].x then
+						noodle.x = comb_boat.x
+					elseif o.timer>i and o.timer-i<1 then
+						noodle.y-=2
+					else
+						noodle.y+=1
+						if i==#o.tentacles and noodle.y>105 and o.timer>3 then
+							o.tentacles=init_tentacles(true)
+							o.timer=0
+							o.stepIndex=2
+						end
+					end
+				end
+			end,
 		},
 		update=function(o)
+			o.timer+=0.03
 			o.y+=cos(t())*.25
 			if (o.hp<=0) o.stepIndex=1
 			o.steps[o.stepIndex](o)
