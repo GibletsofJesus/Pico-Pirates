@@ -6,7 +6,7 @@ __lua__
 --	remaining tokens:	 274
 -- 21 func ___name instances = 63 tokens that acn be reallocated
 
-state,nextState,st_t=3,1,5
+state,nextState,st_t=1,1,5
 --0 splash screen
 --1 top down exploration
 --2 screen transition
@@ -136,6 +136,7 @@ function _draw()
 			if (abs(boat.x) < 64 and abs(boat.y) < 64) state,nextState,st_t=2,3,0
 		end
 		boat.draw(boat) 	--60% CPU usage
+		boat_text(flr(boat.x-24),flr(boat.y-16))
 		if drawClouds then
 			for c in all(clouds) do
 				c.draw(c)
@@ -154,7 +155,7 @@ function _draw()
 		--print_u("wx: "..cellwindx,camx+64,camy+48)
 		--print_u("wx: "..cellwindy,camx+64,camy+56)
 		if (mapPos<127) draw_map()
-	elseif state==2 then
+		elseif state==2 then
 		if st_t>0 and st_t<.8 then
 			st_horizbars_out()
 		end
@@ -203,7 +204,7 @@ function _draw()
 	  _circfill(124,8,24,10)
 
 		--will be writing to screen + spritesheet here
-		boat_text(boat_message)
+		boat_text(comb_boat.x,comb_boat.y-16)
 
 	  for c in all(comb_objs) do
 	 	 c.draw(c)
@@ -1341,23 +1342,23 @@ end
 
 boat_message,txt_timer="tEST MESSAGE!",0
 
-function boat_text(s)
+function boat_text(x0,y0)
 	txt_timer+=.33
-	if txt_timer>0 and txt_timer<#s+15 then
+	if txt_timer>0 and txt_timer<#boat_message+15 then
 
-		print_u(sub(s,0,txt_timer),0,0)
+		print_u(sub(boat_message,0,txt_timer),camx,camy)
 		memcpy(0x1d00,0x6000,768)
 		rectfill(0,0,64,12,12)
 		local _y=0
-		if (sub(s,#s,#s)==' ') _y=6
+		if (sub(boat_message,#boat_message,#boat_message)==' ') _y=6
+		palt(12,true)
 		for y=0,_y,6 do
 		 for x=0,80,2 do
-		 	wiggle=sin(t()+(x/#s))
-		 	sspr(x,116+y,2,6,comb_boat.x+x,flr(comb_boat.y)-16+y+wiggle)
+		 	sspr(x,116+y,2,6,x0+x,y0+y+sin(t()+(x/#boat_message)))
 		 end
 		end
 	end
-	if txt_timer>#s+45 then
+	if txt_timer>#boat_message+45 then
 		txt_timer=0
 		boat_message="cOME ON THEN PAL,\nSQUARE TAE GO LIKE "
 		if morale<70 then
@@ -1864,3 +1865,4 @@ __sfx__
 __music__
 03 19464344
 03 07194344
+
