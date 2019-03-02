@@ -1,19 +1,17 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
---Current cart stats (26/2/18)
--- Token count 7918 / 8192
---	remaining tokens:	 274
+--Current cart stats (2/3/18)
+-- Token count 8035 / 8192
+--	remaining tokens:	 249
 -- 21 func ___name instances = 63 tokens that acn be reallocated
 
-state,nextState,st_t=1,1,5
+state,nextState,st_t,printStats=2,1,0,false
 --0 splash screen
 --1 top down exploration
 --2 screen transition
 --3 side view combat
 --4 treasure view
-
-printStats,drawClouds,projectiles=false,true,{}
 
 function stringToArray(str)
 	local a,l={},0
@@ -27,7 +25,9 @@ function stringToArray(str)
 	return a
 end
 
-camx,camy,cellseed,currentcell,cellwind,celltype=0,0,0,{},{},""
+morale,tempFlip,playerHpTimer,prevMorale,mapPos=100,false,0,100,127
+
+camx,camy,cellseed,currentcell,cellwind,celltype,drawClouds,projectiles=0,0,0,{},{},"",false,true,{}
 fillps=stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★"
 
 function _________built_in_funcitons()
@@ -266,7 +266,6 @@ function ___________top_down__HuD()
 		--remove me
 end
 
-mapPos=127
 
 function draw_map()
 	--Draw base map
@@ -296,13 +295,13 @@ function draw_map()
 	end
 	for x=1,32 do
 		for y=1,32 do
-			if cells[x][y].type=="island" then
-				_circfill(_x+x*3,_y+y*3,1,15)
-			elseif cells[x][y].type=="whirlpool" and cells[x][y].visited  then
-				_circfill(_x+x*3,_y+y*3,1,7)
-			elseif cells[x][y].type!="sea" then
-				_circfill(_x+x*3,_y+y*3,0,13)
+			local c,r,type=15,1,cells[x][y].type
+			if type=="whirlpool" and cells[x][y].visited  then
+				c=7
+			elseif type=="enemy" then
+				c=13 r=0
 			end
+			if (type!="sea") _circfill(_x+x*3,_y+y*3,r,c)
 		end
 	end
 	_x+=boat.x/128
@@ -326,8 +325,6 @@ function draw_minimap()
 	_pset(camx+112+flr(((boat.x+256)/512)*14),camy+1+flr(((boat.y+256)/512)*14),4)
 end
 
-playerHpTimer=0
-prevMorale=100
 function draw_morale_bar()
 	--"Morale"
 	print_str('4d6f72616c65a',camx+1,camy+11,7)
@@ -356,8 +353,6 @@ end
 function ___________________cool_flip()
 		--remove me
 end
-
-tempFlip=false
 
 function putAFlipInIt()
 	tempFlip=true
@@ -460,12 +455,6 @@ function st_vertbars_in()
  		end
 	end
 end
-
-function _______________pirate_crew()
-		--remove me
-end
-
-morale=100
 
 function ___________top_down_boat()
 		--remove me
@@ -906,11 +895,11 @@ function draw_island_chest_view()
 	--draw clouds
 	for c in all(chestClouds) do
 		c.x+=c.r*.05
-		circfill((c.x-3)%72,c.y,c.r,7)
+		_circfill((c.x-3)%72,c.y,c.r,7)
 	end
 
 	--draw water
-	rectfill(0,28,127,127,1)
+	_rectfill(0,28,127,127,1)
 
 	--draw land
 	local _pals={7,13,15}
@@ -922,7 +911,7 @@ function draw_island_chest_view()
 	for i=1,3 do
 		pal(15,_pals[i])
 		for s in all(staticSand) do
-			circfill(s.x+x[i],s.y,s.r+r[i],15)
+			_circfill(s.x+x[i],s.y,s.r+r[i],15)
 		end
 	end
 
@@ -937,7 +926,7 @@ function draw_island_chest_view()
 		pal()
 		?"yOU FOUND SOME\n   TREASURE!",4,16,0
 		?"yOU FOUND SOME\n   TREASURE!",4,15,9.5+p
-		sspr(80,0,12,5,25,40)--draw chest contents
+		_sspr(80,0,12,5,25,40)--draw chest contents
 	else
 		--draw closed chest
 		_sspr(40,0,w,h,32-w/2-sin(chestPos/1.5)*.5,chestPos-h/2,w,h)
@@ -1272,9 +1261,9 @@ function newComb_boat()
 				b.update=function(b)
 					b.y+=0.1
 					if not b.isPlayer and b.y>103 then
-						victory=true
-						txt_timer=0
+						victory,txt_timer,currentcell.type=true,0,"sea"
 						boat_message="gLORIOUS\nVICTORY! "
+						if (rnd"1">.5) boat_message="eXCELLENT\nPIRATING MEN! "
 						sfx(29,0)
 						sfx(30,1)
 						music(2)
@@ -1340,7 +1329,7 @@ end
 -- enemy hit, print generic positive
 --	message
 
-boat_message,txt_timer="tEST MESSAGE!",0
+boat_message,txt_timer="",0
 
 function boat_text(x0,y0)
 	txt_timer+=.33
@@ -1348,7 +1337,7 @@ function boat_text(x0,y0)
 
 		print_u(sub(boat_message,0,txt_timer),camx,camy)
 		memcpy(0x1d00,0x6000,768)
-		rectfill(0,0,64,12,12)
+		_rectfill(camx,camy,camx+64,camy+12,12)
 		local _y=0
 		if (sub(boat_message,#boat_message,#boat_message)==' ') _y=6
 		palt(12,true)
@@ -1359,12 +1348,31 @@ function boat_text(x0,y0)
 		end
 	end
 	if txt_timer>#boat_message+45 then
-		txt_timer=0
-		boat_message="cOME ON THEN PAL,\nSQUARE TAE GO LIKE "
-		if morale<70 then
-			boat_message="nO SLACKING YOU\nLAZY SEA DOGS! "
-		elseif morale<33 and morale>1 then
-			boat_message="mAYBE I SHOULDN'T OF\nBEEN A PIRATE... "
+		if state==3 then
+			txt_timer=0
+			boat_message="cOME ON THEN PAL,\nSQUARE TAE GO LIKE "
+			if morale<70 and morale>33 then
+				boat_message="nO SLACKING YOU\nLAZY SEA DOGS! "
+			elseif morale<33 and morale>1 then
+				boat_message="mAYBE I SHOULDN'T OF\nBEEN A PIRATE... "
+			end
+		else
+			if celltype=="sea" then
+				txt_timer=0
+				local xs=stringToArray"-1,1,0,0,★"
+				local ys=stringToArray"0,0,1,-1,★"
+				local dirs={"WEST","EAST","SOUTH","NORTH"}
+
+				for i=1,#xs do
+					local cellToCheck=cells[flr(mid(1,currentcellx+xs[i],31))][flr(mid(1,currentcelly+ys[i],31))]
+					if not cellToCheck.visited and cellToCheck.type=="island" then
+						boat_message="lAND TO\nTHE "..dirs[i].."! "
+					end
+				end
+			elseif celltype=="enemy" then
+				txt_timer=0
+				boat_message="sir! I SPY\nSOMETHING! "
+			end
 		end
 	end
 end
@@ -1454,7 +1462,7 @@ end
 
 function dmgFlash(e)
 	e.flashing-=1
-	if (e.flashing>0) pal_all"7"
+	if (t()%.01>.005 and e.flashing>0) pal_all"7"
 end
 
 function ______octopus()
@@ -1865,4 +1873,3 @@ __sfx__
 __music__
 03 19464344
 03 07194344
-
