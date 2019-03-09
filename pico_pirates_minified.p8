@@ -1,17 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
---Current cart stats (2/3/18)
--- Token count 8049 / 8192
---	remaining tokens:	 143
--- 21 func ___name instances = 63 tokens that acn be reallocated
-
 state,nextState,st_t,printStats=0,1,5,false
---0 splash screen
---1 top down exploration
---2 screen transition
---3 side view combat
---4 treasure view
 
 function stringToArray(str)
 	local a,l={},0
@@ -34,10 +24,6 @@ end
 
 camx,camy,cellseed,currentcell,cellwind,celltype,drawClouds,projectiles,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once=0,0,0,{},{},"",true,{},100,false,0,100,127,true
 fillps=stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★"
-
-function _________built_in_funcitons()
-		--remove me
-end
 
 function _init()
 	srand(1)
@@ -263,11 +249,6 @@ function _draw()
 	tempFlip=false
 end
 
-function ___________top_down__HuD()
-		--remove me
-end
-
-
 function draw_map()
 	--Draw base map
 	local _y=camy+20
@@ -355,10 +336,6 @@ function draw_morale_bar()
 	_rect(x,y,_x,_y,7)
 end
 
-function ___________________cool_flip()
-		--remove me
-end
-
 function putAFlipInIt()
 	tempFlip=true
 end
@@ -405,10 +382,6 @@ end
 function _sspr(sx,sy,sw,sh,dx,dy)
 	if (tempFlip) flip()
 	sspr(sx,sy,sw,sh,dx,dy)
-end
-
-function ______________________meta()
-		--remove me
 end
 
 function splash_screen()
@@ -459,10 +432,6 @@ function st_vertbars_in()
 			_line(_x,128+_y,_x,_y+(st_t*120)-137,0)
 		end
 	end
-end
-
-function ___________top_down_boat()
-		--remove me
 end
 
 boat={
@@ -1057,10 +1026,6 @@ function set_col_layer(c,b)
 	end
 end
 
-function ____________________COMBAT()
-	--#RemoveMe
-end
-
 --comb_boat combat-
 function comb_init(enemyType)
 	camx,camy,comb_objs,victory=0,0,{},false
@@ -1099,9 +1064,6 @@ function comb_init(enemyType)
 	music(0,0)
 end
 
-function _______clouds()
-end
-
 function newCombCloud(_x,_y,_r,_c,_vx)
 	local c={
 		x=_x,y=_y,r=_r,c=_c,vx=_vx,
@@ -1114,9 +1076,6 @@ function newCombCloud(_x,_y,_r,_c,_vx)
 	end
 	}
 	add(comb_objs,c)
-end
-
-function _______water()
 end
 
 --water--
@@ -1149,9 +1108,6 @@ function drawUpdateWater()
 			_pset(i-16,wpts[i]+97,7)
 		end
 	end
-end
-
-function _________player_ship()
 end
 
 btn4=false
@@ -1348,9 +1304,6 @@ function cannonLines(x0,y0,b)
 	end
 end
 
-function ___________projectile()
-end
-
 function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 	proj={
 		x0=_x,y0=_y,x=_x,y=_y,r=_r,owner=_owner,
@@ -1422,9 +1375,6 @@ end
 function dmgFlash(e)
 	e.flashing-=1
 	if (t()%.01>.005 and e.flashing>0) pal_all"7"
-end
-
-function ______octopus()
 end
 
 enemyHpTimer=0
@@ -1568,9 +1518,6 @@ function hit(this,dmg)
 	else
 		enemyHpTimer=2
 	end
-end
-
-function ___________________helpers()
 end
 
 function spr_rot(sx,sy,swh,dx,dy,rot,depth)
