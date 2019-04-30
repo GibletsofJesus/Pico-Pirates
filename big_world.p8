@@ -228,32 +228,32 @@ end
 
 island={
 	update=function()
-		for t in all(island.trees) do
+		for t in all(island_trees) do
 			t.update(t)
 		end
 	end,
 	draw=function()
 	--white wave crest
-	for b in all(island.beach) do
+	for b in all(island_beach) do
 		circ(b.x,b.y,b.rad+((.75+sin(t()*.2))*b.rad*.2)+2,7)
 	end
 	--wet sand
-	for b in all(island.beach) do
+	for b in all(island_beach) do
 		circfill(b.x,b.y,b.rad+((.75+sin(t()*.2))*b.rad*.2)+1,13)
 	end
 	--beach
-	for b in all(island.beach) do
+	for b in all(island_beach) do
 		circfill(b.x,b.y,b.rad,15)
 	end
-	for b in all(island.beach) do
+	for b in all(island_beach) do
 		circfill(b.x+(b.r0*8),b.y+(b.r0*8),b.rad/15,6)
 	end
-	circfill(0,0,island.size*.8,6)
+	circfill(0,0,island_size*.8,6)
 	fillp(fillps[2])
-	circfill(0,0,island.size*1.35,6)
+	circfill(0,0,island_size*1.35,6)
 	fillp()
 	--draw trees
-	for t in all(island.trees) do
+	for t in all(island_trees) do
 	  t.draw(t)
 	end
 end
@@ -262,18 +262,18 @@ end
 function createisland(seed)
 	srand(seed)
 	--radius of this new island
-	island.size=rnd(26)+16
-	local size=island.size
+	island_size=rnd(26)+16
+	local size=island_size
 	--create the various circles required to create this island
  	local totalcircs=size/2
-	island.beach={}
+	island_beach={}
 	island.wetsand={}
 	island.waves={}
 	for i=0,totalcircs do
 		--offset around the overall island circle to place this new circle to be drawn
 		local r=i/totalcircs
 
-		add(island.beach,{
+		add(island_beach,{
 			x=cos(r)*size,y=-sin(r)*size,
 			rad=(size)*(.7+rnd(.6)),
 			r0=rnd(2)-1,r1=rnd(2)-1,r2=rnd(2)-1,r3=rnd(2)-1
@@ -281,7 +281,7 @@ function createisland(seed)
 	end
 
 	--now for some trees
-	island.trees={}
+	island_trees={}
 	size*=.66
  	local totalcircs=size/2
 	for i=0,totalcircs do
@@ -290,7 +290,7 @@ function createisland(seed)
 	end
 	newtree(size*(.1+rnd(.25)),size*(.1+rnd(.25)),size*.66)
 	--sort trees by z value
-	sorttrees(island.trees)
+	sorttrees(island_trees)
 end
 
 function newtree(x,y,s)
@@ -329,7 +329,7 @@ function new_tree_section(_x,_y,_z,_c,_r,palette)
 		 fillp()
 		end
 	}
-	add(island.trees,tree)
+	add(island_trees,tree)
 end
 
 function new_tree_section_h(_x,_y,_z,_c,_r,palette)
@@ -345,7 +345,7 @@ function new_tree_section_h(_x,_y,_z,_c,_r,palette)
 		 fillp()
 		end
 	}
-	add(island.trees,tree)
+	add(island_trees,tree)
 end
 
 function sorttrees(a)

@@ -25,8 +25,8 @@ end
 c=15
 function _draw()
 	cls(c)
-	if (btnp(�)) c+=1
-	if (btnp(�)) c-=1
+	if (btnp(4)) c+=1
+	if (btnp(5)) c-=1
 	for t in all(trees) do
 		if (t.z==0)t.draw(t)
 	end
@@ -108,10 +108,10 @@ end
 player={
 x=0,y=0,
 update=function(p)
-	if (btn(�)) p.x-=1
-	if (btn(�)) p.x+=1
-	if (btn(�)) p.y+=1
-	if (btn(�)) p.y-=1
+	if (btn(0)) p.x-=1
+	if (btn(1)) p.x+=1
+	if (btn(2)) p.y-=1
+	if (btn(3)) p.y+=1
 end,
 draw=function(p)
 	spr(2,p.x,p.y)

@@ -83,7 +83,7 @@ function _draw()
 
 		--draw island dark blue backdrop before waves
 		if cells[currentcellx][currentcelly].seed>island_prob then
-		 	for b in all(island.beach) do
+		 	for b in all(island_beach) do
 				circfill(b.x,b.y,b.rad+15,1)
 			end
 		end
@@ -310,7 +310,7 @@ function minimap()
 
 	rectfill(camx+111,camy,camx+127,camy+16,12)
 	rect(camx+111,camy,camx+127,camy+16,7)
-	if (cells[currentcellx][currentcelly].seed>island_prob) circfill(camx+119,camy+8,island.size/16,15)
+	if (cells[currentcellx][currentcelly].seed>island_prob) circfill(camx+119,camy+8,island_size/16,15)
 	if cells[currentcellx][currentcelly].seed<wp_prob then
 		fillp(fillps[1])
 		circfill(camx+119,camy+8,4,7)
@@ -452,45 +452,45 @@ end
 
 island={
 	update=function()
-		for t in all(island.trees) do
+		for t in all(island_trees) do
 			t.update(t)
 		end
 	end,
 	draw=function()
 		--white wave crest
-		for b in all(island.beach) do
+		for b in all(island_beach) do
 			circ(b.x,b.y,b.rad+((1+sin(t()*.2))*8)+1,7)
 			circ(b.x,b.y,b.rad+((1+sin(t()*.2))*8),7)
 		end
 		--wet sand
-		for b in all(island.beach) do
+		for b in all(island_beach) do
 			circfill(b.x,b.y,b.rad+((1+sin(t()*.2))*8),13)
 		end
 		--beach
-		for b in all(island.beach) do
+		for b in all(island_beach) do
 			circfill(b.x,b.y,b.rad,15)
 		end
-		for b in all(island.beach) do
+		for b in all(island_beach) do
 			circfill(b.x+(b.r0*8),b.y+(b.r0*8),b.rad/15,6)
 		end
 
-		if (island.size > 8) circfill(0,0,island.size*.8,6)
-		if (island.size > 16) circfill(0,0,island.size*.5,4)
+		if (island_size > 8) circfill(0,0,island_size*.8,6)
+		if (island_size > 16) circfill(0,0,island_size*.5,4)
 
 		fillp(fillps[2],-camx,-camy)
-		if (island.size > 6) circfill(0,0,island.size*1.35,6)
+		if (island_size > 6) circfill(0,0,island_size*1.35,6)
 		fillp(fillps[4],-camx,-camy)
-		if (island.size > 16) circfill(0,0,island.size*.35,9)
+		if (island_size > 16) circfill(0,0,island_size*.35,9)
 		fillp()
 		--draw trees
-		for t in all(island.trees) do
+		for t in all(island_trees) do
 			if(t.c<2)t.draw(t)
 		end
 		for f in all(fps) do
 			f.draw(f) --draw footprints
 		end
 		if (player.draw) player_draw(player)
-		for t in all(island.trees) do
+		for t in all(island_trees) do
 			if(t.c>1)t.draw(t)
 		end
 	end
@@ -499,18 +499,18 @@ island={
 function createisland(seed)
 	srand(seed)
 	--radius of this new island
-	island.size=rnd(64)+6
-	local size=island.size
+	island_size=rnd(64)+6
+	local size=island_size
 	--create the various circles required to create this island
  	local totalcircs=size/2
-	island.beach={}
+	island_beach={}
 	island.wetsand={}
 	island.waves={}
 	for i=0,totalcircs do
 		--offset around the overall island circle to place this new circle to be drawn
 		local r=i/totalcircs
 
-		add(island.beach,{
+		add(island_beach,{
 			x=cos(r)*size,y=-sin(r)*size,
 			rad=(size)*(.7+rnd(.6)),
 			r0=rnd(2)-1,r1=rnd(2)-1,r2=rnd(2)-1,r3=rnd(2)-1
@@ -518,7 +518,7 @@ function createisland(seed)
 	end
 
 	--now for some trees
-	island.trees={}
+	island_trees={}
 	if size > 16 then
 		size*=.66
 	 	local totalcircs=size/2
@@ -533,7 +533,7 @@ function createisland(seed)
 			newtree((rnd(10)-5)+(rnd(1)-.5)*size,(rnd(10)-5)-(rnd(1)-.5)*size,sz)
 		end
 		--sort trees by z value
-		sorttrees(island.trees)
+		sorttrees(island_trees)
 	end
 end
 
@@ -573,7 +573,7 @@ function new_tree_section(_x,_y,_z,_c,_r,palette)
 		 fillp()
 		end
 	}
-	add(island.trees,tree)
+	add(island_trees,tree)
 end
 
 function new_tree_section_h(_x,_y,_z,_c,_r,palette)
@@ -589,7 +589,7 @@ function new_tree_section_h(_x,_y,_z,_c,_r,palette)
 		 fillp()
 		end
 	}
-	add(island.trees,tree)
+	add(island_trees,tree)
 end
 
 function sorttrees(a)

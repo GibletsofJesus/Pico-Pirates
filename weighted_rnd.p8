@@ -1,17 +1,22 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
-array={1,2,3,4}
+array={1,1.5,2,3}
 cls()
-total_weight=0
-for a in all(array) do
-	total_weight+=a
+function weighted_rnd(array)
+	local total=0
+	for a in all(array) do
+		total+=a
+	end
+	r=rnd(total)
+	for a in all(array) do
+		if (r<a) return a
+		r-=a
+	end
 end
+--39 tokens
 ::★::
-r=rnd(total_weight)
-for a in all(array) do
-	if (r<a) pset(a*8,rnd(127),a*3)
-	r-=a
-end
+r=weighted_rnd(array)
+pset(r*8,rnd(127),r*2)
 flip()
 goto ★
