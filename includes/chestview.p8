@@ -1,6 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
+--Current cart stats (30/4/18)
+-- Token count 614
 
 function init_island_chest_view()
 	camera(0,0)
@@ -110,7 +112,6 @@ function draw_island_chest_view()
 		--	Big treasre
 		--Very Rare
 		--	A big cannon
-
 		?"yOU FOUND SOME\n	 TREASURE!",4,16,0
 		?"yOU FOUND SOME\n	 TREASURE!",4,15,9.5+p
 		_sspr(50,34,12,5,24,39)--draw chest contents

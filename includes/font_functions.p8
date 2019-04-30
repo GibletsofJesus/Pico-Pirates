@@ -1,6 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
+--Current cart stats (30/4/18)
+-- Token count 332
 
 function print_s(_x,_y,_l,c)
 	--total_layers=4
