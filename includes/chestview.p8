@@ -52,7 +52,7 @@ function update_island_chest_view()
 				if (rnd"1">.5) grain.vx*=0xffff
 				sandIndex+=1
 				chestPos-=0.1
-				if (flr(chestPos)==44) sfx(7)
+				if (flr(chestPos)==44) sfx"7"
 			end
 		end
 	end
@@ -117,7 +117,7 @@ function draw_island_chest_view()
 		_sspr(50,34,12,5,24,39)--draw chest contents
 	else
 		--draw closed chest
-		_sspr(32,47,15,11,23-sin(chestPos/1.5)*.5,chestPos-4,15,11)
+		_sspr(32,47,15,11,23-sin(chestPos/1.5)*.5,chestPos-4)
 	end
 
 	--draw sand particles

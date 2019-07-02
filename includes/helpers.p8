@@ -1,8 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
---Current cart stats (30/4/18)
--- Token count 568
+--Current cart stats (2/7/18)
+-- Token count 567
 
 function stringToArray(str)
 	local a,l={},0
@@ -36,7 +36,7 @@ function spr_rot(sx,sy,swh,dx,dy,rot,depth)
 			if ox<swh and oy<swh and ox>0 and oy>0 then
 				for d=0,depth do
 					local col=sget(ox+sx+d*12,oy+sy)
-					if (col>0) _pset(dx+x,dy+y-d,col)
+					if(col>0)_pset(dx+x,dy+y-d,col)
 				end
 			end
 		end

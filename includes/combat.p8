@@ -1,35 +1,27 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
---Current cart stats (30/4/18)
--- Token count 2074
-
+--Current cart stats (2/7/18)
+-- Token count 2023
+first=true
 function comb_init(timeToFightAnOctopus)
 	camx,camy,comb_objs,victory=0,0,{},false
 	camera(0,0)
 	for j=1,0,0xffff do
 		srand"1"
 		for i=0,25 do
-			local x,y=rnd(127),rrnd(8,40)
-			local r,vx=rrnd(4,12),rnd(.5)
-			newCombCloud(x+j*2,y+j,r+j,7-j,vx)
+			newCombCloud(rnd"127"+j*2,rrnd(8,40)+j,rrnd(4,12)+j,7-j,rnd".5")
 		end
 	end
 	comb_boat=newComb_boat()
-	comb_boat.hp=morale
-	comb_boat.isPlayer=true
-	boat_message="aLL HANDS\nON DECK! "
-	txt_timer=0xfffa
+	comb_boat.hp,comb_boat.isPlayer,boat_message,txt_timer=morale,true,"aLL HANDS\nON DECK! ",0xfffa
 	add(comb_objs,comb_boat)
 	if timeToFightAnOctopus then
-		enemyName="wATERY FIEND"
-		enemy=newOctopus()
-			add(comb_objs,enemy)
+		enemyName,enemy="sEA MONSTER",newOctopus()
+		add(comb_objs,enemy)
 	else
-		enemyName="aN BOAT"
-		enemy=newComb_boat()
-		enemy.isPlayer=false
-		enemy.x=114
+		enemyName,enemy="eNEMY VESSEL",newComb_boat()
+		enemy.isPlayer,enemy.x=false,114
 	end
 	add(comb_objs,enemy)
 
@@ -55,7 +47,7 @@ function newCombCloud(_x,_y,_r,_c,_vx)
 end
 
 --water--
-wpts,prevwpts={},{}
+wpts,prevwpts,btn4={},{},false
 
 --get corrected array value for water
 function pt(i)
@@ -64,46 +56,34 @@ end
 
 function drawUpdateWater()
 	for i=1,#wpts do
-		local vel = .975+(wpts[i]-prevwpts[i])*1.125
-		prevwpts[i] = wpts[i]
-		wpts[i]+=vel
+		local diff=wpts[i]-prevwpts[i]
+		prevwpts[i]=wpts[i]
+		wpts[i]+=.975+diff*1.125
 		local surroundingPoints=0
 		for j=0xfffc,4 do
 			surroundingPoints+=pt(i+j)
 		end
-		local diff=-.095*surroundingPoints*
-			(-8*wpts[i])
-
-		wpts[i] -= diff*0.005
-
-		wpts[i]=mid(wpts[i],0,128)
-
+		wpts[i]=mid(wpts[i]-surroundingPoints*.005*wpts[i],0,128)
 		_line(i-16,160,i-16,wpts[i]+97,1)
-
-		if vel>1.25 or vel<-1.25 then
+		if abs(diff)>.3 then
 			_pset(i-16,wpts[i]+97,7)
 		end
 	end
 end
 
-btn4=false
-
-function comb_boat_move(b,left)
-	local x=.1
-	if (left) x*=0xffff
-	b.vx=mid(-1.5,b.vx+x,1.5)
-	b.flipx=left
+function comb_boat_move(obj,m)
+	obj.vx=mid(-1.5,obj.vx+m,1.5)
+	obj.flipx=m<0
 	x=18
-	if (left) x=23
-	wpts[mid(1,flr(b.x+x),160)]-=.7
-	sfx(0)
+	if (m<0) x=23
+	wpts[mid(1,flr(obj.x+x),160)]-=.7
+	sfx"0"
 end
 
 function comb_boat_fire_projectile(b)
-	b.firecd=1
-	sfx(9)
+	sfx"9"
 	fireProjectile(2+b.x,5+b.y,b.flipx,1,b.vx,b.aim,b)
-	b.aim=.1
+	b.aim,b.firecd=.1,1
 	b.vx-=1
 	if (b.flipx) b.vx+=2
 end
@@ -119,15 +99,15 @@ function newComb_boat()
 
 			--combat boat movement/firing
 			if b.isPlayer then
-				if (btn"0") comb_boat_move(b,true)
-				if (btn"1") comb_boat_move(b,false)
+				if (btn"0") comb_boat_move(b,-.1)
+				if (btn"1") comb_boat_move(b,.1)
 				if (btn"4" and b.firecd==0) b.aim+=0.025
 				if (btn4 and not btn"4" and b.firecd==0 or b.aim>1) comb_boat_fire_projectile(b)
 				btn4=btn"4"
 			elseif morale>0 then
 				b.flipx=true
-				if (abs(comb_boat.x-b.x) < 48) comb_boat_move(b,false)
-				if (abs(comb_boat.x-b.x) > 72 or b.x>114) comb_boat_move(b,true)
+				if (abs(comb_boat.x-b.x) < 48) comb_boat_move(b,.1)
+				if (abs(comb_boat.x-b.x) > 72 or b.x>114) comb_boat_move(b,-.1)
 				if (b.x>125) b.flipx=true
 
 				local target=(abs(comb_boat.x-b.x)-4)/80
@@ -140,26 +120,23 @@ function newComb_boat()
 
 			if b.flashing<=0 and enemy!=null then
 				if b.isPlayer then
-					if (aabbOverlap(b,enemy)) hit(b,rrnd(12,17)) sfx(13)
+					if (aabbOverlap(b,enemy)) hit(b,rrnd(12,17)) sfx"13"
 				end
 				for t in all(tentacles) do
-					if (aabbOverlap(b,t)) hit(b,rrnd(12,17)) sfx(13)
+					if (aabbOverlap(b,t)) hit(b,rrnd(12,17)) sfx"13"
 				end
 			end
 			if b.hp<=0 then
-				sfx(27)
-				music(2)
+				sfx"27"
+				music"2"
 				b.update=function(b)
 					b.y+=0.1
 					if not b.isPlayer and b.y>103 then
-						victory,txt_timer,currentcell.type=true,0,"sea"
-						boat_message="gLORIOUS\nVICTORY! "
+						victory,txt_timer,currentcell.type,boat_message,npcBoat,victory_time,b.update,boatCell.type=true,0,"sea","gLORIOUS\nVICTORY! ",0,time()+.01,function()end,"sea"
 						if (rnd"1">.5) boat_message="eXCELLENT\nPIRATING MEN! "
 						sfx(29,0)
 						sfx(30,1)
-						music(2)
-						victory_time=time()+0.01
-						b.update=function()end
+						music"2"
 					end
 				end
 
@@ -236,7 +213,7 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 		p.y=p.y0-(p.vy*5*p.t)+(0.125*p.t^2)
 		if p.y > 102 then
 			del(comb_objs,p)
-			sfx(11)
+			sfx"11"
 			for i=p.x+15,p.x+17 do
 				wpts[mid(1,flr(i),160)]-=10
 			end
@@ -248,24 +225,22 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 					del(comb_objs,p)
 					del(projectiles,p)
 					hit(enemy,rrnd(6,11))
-					sfx(10)
-					sfx(11)
+					sfx"10"
+					sfx"11"
 				end
 			end
 			if aabbOverlap(enemy,p) then --enemy collision
-				del(comb_objs,p)
-				del(projectiles,p)
+				del(comb_objs,p)del(projectiles,p)
 				hit(enemy,rrnd(12,18))
-				sfx(10)
-				sfx(11)
+				sfx"10"
+				sfx"11"
 			end
 		elseif not b then
 			if aabbOverlap(comb_boat,p) then --player collision
-				del(comb_objs,p)
-				del(projectiles,p)
+				del(comb_objs,p)del(projectiles,p)
 				hit(comb_boat,rrnd(10,14))
-				sfx(10)
-				sfx(11)
+				sfx"10"
+				sfx"11"
 			end
 		end
 	end,
@@ -346,11 +321,10 @@ function newOctopus()
 						txt_timer=0
 						sfx(29,0)
 						sfx(30,1)
-						music(2)
-						victory_time=time()
+						music"2"
+						victory_time,enemy=time(),null
 						victory_time+=0.01
 						del(comb_objs,o)
-						enemy=null
 					end
 				end
 			end,

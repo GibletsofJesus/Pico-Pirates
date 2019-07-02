@@ -2,33 +2,26 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 
---Current cart stats (30/4/18)
--- Token count 592
+--Current cart stats (2/7/18)
+-- Token count 566
 
 function init_boat(isPlayer)
-	return {x=-0xff60,y=0xff60,r=0,d=0,mx=0,my=0,max=2.5,player=isPlayer}
+	return {x=-0,y=0,r=0,d=0,mx=0,my=0,max=2.5,player=isPlayer}
 end
 
 function boat_update(b)
 	local speed,c,s=.05,cos(b.r),sin(b.r)
 	local sc=(s*s)+(c*c)
 
+		b.mx+=cellwindy*.05
+		b.my-=cellwindx*.05
 	if b.player then
 		if(btn"0") b.r=b.r%1+.01
 		if(btn"1") b.r=b.r%1-.01
-	else
-		--get angle between the two boat
-		--turn towards player?
-	end
-
-	b.mx+=cellwindy*.05
-	b.my-=cellwindx*.05
-
-	if b.player then
 		if btn"2" then
 			b.mx+=s*speed
 			b.my-=c*speed
-			sfx(0)
+			sfx"0"
 		else
 			b.mx*=.99
 			b.my*=.99
@@ -38,16 +31,16 @@ function boat_update(b)
 		local px=bx+boat.mx*5
 		local py=by+boat.my*5
 		local angle=atan2(b.x-px,b.y-py)-.25
-		dist = abs(sqrt((b.y-by)^2+(b.x-bx)^2))
+		--Dividing by 100 here since big numbers squared can
+		-- easily exceed pico 8's max int value
+		dist=sqrt(abs(((b.y-by)/100)^2+((b.x-bx)/100)^2))
 		b.r=lerp(b.r,angle+.5,.1)
-		if dist>140 then
-			b.x=bx+sin(angle)*128
-			b.y=by-cos(angle)*128
-			b.mx/=4
-			b.my/=4
+		if dist>4 then
+			npcBoat=0
+			return
 		elseif anglediff(b.r,atan2(px,py))<.5 then
-			b.mx+=s*speed
-			b.my-=c*speed
+			b.mx+=s*speed*5
+			b.my-=c*speed*5
 		else
 			b.mx*=.95
 			b.my*=.95
@@ -58,7 +51,7 @@ function boat_update(b)
 	b.d+=sc
 	if (flr(b.d)>2) newWave(b.x-sin(b.r)*4,b.y+cos(b.r)*4) b.d=0
 
-	if b.player or celltype=="sea" then
+	if b.player or celltype!="island" then
 		b.x,b.y=flr((b.x+b.mx)*2)/2,flr((b.y+b.my)*2)/2
 	end
 
@@ -75,10 +68,8 @@ function boat_update(b)
 		end
 		if checklandcol(b.x,b.y,b.r) and not player.draw then
 			player.draw=true
-			sfx(3)
-			player.x=b.x+sin(b.r)*8
-			player.y=b.y-cos(b.r)*8
-			b.mx=0 b.my=0
+			sfx"3"
+			player.x,player.y,b.mx,b.my=b.x+sin(b.r)*8,b.y-cos(b.r)*8,0,0
 		end
 	end
 end
@@ -91,14 +82,8 @@ function boat_draw(b)
 	pal(0,5)
 	if not b.player then
 		pal(4,2)pal(15,6)pal(7,13)pal(9,15)
+		if (dist<.25) nextState,state,st_t,boat_message,dist,npcBoat=5,2,0,"",512,0
 	end
-
 	spr_rot(-2,76,12,flr(b.x),flr(b.y),b.r,6)
 	pal()
-
-		if dist<48 then
-			nextState,state,st_t,boat_message,dist=5,2,0,"",512
-			npcBoat=0
-			return
-		end
 end

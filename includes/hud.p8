@@ -2,8 +2,8 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 
---Current cart stats (30/4/18)
--- Token count 523
+--Current cart stats (2/7/18)
+-- Token count 524
 
 function draw_map()
 	--Draw base map
@@ -63,7 +63,7 @@ function draw_minimap()
 end
 
 function minimapPos(value)
-	return flr((value+256/512)*14)
+	return min((value+256)/512*14,111)
 end
 
 function draw_morale_bar()

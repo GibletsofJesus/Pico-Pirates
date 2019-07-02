@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 16
+version 18
 __lua__
 #include includes/font_functions.p8
 #include includes/helpers.p8
@@ -9,9 +9,9 @@ __lua__
 #include includes/hud.p8
 #include includes/topdown_boat_movement.p8
 
---Current cart stats (30/4/18)
--- Token count 8023 / 8192
---	remaining tokens:	 169
+--Current cart stats (2/7/18)
+-- Token count 7987 / 8192
+--	remaining tokens:	 205
 
 state,nextState,st_t,printStats=0,1,5,false
 --0 splash screen
@@ -26,10 +26,9 @@ fillps=stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101
 function _init()
 	srand(0)
 	boat,npcBoat=init_boat(true),0
-	--npcBoat.x=0
+	if (state==3) comb_init(false)
 	currentcellx,currentcelly=flr(rrnd(2,30)),flr(rrnd(2,30))
 	world_init()
-	if (state==3) comb_init"1"
 	clouds={}
 	for i=0,50 do
 		local cloud={
@@ -70,7 +69,6 @@ function _update()
 		--check if boat is outside cell range
 		checkboatpos()
 		if (celltype=="island") island_update()
-		if (celltype=="whirlpool") wp_update()
 		if celltype=="enemy" then
 			for i=0,4 do
 				local r=rnd"1"
@@ -107,6 +105,7 @@ function _draw()
 	if state==1 then
 		camera(camx,camy)
 		cls(12)
+		boat_text_process()
 		--draw island dark blue backdrop before waves
 		if celltype=="island" then
 			for b in all(island_beach) do
@@ -122,13 +121,11 @@ function _draw()
 		end
 		fillp()
 		if (celltype=="island") island_draw()
-		if (celltype=="whirlpool") wp_draw()
 		if celltype=="enemy" then
 			if (abs(boat.x) < 64 and abs(boat.y) < 64) state,nextState,st_t=2,3,0
 		end
 		boat_draw(boat)
 		if (npcBoat!=0) boat_draw(npcBoat)
-		boat_text(flr(boat.x-24),flr(boat.y-16))
 		if drawClouds then
 			for c in all(clouds) do
 				c.draw(c)
@@ -144,6 +141,7 @@ function _draw()
 		end
 
 		print_u("wIND",camx+112,camy+30)
+		boat_text_render	(flr(boat.x-24),flr(boat.y-16))
 		--print_u("wx: "..cellwindx,camx+64,camy+48)
 		--print_u("wx: "..cellwindy,camx+64,camy+56)
 		if (mapPos<127) draw_map()
@@ -167,7 +165,6 @@ function _draw()
 						end
 						self.windx/=5
 						self.windy/=5
-
 				end
 			end
 		end
@@ -185,11 +182,24 @@ function _draw()
 		screenShake()
 		_circfill(124,8,24,10)
 
-		--will be writing to screen + spritesheet here
-		boat_text(comb_boat.x,comb_boat.y-16)
+		boat_text_process()
+		boat_text_render(comb_boat.x,comb_boat.y-16)
 
 		for c in all(comb_objs) do
 		 c.draw(c)
+		end
+		if first and txt_timer>0 then
+			local txt_pos = 10
+			if (txt_timer<10) txt_pos=txt_timer%10
+			if (txt_timer>50) txt_pos=-txt_timer%15
+			txt_pos=-sin(txt_pos/30)*80
+			a=stringToArray"35,18,93,2,1,35,18,93,3,15,36,17,92,4,2,2"
+			for i=1,15,5 do
+				rectfill(a[i],txt_pos-a[i+1],a[i+2],txt_pos-a[i+3],a[i+4])
+			end
+			?" mOVE: ⬅️/➡️\nsHOOT: HOLD 🅾️",37,txt_pos-15,4
+			?" mOVE: ⬅️/➡️\nsHOOT: HOLD 🅾️",37,txt_pos-16,15
+			first=txt_timer<60
 		end
 		drawUpdateWater()
 
@@ -211,9 +221,9 @@ function _draw()
 		if victory then
 		 local cols={}
 		 local vt=t()-victory_time
-		 pal(15,sget(min(vt*15,4),9))
 		 rectfill(0,48,127,64,0)
-		 _sspr(0,61,112,14,7,49,114,16)
+		 pal(15,sget(min(vt*15,4),9))
+		 sspr(0,61,112,14,7,49,114,16)
 		 pal(15,sget(min(vt*15,11),8))
 		 _sspr(0,61,112,14,8,50)
 		 pal()
@@ -231,8 +241,8 @@ function _draw()
 		draw_island_chest_view()
 	end
 
-	if st_t>1	and st_t < 2.5 and state!=4 then
-		st_vertbars_in()
+	if st_t>1	and st_t < 1.5 and state!=4 then
+		st_spiral_in()
 	end
 
 	if printStats then
@@ -288,29 +298,22 @@ function st_horizbars_out()
 	local a=0
 	for y=0,127 do
 		if y%2==0 then
-			_line(camx+127,camy+y,camx+127-(st_t*59),camy+y,0)
+			_line(camx+127,camy+y,camx+127-st_t*59,camy+y,0)
 		else
 			_line(camx,camy+y,camx+st_t*59,camy+y,0)
 		end
 	end
 	for y=0,127 do
-		local scr=0x6000+(y*64)
-		local l=-(st_t*2)
+		local scr,l=0x6000+y*64,-st_t*2
 		if (y%2==0) l=(st_t+.48)*2
 		memcpy(scr,scr+l,64)
 	end
 end
 
-function st_vertbars_in()
-	for x=0,127 do
-		local _x=x+camx
-		local _y=camy
-		if x%2==0 then
-			_line(_x,-1+_y,_x,_y+264-(st_t*120),0)
-		else
-			_line(_x,128+_y,_x,_y+(st_t*120)-137,0)
-		end
-	end
+function st_spiral_in()
+	fillp((stringToArray"0,1.5,3.5,7.5,15.5,143.5,2191.5,-30576.5,-14192.5,-6000.5,-1904.5,-1648.5,-1632.5,-1600.5,-1536.5,-512.5,★")[ceil((st_t-1)*32)])
+	_rectfill(camx,camy,camx+128,camy+128,0)
+	fillp()
 end
 
 --check land collision
@@ -344,10 +347,10 @@ function world_init()
 			local _type=""
 			if rnd"1">.925 then
 				 _type="island"
-			elseif rnd"1">.7 then
-				 _type="enemy"
-			elseif rnd"1">.99 then
-				 _type="whirlpool"
+			 elseif rnd"1">.7 then
+ 				 _type="enemy"
+ 			elseif rnd"1">.6 then
+				 _type="boat"
 			else
 				_type="sea"
 			end
@@ -392,18 +395,13 @@ function checkboatpos()
 end
 
 function setcell()
-	wp_ps={}
-	fps={}
 	currentcell=cells[currentcellx][currentcelly]
-	currentcell.visited=true
-	cellwindx=currentcell.windy
-	cellwindy=currentcell.windx
-	cellseed=currentcell.seedf
-	celltype=currentcell.type
+	currentcell.visited,cellwindx,cellwindy,cellseed,celltype=true,currentcell.windy,currentcell.windx,currentcell.seed,currentcell.type
 	if celltype=="island" then
+		fps={}
 		createisland(cellseed)
-	elseif celltype=="whirlpool" then
-		wp_init()
+	elseif npcBoat==0 and celltype=="boat" then
+		npcBoat,boatCell=init_boat(false),currentcell
 	end
 end
 
@@ -458,7 +456,7 @@ function island_draw()
 		local crossX=sin(currentcell.seed/4096)*island_size
 		local crossY=cos(currentcell.seed/4096)*island_size
 		if (abs(crossX-player.x) < 6 and abs(crossY-player.y) < 6) state,st_t,nextState=2,0,4
-		_sspr(47,47,10,11,crossX,crossY,10,11)
+		_sspr(47,47,10,11,crossX,crossY)
 	end
 
 	if (player.draw) player_draw(player)
@@ -503,7 +501,7 @@ function createisland(seed)
 		for i=1,#island_trees do
 		 local j = i
 		 while j > 1 and island_trees[j-1].z > island_trees[j].z do
-			island_trees[j],island_trees[j-1] = island_trees[j-1],island_trees[j]
+			island_trees[j],island_trees[j-1]=island_trees[j-1],island_trees[j]
 			j=j-1
 		 end
 		end
@@ -511,11 +509,11 @@ function createisland(seed)
 end
 
 function toggleClouds()
-	drawClouds = not drawClouds
+	drawClouds=not drawClouds
 end
 
 function toggleStats()
-	printStats = not printStats
+	printStats=not printStats
 end
 
 menuitem(1, "toggle clouds", toggleClouds)
@@ -523,12 +521,8 @@ menuitem(2, "toggle stats ", toggleStats)
 menuitem(3, "do a flip()!", putAFlipInIt)
 
 function newtree(_x,_y,s)
-	local z=rrnd(1,1.5)
-
-	local z_array={0,0,0,z-.25,z-.15,z,z+.5,z+1,z+1.25,z+1.5}
-	local c_array=stringToArray"4,1,1,3,3,3,11,11,7,7,★"
-	local r_array=stringToArray".25,1,1.1,1,.9,.8,.667,.5,.25,.2,★"
-	local fillp_array=stringToArray"0x0000,0b1010010110100101.1,0b0101101001011010.1,0b111111111011111.1,0b0101101001011010.1,0x0000,0b0101101001011010.1,0x0000,0b0101101001011010.1,0x0000,★"
+	local z=rnd(1,1.5)
+	local z_array,c_array,r_array,fillp_array={0,0,0,z-.25,z-.15,z,z+.5,z+1,z+1.25,z+1.5},stringToArray"4,1,1,3,3,3,11,11,7,7,★",stringToArray".25,1,1.1,1,.9,.8,.667,.5,.25,.2,★",stringToArray"0x0000,0b1010010110100101.1,0b0101101001011010.1,0b111111111011111.1,0b0101101001011010.1,0x0000,0b0101101001011010.1,0x0000,0b0101101001011010.1,0x0000,★"
 	for i=1,10 do
 		local tree={
 			x=_x,y=_y,z=z_array[i]*.1,
@@ -553,7 +547,7 @@ player={
 function player_update(p)
 	if abs(p.x-boat.x) < 4 and abs(p.y-boat.y) < 4 then
 		p.draw=false
-		sfx(4)
+		sfx"4"
 		--push boat away from centre of island
 		--island always found at (0,0)
 		--vector topush boat away is same as position(normalised)
@@ -599,22 +593,11 @@ end
 
 boat_message,txt_timer="",0
 
-function boat_text(x0,y0)
+function boat_text_process()
 	txt_timer+=.33
-	if txt_timer>0 and txt_timer<#boat_message+15 then
-
-		print_u(sub(boat_message,0,txt_timer),camx,camy)
-		memcpy(0x1d00,0x6000,768)
-		_rectfill(camx,camy,camx+64,camy+12,12)
-		local _y=0
-		if (sub(boat_message,#boat_message,#boat_message)==' ') _y=6
-		palt(12,true)
-		for y=0,_y,6 do
-		 for x=0,80,2 do
-			sspr(x,116+y,2,6,x0+x,y0+y+sin(t()+(x/#boat_message)))
-		 end
-		end
-	end
+	print_u(sub(boat_message,0,txt_timer),camx,camy)
+	memcpy(0x1d00,0x6000,768)
+	_rectfill(camx,camy,camx+64,camy+12,12)
 	if txt_timer>#boat_message+45 then
 		if state==3 then
 			txt_timer=0
@@ -627,11 +610,8 @@ function boat_text(x0,y0)
 			end
 		else
 			if celltype=="sea" then
-				txt_timer=0
 				local xs,ys,dirs=stringToArray"-1,1,0,0,★",stringToArray"0,0,1,-1,★",{"WEST","EAST","SOUTH","NORTH"}
-
-				boat_message="cLEAR HORIZONS... "
-
+				boat_message,txt_timer="cLEAR HORIZONS... ",0
 				for i=1,#xs do
 					local cellToCheck=cells[flr(mid(1,currentcellx+xs[i],31))][flr(mid(1,currentcelly+ys[i],31))]
 					if not cellToCheck.visited and cellToCheck.type=="island" then
@@ -643,6 +623,19 @@ function boat_text(x0,y0)
 				boat_message="sOMETHING ON\nTHE HORIZON... "
 				if (rnd(1)>.5) boat_message="sir! I SPY\nSOMETHING! "
 			end
+		end
+	end
+end
+
+function boat_text_render(x0,y0)
+	if txt_timer>0 and txt_timer<#boat_message+15 then
+		local _y=0
+		if (sub(boat_message,#boat_message,#boat_message)==' ') _y=6
+		palt(12,true)
+		for y=0,_y,6 do
+		 for x=0,80,2 do
+			sspr(x,116+y,2,6,x0+x,y0+y+sin(t()+(x/#boat_message)))
+		 end
 		end
 	end
 end
