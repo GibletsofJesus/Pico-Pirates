@@ -1,517 +1,507 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
+--pICO pIRATES
+--bY cRAIG tINNEY
 #include includes/font_functions.p8
 #include includes/helpers.p8
 #include includes/api_functions_with_flip.p8
-#include includes/combat.p8
-#include includes/chestview.p8
-#include includes/hud.p8
+#include includes/combat_min.p8
+#include includes/chestview_min.p8
+#include includes/hud_min.p8
 #include includes/topdown_boat_movement.p8
-
---Current cart stats (2/7/18)
--- Token count 7987 / 8192
---	remaining tokens:	 205
-
 state,nextState,st_t,printStats=0,1,5,false
---0 splash screen
---1 top down exploration
---2 screen transition
---3 side view combat
---4 treasure view
-
 camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles=0,0,0,"",true,66,false,0,100,127,true,999,{},{},{}
 fillps=stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★"
-
 function _init()
-	boat,npcBoat=init_boat(true),0
-	if (state==3) comb_init(false)
-	currentcellx,currentcelly=15,16
-	world_init()
-	while (cells[currentcellx][currentcelly].type!="sea") do
-		currentcellx,currentcelly=flr(rrnd(2,30)),flr(rrnd(2,30))
-	end
-	clouds={}
-	for i=0,50 do
-		local cloud={
-			x=camx+rnd(127),y=camy+rnd(127),
-			r=4+rnd(10),z=rrnd(1.5,2),vx=0,vy=0,
-			update=function(c)
-				local x,y,vx,vy=c.x,c.y,c.vx,c.vy
-				x+=cellwindy
-				y-=cellwindx
-				if (x+vx>camx+128) x-=128
-				if (y+vy>camy+128) y-=128
-				if (x+vx<camx-0) x+=128
-				if (y+vy<camy-0) y+=128
-				vx,vy=(x-camx-64)*c.z,(y-camy-64)*c.z
-				c.vx,c.vy,c.x,c.y=mid(0xff80,vx,128),mid(0xff80,vy,128),x,y
-			end,
-			draw=function(c)
-				fillp(fillps[2-flr(c.r/8)])
-				_circfill(c.x+c.vx,c.y+c.vy,c.r,7)
-				fillp()
-			end
-		}
-		add(clouds,cloud)
-	end
+boat,npcBoat=init_boat(true),0
+if (state==3) comb_init(false)
+currentcellx,currentcelly=15,16
+world_init()
+while (cells[currentcellx][currentcelly].type!="sea") do
+currentcellx,currentcelly=flr(rrnd(2,30)),flr(rrnd(2,30))
+end
+clouds={}
+for i=0,50 do
+local cloud={
+x=camx+rnd(127),y=camy+rnd(127),
+r=4+rnd(10),z=rrnd(1.5,2),vx=0,vy=0,
+update=function(c)
+local x,y,vx,vy=c.x,c.y,c.vx,c.vy
+x+=cellwindy
+y-=cellwindx
+if (x+vx>camx+128) x-=128
+if (y+vy>camy+128) y-=128
+if (x+vx<camx-0) x+=128
+if (y+vy<camy-0) y+=128
+vx,vy=(x-camx-64)*c.z,(y-camy-64)*c.z
+c.vx,c.vy,c.x,c.y=mid(0xff80,vx,128),mid(0xff80,vy,128),x,y
+end,
+draw=function(c)
+fillp(fillps[2-flr(c.r/8)])
+_circfill(c.x+c.vx,c.y+c.vy,c.r,7)
+fillp()
+end
+}
+add(clouds,cloud)
+end
 end
 
 function _update()
-	if state==0 then
-		if (btnp(5)) state=2 st_t=0
-	elseif state==1 then
-		cls()
-		--check if boat is outside cell range
-		checkboatpos()
-		if (celltype=="island") island_update()
-		if celltype=="enemy" then
-			for i=0,4 do
-				local r=rnd"1"
-				local d=rnd(i*32)
-				newWave(sin(r)*d,-cos(r)*d)
-			end
-		end
-		if (player.draw) player_update(player)
-		map=btn"4"
-		for c in all(clouds) do
-			c.update(c)
-		end
-		if map then
-			mapPos=max(mapPos-16,0)
-		else
-			mapPos=min(mapPos+16,127)
-		end
-		if (not player.draw) boat_update(boat)
-		if (npcBoat!=0) boat_update(npcBoat)
-	elseif state==3 then
-		for c in all(comb_objs) do
-			c.update(c)
-		end
-	elseif state==4 then
-		update_island_chest_view()
-	end
-	st_t+=0.016666--1/60
+if state==0 then
+if (btnp(5)) state=2 st_t=0
+elseif state==1 then
+cls()
+--check if boat is outside cell range
+checkboatpos()
+if (celltype=="island") island_update()
+if celltype=="enemy" then
+for i=0,4 do
+local r=rnd"1"
+local d=rnd(i*32)
+newWave(sin(r)*d,-cos(r)*d)
+end
+end
+if (player.draw) player_update(player)
+map=btn"4"
+for c in all(clouds) do
+c.update(c)
+end
+if map then
+mapPos=max(mapPos-16,0)
+else
+mapPos=min(mapPos+16,127)
+end
+if (not player.draw) boat_update(boat)
+if (npcBoat!=0) boat_update(npcBoat)
+elseif state==3 then
+for c in all(comb_objs) do
+c.update(c)
+end
+elseif state==4 then
+update_island_chest_view()
+end
+st_t+=0.016666--1/60
 end
 
 function _draw()
-	if (state==0) splash_screen()
+if (state==0) splash_screen()
 
-	--Draw top down view of world
-	if state==1 then
-		camera(camx,camy)
-		cls(12)
-		boat_text_process()
-		--draw island dark blue backdrop before waves
-		if celltype=="island" then
-			for b in all(island_beach) do
-				_circfill(b.x,b.y,b.rad+16,1)
-			end
-		end
-		--draw waves from ship
-		fillp(0b0101101001011010.1)
-		for w in all(waves) do
-			_circ(w.x,w.y,w.r,7)
-			w.r+=0.2
-			if (w.r>10) del(waves,w)
-		end
-		fillp()
-		if (celltype=="island") island_draw()
-		if celltype=="enemy" then
-			if (abs(boat.x) < 64 and abs(boat.y) < 64) state,nextState,st_t=2,3,0
-		end
-		boat_draw(boat)
-		if (npcBoat!=0) boat_draw(npcBoat)
-		if drawClouds then
-			for c in all(clouds) do
-				c.draw(c)
-			end
-		end
-		draw_minimap()
-		draw_morale_bar()
-		local r =atan2(cellwindx,cellwindy)
-		for c=0,1 do
-			pal(6,7^c)
-			spr_rot(26,2,12,camx+120,camy+44-c,r,0)
-			pal()
-		end
+--Draw top down view of world
+if state==1 then
+camera(camx,camy)
+cls(12)
+boat_text_process()
+--draw island dark blue backdrop before waves
+if celltype=="island" then
+for b in all(island_beach) do
+_circfill(b.x,b.y,b.rad+16,1)
+end
+end
+--draw waves from ship
+fillp(0b0101101001011010.1)
+for w in all(waves) do
+_circ(w.x,w.y,w.r,7)
+w.r+=0.2
+if (w.r>10) del(waves,w)
+end
+fillp()
+if (celltype=="island") island_draw()
+if celltype=="enemy" then
+if (abs(boat.x) < 64 and abs(boat.y) < 64) state,nextState,st_t=2,3,0
+end
+boat_draw(boat)
+if (npcBoat!=0) boat_draw(npcBoat)
+if drawClouds then
+for c in all(clouds) do
+c.draw(c)
+end
+end
+draw_minimap()
+draw_morale_bar()
+local r =atan2(cellwindx,cellwindy)
+for c=0,1 do
+pal(6,7^c)
+spr_rot(26,2,12,camx+120,camy+44-c,r,0)
+pal()
+end
 
-		print_u("wIND",camx+112,camy+30)
-		boat_text_render	(flr(boat.x-24),flr(boat.y-16))
-		--print_u("wx: "..cellwindx,camx+64,camy+48)
-		--print_u("wx: "..cellwindy,camx+64,camy+56)
-		if (mapPos<127) draw_map()
+print_u("wIND",camx+112,camy+30)
+boat_text_render(flr(boat.x-24),flr(boat.y-16))
+--print_u("wx: "..cellwindx,camx+64,camy+48)
+--print_u("wx: "..cellwindy,camx+64,camy+56)
+if (mapPos<127) draw_map()
 
-	elseif state==2 then
-		if st_t>0 and st_t<.8 then
-			st_horizbars_out()
-		elseif once then
-				--"Loading"
-				cls()
-				print_str('4c6f6164696e67',76,127,12)
-				flip()
-				for _x=1,#cells do
-					for _y=1,#cells[_x] do
-						local vals=stringToArray"1,0,-1,0,0,1,0,-1,★"
-						local self=cells[_x][_y]
-						for i=1,8,2 do
-							local adjCell=cells[mid(1,flr(_x+vals[i]),#cells-1)][mid(1,flr(_y+vals[i+1]),#cells[_x]-1)]
-							self.windx+=adjCell.windx
-							self.windy+=adjCell.windy
-						end
-						self.windx/=5
-						self.windy/=5
-				end
-				setcell()
-			end
-		end
+elseif state==2 then
+if st_t>0 and st_t<.8 then
+st_horizbars_out()
+elseif once then
+--"Loading"
+cls()
+print_str('4c6f6164696e67',76,127,12)
+flip()
+for _x=1,#cells do
+for _y=1,#cells[_x] do
+local vals=stringToArray"1,0,-1,0,0,1,0,-1,★"
+local self=cells[_x][_y]
+for i=1,8,2 do
+local adjCell=cells[mid(1,flr(_x+vals[i]),#cells-1)][mid(1,flr(_y+vals[i+1]),#cells[_x]-1)]
+self.windx+=adjCell.windx
+self.windy+=adjCell.windy
+end
+self.windx/=5
+self.windy/=5
+end
+setcell()
+end
+end
 
-		--exit state condition
-		if st_t>1 then
-			state=nextState
-			if (nextState==3)	comb_init(true)
-			if (nextState==4)	init_island_chest_view()music(1,0)
-			if (nextState==5)	comb_init() state=3
-			once=false
-		end
-	elseif state==3 then
-		cls(12)
-		screenShake()
-		_circfill(124,8,24,10)
+--exit state condition
+if st_t>1 then
+state=nextState
+if (nextState==3)comb_init(true)
+if (nextState==4)init_island_chest_view()
+if (nextState==5)comb_init() state=3
+once=false
+end
+elseif state==3 then
+cls(12)
+screenShake()
+_circfill(124,8,24,10)
 
-		boat_text_process()
-		boat_text_render(comb_boat.x,comb_boat.y-16)
+boat_text_process()
+boat_text_render(comb_boat.x,comb_boat.y-16)
 
-		for c in all(comb_objs) do
-		 c.draw(c)
-		end
-		if first and txt_timer>0 then
-			local txt_pos = 10
-			if (txt_timer<10) txt_pos=txt_timer%10
-			if (txt_timer>50) txt_pos=-txt_timer%15
-			txt_pos=-sin(txt_pos/30)*80
-			a=stringToArray"35,18,93,2,1,35,18,93,3,15,36,17,92,4,2,2"
-			for i=1,15,5 do
-				rectfill(a[i],txt_pos-a[i+1],a[i+2],txt_pos-a[i+3],a[i+4])
-			end
-			?" mOVE: ⬅️/➡️\nsHOOT: HOLD 🅾️",37,txt_pos-15,4
-			?" mOVE: ⬅️/➡️\nsHOOT: HOLD 🅾️",37,txt_pos-16,15
-			first=txt_timer<60
-		end
-		drawUpdateWater()
+for c in all(comb_objs) do
+ c.draw(c)
+end
+if first and txt_timer>0 then
+local txt_pos = 10
+if (txt_timer<10) txt_pos=txt_timer%10
+if (txt_timer>50) txt_pos=-txt_timer%15
+txt_pos=-sin(txt_pos/30)*80
+a=stringToArray"35,18,93,2,1,35,18,93,3,15,36,17,92,4,2,2"
+for i=1,15,5 do
+rectfill(a[i],txt_pos-a[i+1],a[i+2],txt_pos-a[i+3],a[i+4])
+end
+?" mOVE: ⬅️/➡️\nsHOOT: HOLD 🅾️",37,txt_pos-15,4
+?" mOVE: ⬅️/➡️\nsHOOT: HOLD 🅾️",37,txt_pos-16,15
+first=txt_timer<60
+end
+drawUpdateWater()
 
-		--water reflections
-		memcpy(0x1800,0x7140,0x800)
-		palt(12,true)
-		palt(1,true)
-		pal_all"13"
-		for y=1,31 do
-			sspr(0,127-y,128,1,sin(t()+y/20)*(y/5),101+y)
-		end
-		for x=0,127 do
-			local c=sget(x,127)
-			if (pget(x,101)==1 and c!=12 and c!=7 and c!=1) pset(x,101,c)
-		end
+--water reflections
+memcpy(0x1800,0x7140,0x800)
+palt(12,true)
+palt(1,true)
+pal_all"13"
+for y=1,31 do
+sspr(0,127-y,128,1,sin(t()+y/20)*(y/5),101+y)
+end
+for x=0,127 do
+local c=sget(x,127)
+if (pget(x,101)==1 and c!=12 and c!=7 and c!=1) pset(x,101,c)
+end
 
-		pal()
+pal()
 
-		if victory then
-		 local cols={}
-		 local vt=t()-victory_time
-		 rectfill(0,48,127,64,0)
-		 pal(15,sget(min(vt*15,4),9))
-		 sspr(0,61,112,14,7,49,114,16)
-		 pal(15,sget(min(vt*15,11),8))
-		 _sspr(0,61,112,14,8,50)
-		 pal()
-		 celltype,currentcell.type,string="sea","sea","cREW MORALE INCREASED!"
-		 print_u(sub(string,0,vt*10),20,68)
-		 morale=min(morale+0.1+rnd(.2),100)
-		 if (vt > 5) nextState,state,st_t,boat_message=1,2,0,""
-		elseif morale>0 then
-		 cannonLines(2+comb_boat.x,5+comb_boat.y,comb_boat)
-		 if (tentacles==null) cannonLines(2+enemy.x,5+enemy.y,enemy)
-		 drawEnemyHP()
-		end
-		draw_morale_bar()
-	elseif state==4 then
-		draw_island_chest_view()
-	end
+if victory then
+ local cols={}
+ local vt=t()-victory_time
+ rectfill(0,48,127,64,0)
+ pal(15,sget(min(vt*15,4),9))
+ sspr(0,61,112,14,7,49,114,16)
+ pal(15,sget(min(vt*15,11),8))
+ _sspr(0,61,112,14,8,50)
+ pal()
+ celltype,currentcell.type,string="sea","sea","cREW MORALE INCREASED!"
+ print_u(sub(string,0,vt*10),20,68)
+ morale=min(morale+0.1+rnd(.2),100)
+ if (vt > 5) nextState,state,st_t,boat_message=1,2,0,""
+elseif morale>0 then
+ cannonLines(2+comb_boat.x,5+comb_boat.y,comb_boat)
+ if (tentacles==null) cannonLines(2+enemy.x,5+enemy.y,enemy)
+ drawEnemyHP()
+end
+draw_morale_bar()
+elseif state==4 then
+draw_island_chest_view()
+end
 
-	if st_t>1	and st_t < 1.5 and state!=4 then
-		st_spiral_in()
-	end
+if st_t>1 and st_t < 1.5 and state!=4 then
+st_spiral_in()
+end
 
-	if printStats then
-		rectfill(camx,camy+14,camx+66,camy+31,5)
-		rect(camx,camy+14,camx+66,camy+31,0)
-		print_u("mEMORY: "..flr(stat(0)).." kB",camx+2,camy+16)
-		print_u("cPU: "..(flr(stat(1)*1000)/10).."%",camx+2,camy+24)
-	end
-	tempFlip=false
+if printStats then
+rectfill(camx,camy+14,camx+66,camy+31,5)
+rect(camx,camy+14,camx+66,camy+31,0)
+print_u("mEMORY: "..flr(stat(0)).." kB",camx+2,camy+16)
+print_u("cPU: "..(flr(stat(1)*1000)/10).."%",camx+2,camy+24)
+end
+tempFlip=false
 end
 
 function splash_screen()
-	cls(0)
+cls(0)
 
-	--ico
-	local xls=stringToArray"10,20,32,★"
-	for i=1,#xls do
-		print_xl(xls[i],5,i-1,7)
-	end
+--ico
+local xls=stringToArray"10,20,32,★"
+for i=1,#xls do
+print_xl(xls[i],5,i-1,7)
+end
 
-	local vals=stringToArray"-71,33,13,-71,32,7,-49,5,13,-49,4,7,★"
-	--big Ps
-	for i=1,12,3 do
-		for x=86,109 do
-			pal(1,vals[i+2])
-			local a=x+vals[i]
-			_sspr(x,0,1,26,a,vals[i+1]+sin(t()*-.33+(a*.018))*2)
-		end
-	end
+local vals=stringToArray"-71,33,13,-71,32,7,-49,5,13,-49,4,7,★"
+--big Ps
+for i=1,12,3 do
+for x=86,109 do
+pal(1,vals[i+2])
+local a=x+vals[i]
+_sspr(x,0,1,26,a,vals[i+1]+sin(t()*-.33+(a*.018))*2)
+end
+end
 
-	--pirates
-	xls=stringToArray"-12,-2,11,23,31,43,55,★"
-	local ls=stringToArray"0,3,4,5,7,8,9,★"
-	for i=1,#xls do
-		print_xl(xls[i],32,ls[i],7)
-	end
+--pirates
+xls=stringToArray"-12,-2,11,23,31,43,55,★"
+local ls=stringToArray"0,3,4,5,7,8,9,★"
+for i=1,#xls do
+print_xl(xls[i],32,ls[i],7)
+end
 
-	local x=stringToArray"24,26,16,52,64,★"
-	local y=stringToArray"72,82,112,112,112,★"
-	local c=stringToArray"7,12,7,8,7,★"
-	local strs={'412067616d65206d616465206279','43726169672054696e6e6579','5072657373','58','746f207374617274'}
-	for i=1,5 do
-		local _y=y[i]
-		if (i>2) _y+=sin(t()*.5)*4
-		print_str(strs[i],x[i],_y,c[i])
-	end
+local x=stringToArray"24,26,16,52,64,★"
+local y=stringToArray"72,82,112,112,112,★"
+local c=stringToArray"7,12,7,8,7,★"
+local strs={'412067616d65206d616465206279','43726169672054696e6e6579','5072657373','58','746f207374617274'}
+for i=1,5 do
+local _y=y[i]
+if (i>2) _y+=sin(t()*.5)*4
+print_str(strs[i],x[i],_y,c[i])
+end
 end
 
 --screen transition
 function st_horizbars_out()
-	--1.2s duration
-	--draw black bars
-	local a=0
-	for y=0,127 do
-		if y%2==0 then
-			_line(camx+127,camy+y,camx+127-st_t*59,camy+y,0)
-		else
-			_line(camx,camy+y,camx+st_t*59,camy+y,0)
-		end
-	end
-	for y=0,127 do
-		local scr,l=0x6000+y*64,-st_t*2
-		if (y%2==0) l=(st_t+.48)*2
-		memcpy(scr,scr+l,64)
-	end
+--1.2s duration
+--draw black bars
+local a=0
+for y=0,127 do
+if y%2==0 then
+_line(camx+127,camy+y,camx+127-st_t*59,camy+y,0)
+else
+_line(camx,camy+y,camx+st_t*59,camy+y,0)
+end
+end
+for y=0,127 do
+local scr,l=0x6000+y*64,-st_t*2
+if (y%2==0) l=(st_t+.48)*2
+memcpy(scr,scr+l,64)
+end
 end
 
 function st_spiral_in()
-	fillp((stringToArray"0,1.5,3.5,7.5,15.5,143.5,2191.5,-30576.5,-14192.5,-6000.5,-1904.5,-1648.5,-1632.5,-1600.5,-1536.5,-512.5,★")[ceil((st_t-1)*32)])
-	_rectfill(camx,camy,camx+128,camy+128,0)
-	fillp()
+fillp((stringToArray"0,1.5,3.5,7.5,15.5,143.5,2191.5,-30576.5,-14192.5,-6000.5,-1904.5,-1648.5,-1632.5,-1600.5,-1536.5,-512.5,★")[ceil((st_t-1)*32)])
+_rectfill(camx,camy,camx+128,camy+128,0)
+fillp()
 end
 
 --check land collision
 function checklandcol(x,y,r)
-	local j=stringToArray"-r*2,0,.75,.25,★"
-	local bool=false
-	for i in all(j) do
-		bool=bool or pget(x-sin(r+i)*8,y+cos(r+i)*8)==15
-	end
-	return bool
+local j=stringToArray"-r*2,0,.75,.25,★"
+local bool=false
+for i in all(j) do
+bool=bool or pget(x-sin(r+i)*8,y+cos(r+i)*8)==15
+end
+return bool
 end
 
 waves={}
 function newWave(_x,_y)
-	local w={x=flr(_x),y=flr(_y-1),r=2}
-	add(waves,w)
+local w={x=flr(_x),y=flr(_y-1),r=2}
+add(waves,w)
 end
 
 function world_init()
-	cells={}
-	for cx=0,31 do
-		local subcell={}
-		add(cells,subcell)
-		for cy=0,31 do
-			--random wind vectors
-			local wx=rrnd(.25,1)
-			if (rnd"1">.5) wx*=0xffff
-			local wy=rrnd(0.25,1)
-			if (rnd"1">.5) wy*=0xffff
+cells={}
+for cx=0,31 do
+local subcell={}
+add(cells,subcell)
+for cy=0,31 do
+--random wind vectors
+local wx=rrnd(.25,1)
+if (rnd"1">.5) wx*=0xffff
+local wy=rrnd(0.25,1)
+if (rnd"1">.5) wy*=0xffff
 
-			local _type=""
-			if rnd"1">.925 then
-				 _type="island"
-			 elseif rnd"1">.7 then
- 				 _type="enemy"
- 			elseif rnd"1">.6 then
-				 _type="boat"
-			else
-				_type="sea"
-			end
-			add(subcell,{type=_type,treasure=weighted_rnd({1,1.5,2,2.5}),seed=rnd(4096),windx=wx,windy=wy,visited=false})
-		end
-	end
+local _type=""
+if rnd"1">.925 then
+ _type="island"
+ elseif rnd"1">.7 then
+  _type="enemy"
+ elseif rnd"1">.6 then
+ _type="boat"
+else
+_type="sea"
+end
+add(subcell,{type=_type,treasure=weighted_rnd({1,1.5,2,2.5}),seed=rnd(4096),windx=wx,windy=wy,visited=false})
+end
+end
 end
 
 function cell_shift(x,y)
-	boat.x+=x
-	boat.y+=y
-	if (npcBoat!=0) npcBoat.x+=x npcBoat.y+=y
-	for w in all(waves) do
-		w.x+=x
-		w.y+=y
-	end
-	for c in all(clouds) do
-		c.x+=x
-		c.y+=y
-	end
-	setcell()
+boat.x+=x
+boat.y+=y
+if (npcBoat!=0) npcBoat.x+=x npcBoat.y+=y
+for w in all(waves) do
+w.x+=x
+w.y+=y
+end
+for c in all(clouds) do
+c.x+=x
+c.y+=y
+end
+setcell()
 end
 
 function checkboatpos()
-	if (boat.x < 0xff00) then
-		currentcellx-=1
-		if (currentcellx<1) currentcellx+=#cells
-		cell_shift(512,0)
-	elseif (boat.x > 256) then
-		currentcellx+=1
-		if (currentcellx>#cells) currentcellx=1
-		cell_shift(0xfe00,0)
-	elseif (boat.y < 0xff00) then
-		currentcelly-=1
-		if (currentcelly<1) currentcelly+=#cells[currentcellx]
-		cell_shift(0,512)
-	elseif (boat.y > 256) then
-		currentcelly+=1
-		if (currentcelly>#cells) currentcelly=1
-		cell_shift(0,0xfe00)
-	end
+if (boat.x < 0xff00) then
+currentcellx-=1
+if (currentcellx<1) currentcellx+=#cells
+cell_shift(512,0)
+elseif (boat.x > 256) then
+currentcellx+=1
+if (currentcellx>#cells) currentcellx=1
+cell_shift(0xfe00,0)
+elseif (boat.y < 0xff00) then
+currentcelly-=1
+if (currentcelly<1) currentcelly+=#cells[currentcellx]
+cell_shift(0,512)
+elseif (boat.y > 256) then
+currentcelly+=1
+if (currentcelly>#cells) currentcelly=1
+cell_shift(0,0xfe00)
+end
 end
 
 function setcell()
-	currentcell=cells[currentcellx][currentcelly]
-	currentcell.visited,cellwindx,cellwindy,cellseed,celltype=true,mid(-.5,currentcell.windy,.5),mid(-.5,currentcell.windx,.5),currentcell.seed,currentcell.type
-	if celltype=="island" then
-		if (cellseed!=prevSeed) fps={}
-		prevSeed=cellseed
-		createisland(cellseed)
-	elseif npcBoat==0 and celltype=="boat" then
-		npcBoat,boatCell=init_boat(false),currentcell
-	end
+currentcell=cells[currentcellx][currentcelly]
+currentcell.visited,cellwindx,cellwindy,cellseed,celltype=true,mid(-.5,currentcell.windy,.5),mid(-.5,currentcell.windx,.5),currentcell.seed,currentcell.type
+if celltype=="island" then
+if (cellseed!=prevSeed) fps={}
+prevSeed=cellseed
+createisland(cellseed)
+elseif npcBoat==0 and celltype=="boat" then
+npcBoat,boatCell=init_boat(false),currentcell
+end
 end
 
 function island_update()
-	for t in all(island_trees) do
-		t.vx=(t.x-camx-64)*t.z
-		t.vy=(t.y-camy-64)*t.z
-	end
-	--drawing beach for boat colision
-	for b in all(island_beach) do
-		circfill(b.x,b.y,b.rad,15)
-	end
+for t in all(island_trees) do
+t.vx=(t.x-camx-64)*t.z
+t.vy=(t.y-camy-64)*t.z
+end
+--drawing beach for boat colision
+for b in all(island_beach) do
+circfill(b.x,b.y,b.rad,15)
+end
 end
 
 function island_draw()
-	--white wave crest
-	local _t=(1+sin(t()*.2))*8
-	for b in all(island_beach) do
-		_circ(b.x,b.y,b.rad+_t+1,7)
-	end
-	--wet sand
-	for b in all(island_beach) do
-		_circfill(b.x,b.y,b.rad+_t,13)
-	end
-	--beach
-	for b in all(island_beach) do
-		_circfill(b.x,b.y,b.rad,15)
-	end
-	for b in all(island_beach) do
-		_circfill(b.x+(b.r0*8),b.y+(b.r0*8),b.rad/15,6)
-	end
+--white wave crest
+local _t=(1+sin(t()*.2))*8
+for b in all(island_beach) do
+_circ(b.x,b.y,b.rad+_t+1,7)
+end
+--wet sand
+for b in all(island_beach) do
+_circfill(b.x,b.y,b.rad+_t,13)
+end
+--beach
+for b in all(island_beach) do
+_circfill(b.x,b.y,b.rad,15)
+end
+for b in all(island_beach) do
+_circfill(b.x+(b.r0*8),b.y+(b.r0*8),b.rad/15,6)
+end
 
-	if (island_size > 8) _circfill(0,0,island_size*.8,6)
-	if (island_size > 16) _circfill(0,0,island_size*.5,4)
+if (island_size > 8) _circfill(0,0,island_size*.8,6)
+if (island_size > 16) _circfill(0,0,island_size*.5,4)
 
-	fillp(fillps[2],-camx,-camy)
-	if (island_size > 6) _circfill(0,0,island_size*1.35,6)
-	fillp(0b0101101001011010.1,-camx,-camy)
-	if (island_size > 16) _circfill(0,0,island_size*.35,9)
-	fillp()
-	--draw trees
-	for t in all(island_trees) do
-		if(t.c<2) t.draw(t)
-	end
+fillp(fillps[2],-camx,-camy)
+if (island_size > 6) _circfill(0,0,island_size*1.35,6)
+fillp(0b0101101001011010.1,-camx,-camy)
+if (island_size > 16) _circfill(0,0,island_size*.35,9)
+fillp()
+--draw trees
+for t in all(island_trees) do
+if(t.c<2) t.draw(t)
+end
 
-	for f in all(fps) do
-		_pset(f[1],f[2],13)
-	end
+for f in all(fps) do
+_pset(f[1],f[2],13)
+end
 
-	--draw treasure cross
-	if currentcell.treasure!=0 then
-		local crossX=sin(currentcell.seed/4096)*island_size
-		local crossY=cos(currentcell.seed/4096)*island_size
-		if (abs(crossX-player.x) < 6 and abs(crossY-player.y) < 6) state,st_t,nextState=2,0,4
-		_sspr(47,47,10,11,crossX,crossY)
-	end
+--draw treasure cross
+if currentcell.treasure!=0 then
+local crossX=sin(currentcell.seed/4096)*island_size
+local crossY=cos(currentcell.seed/4096)*island_size
+if (abs(crossX-player.x) < 6 and abs(crossY-player.y) < 6) state,st_t,nextState=2,0,4
+_sspr(47,47,10,11,crossX,crossY)
+end
 
-	if (player.draw) player_draw(player)
-	for t in all(island_trees) do
-		if(t.c>1)t.draw(t)
-	end
+if (player.draw) player_draw(player)
+for t in all(island_trees) do
+if(t.c>1)t.draw(t)
+end
 end
 
 function createisland(seed)
-	srand(seed)
-	--radius of this new island
-	island_size=rrnd(6,70)
-	--create the various _circles required to create this island
-	local total_circs=max(island_size/8,5)
-	island_beach={}
-	for i=0,total_circs do
-		local r=i/total_circs
-		add(island_beach,{
-			x=cos(r)*island_size,y=-sin(r)*island_size,
-			rad=(island_size)*(rrnd(.7,1.3)),
-			r0=rrnd(0xffff,1),r1=rrnd(0xffff,1),r2=rrnd(0xffff,1),r3=rrnd(0xffff,1)
-		})
-	end
+srand(seed)
+--radius of this new island
+island_size=rrnd(6,70)
+--create the various _circles required to create this island
+local total_circs=max(island_size/8,5)
+island_beach={}
+for i=0,total_circs do
+local r=i/total_circs
+add(island_beach,{
+x=cos(r)*island_size,y=-sin(r)*island_size,
+rad=(island_size)*(rrnd(.7,1.3)),
+r0=rrnd(0xffff,1),r1=rrnd(0xffff,1),r2=rrnd(0xffff,1),r3=rrnd(0xffff,1)
+})
+end
 
-	local size=island_size
-	--now for some trees
-	island_trees={}
-	if size > 24 then
-		size*=.5
-		for i=0,size/2 do
-			local r=i/(size/2)
-			sz=rrnd(8,12)
-			newtree(rrnd(0xfffb,5)+cos(r)*size,rrnd(0xfffb,5)-sin(r)*size,sz)
-		end
-		for i=0,size/4 do
-			local r=i/(size/4)
-			sz=rnd"2"+10
-			newtree(rrnd(0xfffb,5)+(rnd"1"-.5)*size,rrnd(0xfffb,5)-(rnd"1"-.5)*size,sz)
-		end
+local size=island_size
+--now for some trees
+island_trees={}
+if size > 24 then
+size*=.5
+for i=0,size/2 do
+local r=i/(size/2)
+sz=rrnd(8,12)
+newtree(rrnd(0xfffb,5)+cos(r)*size,rrnd(0xfffb,5)-sin(r)*size,sz)
+end
+for i=0,size/4 do
+local r=i/(size/4)
+sz=rnd"2"+10
+newtree(rrnd(0xfffb,5)+(rnd"1"-.5)*size,rrnd(0xfffb,5)-(rnd"1"-.5)*size,sz)
+end
 
-		--sort trees by z value
-		for i=1,#island_trees do
-		 local j = i
-		 while j > 1 and island_trees[j-1].z > island_trees[j].z do
-			island_trees[j],island_trees[j-1]=island_trees[j-1],island_trees[j]
-			j=j-1
-		 end
-		end
-	end
+--sort trees by z value
+for i=1,#island_trees do
+ local j = i
+ while j > 1 and island_trees[j-1].z > island_trees[j].z do
+island_trees[j],island_trees[j-1]=island_trees[j-1],island_trees[j]
+j=j-1
+ end
+end
+end
 end
 
 function toggleClouds()
-	drawClouds=not drawClouds
+drawClouds=not drawClouds
 end
 
 function toggleStats()
-	printStats=not printStats
+printStats=not printStats
 end
 
 menuitem(1, "toggle clouds", toggleClouds)
@@ -519,123 +509,123 @@ menuitem(2, "toggle stats ", toggleStats)
 menuitem(3, "do a flip()!", putAFlipInIt)
 
 function newtree(_x,_y,s)
-	local z=rnd(1,1.5)
-	local z_array,c_array,r_array,fillp_array={0,0,0,z-.25,z-.15,z,z+.5,z+1,z+1.25,z+1.5},stringToArray"4,1,1,3,3,3,11,11,7,7,★",stringToArray".25,1,1.1,1,.9,.8,.667,.5,.25,.2,★",stringToArray"0x0000,0b1010010110100101.1,0b0101101001011010.1,0b111111111011111.1,0b0101101001011010.1,0x0000,0b0101101001011010.1,0x0000,0b0101101001011010.1,0x0000,★"
-	for i=1,10 do
-		local tree={
-			x=_x,y=_y,z=z_array[i]*.1,
-			vx=0,vy=0,
-			c=c_array[i],r=s*r_array[i],
-			palette=fillp_array[i],
-			draw=function(t)
-				fillp(t.palette,-camx,-camy)
-				_circfill(t.x+t.vx,t.y+t.vy,t.r,t.c)
-				fillp()
-			end
-		}
-		add(island_trees,tree)
-	end
+local z=rnd(1,1.5)
+local z_array,c_array,r_array,fillp_array={0,0,0,z-.25,z-.15,z,z+.5,z+1,z+1.25,z+1.5},stringToArray"4,1,1,3,3,3,11,11,7,7,★",stringToArray".25,1,1.1,1,.9,.8,.667,.5,.25,.2,★",stringToArray"0x0000,0b1010010110100101.1,0b0101101001011010.1,0b111111111011111.1,0b0101101001011010.1,0x0000,0b0101101001011010.1,0x0000,0b0101101001011010.1,0x0000,★"
+for i=1,10 do
+local tree={
+x=_x,y=_y,z=z_array[i]*.1,
+vx=0,vy=0,
+c=c_array[i],r=s*r_array[i],
+palette=fillp_array[i],
+draw=function(t)
+fillp(t.palette,-camx,-camy)
+_circfill(t.x+t.vx,t.y+t.vy,t.r,t.c)
+fillp()
+end
+}
+add(island_trees,tree)
+end
 end
 
 player={
-	x=0,y=0,draw=false,speed=1,
-	fp_dist=0, dir=0
+x=0,y=0,draw=false,speed=1,
+fp_dist=0, dir=0
 }
 
 function player_update(p)
-	if abs(p.x-boat.x) < 4 and abs(p.y-boat.y) < 4 then
-		p.draw=false
-		sfx"4"
-		--push boat away from centre of island
-		--island always found at (0,0)
-		--vector topush boat away is same as position(normalised)
-		magnitude=sqrt((boat.x*boat.x) + (boat.y*boat.y))*.1
-		boat.x+=boat.x/magnitude
-		boat.y+=boat.y/magnitude
-	end
+if abs(p.x-boat.x) < 4 and abs(p.y-boat.y) < 4 then
+p.draw=false
+sfx"4"
+--push boat away from centre of island
+--island always found at (0,0)
+--vector topush boat away is same as position(normalised)
+magnitude=sqrt((boat.x*boat.x) + (boat.y*boat.y))*.1
+boat.x+=boat.x/magnitude
+boat.y+=boat.y/magnitude
+end
 
-	if (btn"0") p.x-=p.speed
-	if (btn"1") p.x+=p.speed
-	if (btn"2") p.y-=p.speed
-	if (btn"3") p.y+=p.speed
-	if (btn()>0) p.fp_dist+=1
+if (btn"0") p.x-=p.speed
+if (btn"1") p.x+=p.speed
+if (btn"2") p.y-=p.speed
+if (btn"3") p.y+=p.speed
+if (btn()>0) p.fp_dist+=1
 
-	if player.x < camx+56 then
-		camx=player.x-56
-	elseif player.x > camx+72 then
-		camx=player.x-72
-	end
-	if player.y < camy+56 then
-		camy=player.y-56
-	elseif player.y > camy+72 then
-		camy=player.y-72
-	end
+if player.x < camx+56 then
+camx=player.x-56
+elseif player.x > camx+72 then
+camx=player.x-72
+end
+if player.y < camy+56 then
+camy=player.y-56
+elseif player.y > camy+72 then
+camy=player.y-72
+end
 end
 
 function player_draw(p)
-	p.speed=1
-	local c=pget(p.x,p.y)
-	if (c==12) p.speed=.1
-	if p.fp_dist>2 then
-		if c==15 then
-			add(fps,{p.x,p.y})
-			sfx(1)
-		else
-			sfx(12)
-		end
-		p.fp_dist=0
-	end
-	pal()
-	_circfill(p.x,p.y,1,0)
+p.speed=1
+local c=pget(p.x,p.y)
+if (c==12) p.speed=.1
+if p.fp_dist>2 then
+if c==15 then
+add(fps,{p.x,p.y})
+sfx(1)
+else
+sfx(12)
+end
+p.fp_dist=0
+end
+pal()
+_circfill(p.x,p.y,1,0)
 end
 
 boat_message,txt_timer="",0
 
 function boat_text_process()
-	txt_timer+=.33
-	print_u(sub(boat_message,0,txt_timer),camx,camy)
-	memcpy(0x1d00,0x6000,768)
-	_rectfill(camx,camy,camx+64,camy+12,12)
-	if txt_timer>#boat_message+45 then
-		if state==3 then
-			txt_timer=0
-			boat_message="cOME ON THEN PAL,\nSQUARE TAE GO LIKE "
-			if (rnd(1)>.5) boat_message="yOU'LL HAVE TO DO\nBETTER THAN THAT! "
-			if morale<70 and morale>33 then
-				boat_message="nO SLACKING YOU\nLAZY SEA DOGS! "
-			elseif morale<33 and morale>1 then
-				boat_message="mAYBE I SHOULDN'T OF\nBEEN A PIRATE... "
-			end
-		else
-			if celltype=="sea" then
-				local xs,ys,dirs=stringToArray"-1,1,0,0,★",stringToArray"0,0,1,-1,★",{"WEST","EAST","SOUTH","NORTH"}
-				boat_message,txt_timer="cLEAR HORIZONS... ",0
-				for i=1,#xs do
-					local cellToCheck=cells[flr(mid(1,currentcellx+xs[i],31))][flr(mid(1,currentcelly+ys[i],31))]
-					if not cellToCheck.visited and cellToCheck.type=="island" then
-						boat_message,i="lAND TO\nTHE "..dirs[i].."! ",9
-					end
-				end
-			elseif celltype=="enemy" then
-				txt_timer=0
-				boat_message="sOMETHING ON\nTHE HORIZON... "
-				if (rnd(1)>.5) boat_message="sir! I SPY\nSOMETHING! "
-			end
-		end
-	end
+txt_timer+=.33
+print_u(sub(boat_message,0,txt_timer),camx,camy)
+memcpy(0x1d00,0x6000,768)
+_rectfill(camx,camy,camx+64,camy+12,12)
+if txt_timer>#boat_message+45 then
+if state==3 then
+txt_timer=0
+boat_message="cOME ON THEN PAL,\nSQUARE TAE GO LIKE "
+if (rnd(1)>.5) boat_message="yOU'LL HAVE TO DO\nBETTER THAN THAT! "
+if morale<70 and morale>33 then
+boat_message="nO SLACKING YOU\nLAZY SEA DOGS! "
+elseif morale<33 and morale>1 then
+boat_message="mAYBE I SHOULDN'T OF\nBEEN A PIRATE... "
+end
+else
+if celltype=="sea" then
+local xs,ys,dirs=stringToArray"-1,1,0,0,★",stringToArray"0,0,1,-1,★",{"WEST","EAST","SOUTH","NORTH"}
+boat_message,txt_timer="cLEAR HORIZONS... ",0
+for i=1,#xs do
+local cellToCheck=cells[flr(mid(1,currentcellx+xs[i],31))][flr(mid(1,currentcelly+ys[i],31))]
+if not cellToCheck.visited and cellToCheck.type=="island" then
+boat_message,i="lAND TO\nTHE "..dirs[i].."! ",9
+end
+end
+elseif celltype=="enemy" then
+txt_timer=0
+boat_message="sOMETHING ON\nTHE HORIZON... "
+if (rnd(1)>.5) boat_message="sir! I SPY\nSOMETHING! "
+end
+end
+end
 end
 
 function boat_text_render(x0,y0)
-	if txt_timer>0 and txt_timer<#boat_message+15 then
-		local _y=0
-		if (sub(boat_message,#boat_message,#boat_message)==' ') _y=6
-		palt(12,true)
-		for y=0,_y,6 do
-		 for x=0,80,2 do
-			sspr(x,116+y,2,6,x0+x,y0+y+sin(t()+(x/#boat_message)))
-		 end
-		end
-	end
+if txt_timer>0 and txt_timer<#boat_message+15 then
+local _y=0
+if (sub(boat_message,#boat_message,#boat_message)==' ') _y=6
+palt(12,true)
+for y=0,_y,6 do
+ for x=0,80,2 do
+sspr(x,116+y,2,6,x0+x,y0+y+sin(t()+(x/#boat_message)))
+ end
+end
+end
 end
 __gfx__
 0040000000040000000001d77000000000000007000000000000000011000000000000000000000000000000011111000010001000000000000000000000000d
