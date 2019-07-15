@@ -8,6 +8,7 @@ function init_island_chest_view()
 	camera(0,0)
 	camx,camy=0,0
 	poke(0x5f2c,3)
+	music"1"
 	sand,staticSand,chestClouds,circTrans_start,circTrans_end,sandIndex,chestPos,chestCol={},{},{},t(),0,1,53,(currentcell.treasure*2)-1
 	for i=0,15 do
 		add(chestClouds,{x=rnd(72),y=rnd(4),r=rrnd(1,4)})
@@ -52,7 +53,7 @@ function update_island_chest_view()
 				if (rnd"1">.5) grain.vx*=0xffff
 				sandIndex+=1
 				chestPos-=0.1
-				if (flr(chestPos)==44) sfx"7"
+				if (flr(chestPos)==44) sfx"8"
 			end
 		end
 	end
@@ -130,7 +131,7 @@ function draw_island_chest_view()
 		if circTrans_end-t()<-2.5 then
 			--exit treasure chest state
 			cls(0)
-			poke(0x5f2c,0)
+			poke(0x5f2c,0)music"2"
 			nextState,state,st_t,boat_message=1,2,1,""
 			currentcell.treasure=0
 		end
