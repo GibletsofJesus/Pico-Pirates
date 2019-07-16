@@ -67,9 +67,10 @@ function fillp(pattern,x,y)
 		return _fillp_original(bxor(pattern,add_bits))
 end
 
-function print_u(s,x,y)
-	?s,x,y+1,1
-	?s,x,y,7
+function print_u(s,x,y,c,u)
+	if (c==nil)c,u=7,1
+	?s,x,y+1,u
+	?s,x,y,c
 end
 
 shakeX,shakeY,shakeTimer=0,0,0
@@ -84,16 +85,8 @@ function screenShake()
 end
 
 function aabbOverlap(a,b)
-	return ((a.x+a.w > b.x)
-					and (a.x < b.x+b.w))
-		and ((a.y+a.h > b.y)
-					and (a.y < b.y+b.h))
-end
-
-function anglediff(a,b)
-	if (a>.5 and b<.5) b+=1
-	if (b>.5 and a<.5) a+=1
-	return abs(b-a)
+	return ((a.x+a.w > b.x) and (a.x < b.x+b.w))
+		and ((a.y+a.h > b.y) and (a.y < b.y+b.h))
 end
 
 function pal_all(c)

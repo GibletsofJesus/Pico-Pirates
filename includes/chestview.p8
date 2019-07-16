@@ -113,8 +113,7 @@ function draw_island_chest_view()
 		--	Big treasre
 		--Very Rare
 		--	A big cannon
-		?"yOU FOUND SOME\n	 TREASURE!",4,16,0
-		?"yOU FOUND SOME\n	 TREASURE!",4,15,9.5+p
+		print_u("yOU FOUND SOME\n	 TREASURE!",4,15,9.5+p,0)
 		_sspr(50,34,12,5,24,39)--draw chest contents
 	else
 		--draw closed chest

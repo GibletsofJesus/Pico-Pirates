@@ -3,7 +3,6 @@ version 16
 __lua__
 --Current cart stats (2/7/18)
 -- Token count 2023
-first=true
 function comb_init(timeToFightAnOctopus)
 	camx,camy,comb_objs,victory=0,0,{},false
 	camera(0,0)
@@ -46,9 +45,6 @@ function newCombCloud(_x,_y,_r,_c,_vx)
 	add(comb_objs,c)
 end
 
---water--
-wpts,prevwpts,btn4={},{},false
-
 --get corrected array value for water
 function pt(i)
 	return wpts[mid(1,flr(i),#wpts-1)]
@@ -82,10 +78,15 @@ end
 
 function comb_boat_fire_projectile(b)
 	sfx"9"
-	fireProjectile(2+b.x,5+b.y,b.flipx,1,b.vx,b.aim,b)
+	local max,traj=0,0
+	if (b.isPlayer) max = extra_canons
+	for i=0,max do
+		if (i>0) traj=rrnd(-.2,.2)
+		fireProjectile(2+b.x,5+b.y,b.flipx,1,b.vx+traj,b.aim+traj,b)
+	end
 	b.aim,b.firecd=.1,1
-	b.vx-=1
-	if (b.flipx) b.vx+=2
+	b.vx-=max
+	if (b.flipx) b.vx+=max*2
 end
 
 --combat comb_boat--

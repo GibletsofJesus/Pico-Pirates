@@ -38,12 +38,9 @@ function boat_update(b)
 		if dist>4 then
 			npcBoat=0
 			return
-		elseif anglediff(b.r,atan2(px,py))<.5 then
+		else
 			b.mx+=s*speed*5
 			b.my-=c*speed*5
-		else
-			b.mx*=.95
-			b.my*=.95
 		end
 	end
 	b.mx,b.my=mid(-b.max,b.mx,b.max),mid(-b.max,b.my,b.max)
@@ -82,7 +79,7 @@ function boat_draw(b)
 	pal(0,5)
 	if not b.player then
 		pal(4,2)pal(15,6)pal(7,13)pal(9,15)
-		if (dist<.25) nextState,state,st_t,boat_message,dist,npcBoat=5,2,0,"",512,0
+		--if (dist<.25) nextState,state,st_t,boat_message,dist,npcBoat=5,2,0,"",512,0
 	end
 	spr_rot(-2,76,12,flr(b.x),flr(b.y),b.r,6)
 	pal()

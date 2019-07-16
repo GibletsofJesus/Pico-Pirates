@@ -26,17 +26,12 @@ function draw_map()
 	_x+=4
 
 	--Fill map in with discovered areas
-	for x=1,32 do
-		for y=1,32 do
-			if cells[x][y].visited then
-				_circfill(_x+x*3,_y+y*3,3,13)
-			end
-		end
-	end
-	for x=1,32 do
-		for y=1,32 do
-			if cells[x][y].visited then
-				_circfill(_x+x*3,_y+y*3,2,12)
+	for c=12,13 do
+		for x=1,32 do
+			for y=1,32 do
+				if cells[x][y].visited then
+					_circfill(_x+x*3,_y+y*3,15-c,9-c)
+				end
 			end
 		end
 	end
@@ -59,7 +54,7 @@ function draw_minimap()
 	if (celltype=="island") _circfill(camx+119,camy+8,island_size/16,15)
 	--player indicator on minimap
 	_pset(camx+112+minimapPos(boat.x),camy+1+minimapPos(boat.y),4)
-	if (npcBoat!=0) _pset(camx+112+minimapPos(npcBoat.y),camy+1+minimapPos(npcBoat.x),2)
+	if (npcBoat!=0) _pset(camx+112+minimapPos(npcBoat.x),camy+1+minimapPos(npcBoat.y),2)
 end
 
 function minimapPos(value)
