@@ -72,7 +72,7 @@ chestCols={
 }
 
 function draw_island_chest_view()
-	cls(12)
+	cls"12"
 	pal()
 	--draw clouds
 	for c in all(chestClouds) do
@@ -130,7 +130,7 @@ function draw_island_chest_view()
 		circTransition(32,32,128+((circTrans_end-t()))*50)
 		if circTrans_end-t()<-2.5 then
 			--exit treasure chest state
-			cls(0)
+			cls"0"
 			poke(0x5f2c,0)music"2"
 			nextState,state,st_t,boat_message=1,2,1,""
 			currentcell.treasure=0

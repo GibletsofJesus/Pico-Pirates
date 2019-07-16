@@ -223,21 +223,21 @@ if b and enemy!=null then
 for t in all(tentacles) do --tentacle collision
 if aabbOverlap(t,p) then
 del(comb_objs,p)
-del(projectiles,p)
+del(comb_objs,p)
 hit(enemy,rrnd(6,11))
 sfx"10"
 sfx"11"
 end
 end
 if aabbOverlap(enemy,p) then --enemy collision
-del(comb_objs,p)del(projectiles,p)
+del(comb_objs,p)del(comb_objs,p)
 hit(enemy,rrnd(12,18))
 sfx"10"
 sfx"11"
 end
 elseif not b then
 if aabbOverlap(comb_boat,p) then --player collision
-del(comb_objs,p)del(projectiles,p)
+del(comb_objs,p)del(comb_objs,p)
 hit(comb_boat,rrnd(10,14))
 sfx"10"
 sfx"11"
@@ -256,7 +256,7 @@ p.x2,p.y2=p.x1,p.y1
 p.x1,p.y1=p.x,p.y
 end}
 add(comb_objs,proj)
-add(projectiles,proj)
+add(comb_objs,proj)
 end
 
 function dmgFlash(e)
@@ -398,7 +398,7 @@ end
 
 
 function hit(this,dmg)
-flip()
+flip""
 this.hp,this.flashing,shakeTimer=max(0,this.hp-dmg),10,1
 if this.isPlayer then
 morale,this.flashing,playerHpTimer=this.hp,25,2

@@ -9,9 +9,9 @@ __lua__
 #include includes/hud.p8
 #include includes/topdown_boat_movement.p8
 
---Current cart stats (2/7/18)
--- Token count 7987 / 8192
---	remaining tokens:	 205
+--Current cart stats (16/7/18)
+-- Token count 8018 / 8192
+--	remaining tokens:	 174
 
 state,nextState,st_t,printStats=0,1,5,false
 --0 splash screen
@@ -25,9 +25,9 @@ fillps=stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101
 
 function _init()
 	boat,npcBoat=init_boat(true),0
-	if (state==3) comb_init(false)
+	if (state==3) comb_init(true)
 	currentcellx,currentcelly=15,16
-	world_init()
+	world_init""
 	while (cells[currentcellx][currentcelly].type!="sea") do
 		currentcellx,currentcelly=flr(rrnd(2,30)),flr(rrnd(2,30))
 	end
@@ -50,7 +50,7 @@ function _init()
 			draw=function(c)
 				fillp(fillps[2-flr(c.r/8)])
 				_circfill(c.x+c.vx,c.y+c.vy,c.r,7)
-				fillp()
+				fillp""
 			end
 		}
 		add(clouds,cloud)
@@ -61,10 +61,10 @@ function _update()
 	if state==0 then
 		if (btnp(5)) state=2 st_t=0
 	elseif state==1 then
-		cls()
+		cls""
 		--check if boat is outside cell range
-		checkboatpos()
-		if (celltype=="island") island_update()
+		checkboatpos""
+		if (celltype=="island") island_update""
 		if celltype=="enemy" then
 			for i=0,4 do
 				local r=rnd"1"
@@ -89,19 +89,19 @@ function _update()
 			c.update(c)
 		end
 	elseif state==4 then
-		update_island_chest_view()
+		update_island_chest_view""
 	end
 	st_t+=0.016666--1/60
 end
 
 function _draw()
-	if (state==0) splash_screen()
+	if (state==0) splash_screen""
 
 	--Draw top down view of world
 	if state==1 then
 		camera(camx,camy)
-		cls(12)
-		boat_text_process()
+		cls"12"
+		boat_text_process""
 		--draw island dark blue backdrop before waves
 		if celltype=="island" then
 			for b in all(island_beach) do
@@ -115,8 +115,8 @@ function _draw()
 			w.r+=0.2
 			if (w.r>10) del(waves,w)
 		end
-		fillp()
-		if (celltype=="island") island_draw()
+		fillp""
+		if (celltype=="island") island_draw""
 		if celltype=="enemy" then
 			if (abs(boat.x) < 64 and abs(boat.y) < 64) state,nextState,st_t=2,3,0
 		end
@@ -127,29 +127,29 @@ function _draw()
 				c.draw(c)
 			end
 		end
-		draw_minimap()
-		draw_morale_bar()
+		draw_minimap""
+		draw_morale_bar""
 		local r =atan2(cellwindx,cellwindy)
 		for c=0,1 do
 			pal(6,7^c)
 			spr_rot(26,2,12,camx+120,camy+44-c,r,0)
-			pal()
+			pal""
 		end
 
 		print_u("wIND",camx+112,camy+30)
 		boat_text_render	(flr(boat.x-24),flr(boat.y-16))
 		--print_u("wx: "..cellwindx,camx+64,camy+48)
 		--print_u("wx: "..cellwindy,camx+64,camy+56)
-		if (mapPos<127) draw_map()
+		if (mapPos<127) draw_map""
 
 	elseif state==2 then
 		if st_t>0 and st_t<.8 then
-			st_horizbars_out()
+			st_horizbars_out""
 		elseif once then
 				--"Loading"
-				cls()
+				cls""
 				print_str('4c6f6164696e67',76,127,12)
-				flip()
+				flip""
 				for _x=1,#cells do
 					for _y=1,#cells[_x] do
 						local vals=stringToArray"1,0,-1,0,0,1,0,-1,★"
@@ -162,7 +162,7 @@ function _draw()
 						self.windx/=5
 						self.windy/=5
 				end
-				setcell()
+				setcell""
 			end
 		end
 
@@ -171,16 +171,16 @@ function _draw()
 			state=nextState
 			music"3"
 			if (nextState==3)	comb_init(true)
-			if (nextState==4)	init_island_chest_view()music"1"
-			if (nextState==5)	comb_init() state=3
+			if (nextState==4)	init_island_chest_view""music"1"
+			if (nextState==5)	comb_init"" state=3
 			once=false
 		end
 	elseif state==3 then
-		cls(12)
-		screenShake()
+		cls"12"
+		screenShake""
 		_circfill(124,8,24,10)
 
-		boat_text_process()
+		boat_text_process""
 		boat_text_render(comb_boat.x,comb_boat.y-16)
 
 		for c in all(comb_objs) do
@@ -199,7 +199,7 @@ function _draw()
 			?" mOVE: ⬅️/➡️\nsHOOT: HOLD 🅾️",37,txt_pos-16,15
 			first=txt_timer<60
 		end
-		drawUpdateWater()
+		drawUpdateWater""
 
 		--water reflections
 		memcpy(0x1800,0x7140,0x800)
@@ -207,24 +207,24 @@ function _draw()
 		palt(1,true)
 		pal_all"13"
 		for y=1,31 do
-			sspr(0,127-y,128,1,sin(t()+y/20)*(y/5),101+y)
+			sspr(0,127-y,128,1,sin(t""+y/20)*(y/5),101+y)
 		end
 		for x=0,127 do
 			local c=sget(x,127)
 			if (pget(x,101)==1 and c!=12 and c!=7 and c!=1) pset(x,101,c)
 		end
 
-		pal()
+		pal""
 
 		if victory then
 		 local cols={}
-		 local vt=t()-victory_time
+		 local vt=t""-victory_time
 		 rectfill(0,48,127,64,0)
 		 pal(15,sget(min(vt*15,4),9))
 		 sspr(0,61,112,14,7,49,114,16)
 		 pal(15,sget(min(vt*15,11),8))
 		 _sspr(0,61,112,14,8,50)
-		 pal()
+		 pal""
 		 celltype,currentcell.type,string="sea","sea","cREW MORALE INCREASED!"
 		 print_u(sub(string,0,vt*10),20,68)
 		 morale=min(morale+0.1+rnd(.2),100)
@@ -232,29 +232,30 @@ function _draw()
 		elseif morale>0 then
 		 cannonLines(2+comb_boat.x,5+comb_boat.y,comb_boat)
 		 if (tentacles==null) cannonLines(2+enemy.x,5+enemy.y,enemy)
-		 drawEnemyHP()
+		 drawEnemyHP""
 		end
-		draw_morale_bar()
+		draw_morale_bar""
 	elseif state==4 then
-		draw_island_chest_view()
+		draw_island_chest_view""
 	end
 
 	if st_t>1	and st_t < 1.5 and state!=4 then
-		st_spiral_in()
+		st_spiral_in""
 	end
 
 	if printStats then
-		rectfill(camx,camy+14,camx+66,camy+31,5)
+		--rectfill(camx,camy+14,camx+66,camy+31,5)
+			rectfill(camx,camy+14,camx+66,camy+39,5)
 		rect(camx,camy+14,camx+66,camy+31,0)
 		print_u("mEMORY: "..flr(stat(0)).." kB",camx+2,camy+16)
 		print_u("cPU: "..(flr(stat(1)*1000)/10).."%",camx+2,camy+24)
+		print_u("#oBJS: ".. #comb_objs,camx+2,camy+32)
 	end
 	tempFlip=false
 end
 
 function splash_screen()
-	cls(0)
-
+	cls"0"
 	--ico
 	local xls=stringToArray"10,20,32,★"
 	for i=1,#xls do
@@ -267,7 +268,7 @@ function splash_screen()
 		for x=86,109 do
 			pal(1,vals[i+2])
 			local a=x+vals[i]
-			_sspr(x,0,1,26,a,vals[i+1]+sin(t()*-.33+(a*.018))*2)
+			_sspr(x,0,1,26,a,vals[i+1]+sin(t""*-.33+(a*.018))*2)
 		end
 	end
 
@@ -284,7 +285,7 @@ function splash_screen()
 	local strs={'412067616d65206d616465206279','43726169672054696e6e6579','5072657373','58','746f207374617274'}
 	for i=1,5 do
 		local _y=y[i]
-		if (i>2) _y+=sin(t()*.5)*4
+		if (i>2) _y+=sin(t""*.5)*4
 		print_str(strs[i],x[i],_y,c[i])
 	end
 end
@@ -311,7 +312,7 @@ end
 function st_spiral_in()
 	fillp((stringToArray"0,1.5,3.5,7.5,15.5,143.5,2191.5,-30576.5,-14192.5,-6000.5,-1904.5,-1648.5,-1632.5,-1600.5,-1536.5,-512.5,★")[ceil((st_t-1)*32)])
 	_rectfill(camx,camy,camx+128,camy+128,0)
-	fillp()
+	fillp""
 end
 
 --check land collision
@@ -369,7 +370,7 @@ function cell_shift(x,y)
 		c.x+=x
 		c.y+=y
 	end
-	setcell()
+	setcell""
 end
 
 function checkboatpos()
@@ -417,7 +418,7 @@ end
 
 function island_draw()
 	--white wave crest
-	local _t=(1+sin(t()*.2))*8
+	local _t=(1+sin(t""*.2))*8
 	for b in all(island_beach) do
 		_circ(b.x,b.y,b.rad+_t+1,7)
 	end
@@ -440,7 +441,7 @@ function island_draw()
 	if (island_size > 6) _circfill(0,0,island_size*1.35,6)
 	fillp(0b0101101001011010.1,-camx,-camy)
 	if (island_size > 16) _circfill(0,0,island_size*.35,9)
-	fillp()
+	fillp""
 	--draw trees
 	for t in all(island_trees) do
 		if(t.c<2) t.draw(t)
@@ -531,7 +532,7 @@ function newtree(_x,_y,s)
 			draw=function(t)
 				fillp(t.palette,-camx,-camy)
 				_circfill(t.x+t.vx,t.y+t.vy,t.r,t.c)
-				fillp()
+				fillp""
 			end
 		}
 		add(island_trees,tree)
@@ -586,7 +587,7 @@ function player_draw(p)
 		end
 		p.fp_dist=0
 	end
-	pal()
+	pal""
 	_circfill(p.x,p.y,1,0)
 end
 
@@ -633,7 +634,7 @@ function boat_text_render(x0,y0)
 		palt(12,true)
 		for y=0,_y,6 do
 		 for x=0,80,2 do
-			sspr(x,116+y,2,6,x0+x,y0+y+sin(t()+(x/#boat_message)))
+			sspr(x,116+y,2,6,x0+x,y0+y+sin(t""+(x/#boat_message)))
 		 end
 		end
 	end
@@ -679,22 +680,22 @@ aae5fba057770008eff908ff7daa0bffd9005dddd046617760046fb9010002267512222401173300
 00000000288888882888820000000288009999999999999224c9ac797a9ac9000000000000000000000000000000000000000000000000000000000000000dff
 0000000288888882828882000000028e0a11111111111144409b7a9c9ba990000000000000000000000000000000000000000000000000000000000000000dff
 00000029888888288888820000000288a11111111111144000000000000000000000000000000000000000000000000000000000000000000000000000000dff
-0000002a98888888888882000000028eaaaaaaaaaaa9424000000000000000000000000000000000000000000000000000000000000000000000000000000ddf
-00000029a98889999888820000000288a222a1192229224000000000000000000000000000000000000000000000000000000000000000000000000000000dff
-0000002898889aaa988882000000028ea288a1192889224000000000000000000000000000000000000000000000000000000000000000000000000000000dff
-00000028888899998888200000000288a28889928889224000000000000000000000000000000000000000000000000000000000000000000000000000000dff
-0000002888888888888820000000028ea28888888889224000000000000000000000000000000000000000000000000000000000000000000000000000000ddf
-00000028888888888882000000000288a288888888892400000000000000000000000000000000000000000000000000000000000000000000000000000000df
-0000002888888888882820000000028ea999999999994000000000000000000000000000000000000000000000000000000000000000000000000000000000df
-0000028888888888228820000000028800aaaaaaaaaaa90088000008000000000000000000000000000000000000000000000000000000000000000000000ddf
-0000288888888822882882000000028e0a2222222222924888800088800000000000000000000000000000000000000000000000000000000000000000000ddf
-00028888888882882828820000000288a28888888889224188880888800000000000000000000000000000000000000000000000000000000000000000000dff
-0028882288288288282882000000028ea2888aa28889244018888888100000000000000000000000000000000000000000000000000000000000000000000dff
-02888288882882882822882280000288aaaaa1199999424001888881000000000000000000000000000000000000000000000000000000000000000000000dff
-0288288222888828288228888000028ea222a1192229224008888810000000000000000000000000000000000000000000000000000000000000000000000000
-02828820028888288288828820000288a288a1192889224088888880000000000000000000000000000000000000000000000000000000000000000000000000
-2882882028828882882888220028028ea28889928889224888818888000000000000000000000000000000000000000000000000000000000000000000000000
-28882882282028882882888822882288a28888888889224888101888800000000000000000000000000000000000000000000000000000000000000000000000
+0000002a98888888888882000000028eaaaaaaaaaaa942400000000000000000bbbbbbbbbbbbbbbb000000000000000000000000000000000000000000000ddf
+00000029a98889999888820000000288a222a119222922400000000000000000bbbbbbbbb1000bbb000000000000000000000000000000000000000000000dff
+0000002898889aaa988882000000028ea288a119288922400000000000000000bbbbbbbb5000000b000000000000000000000000000000000000000000000dff
+00000028888899998888200000000288a2888992888922400000000000000000bbbbbbbb55101000000000000000000000000000000000000000000000000dff
+0000002888888888888820000000028ea2888888888922400000000000000000bbbbbbbb0d11110b000000000000000000000000000000000000000000000ddf
+00000028888888888882000000000288a2888888888924000000000000000000bbbbbbbb01d5555b0000000000000000000000000000000000000000000000df
+0000002888888888882820000000028ea9999999999940000000000000000000bbbbbbb151111bbb0000000000000000000000000000000000000000000000df
+0000028888888888228820000000028800aaaaaaaaaaa9008800000800000000bbbbbb1151110bbb000000000000000000000000000000000000000000000ddf
+0000288888888822882882000000028e0a222222222292488880008880000000bbbbbb051111bbbb000000000000000000000000000000000000000000000ddf
+00028888888882882828820000000288a2888888888922418888088880000000bbbbb1151111bbbb000000000000000000000000000000000000000000000dff
+0028882288288288282882000000028ea2888aa2888924401888888810000000bbbb01115111bbbb000000000000000000000000000000000000000000000dff
+02888288882882882822882280000288aaaaa119999942400188888100000000bbbb0115111bbbbb000000000000000000000000000000000000000000000dff
+0288288222888828288228888000028ea222a119222922400888881000000000bbbb1501111bbbbb000000000000000000000000000000000000000000000000
+02828820028888288288828820000288a288a119288922408888888000000000bbb11d1d510bbbbb000000000000000000000000000000000000000000000000
+2882882028828882882888220028028ea2888992888922488881888800000000bbb1151010bbbbbb000000000000000000000000000000000000000000000000
+28882882282028882882888822882288a2888888888922488810188880000000bb11551111bbbbbb000000000000000000000000000000000000000000000000
 0288828288200288828828888882028ea28888888889240181000188100000000000000000000000000000000000000000000000000000000000000000000000
 00282882820022882882022222200288a99999999999400010000011000000000000000000000000000000000000000000000000000000000000000000000000
 0ddddd000ddddd0000000ddddddddddddddddddddd000ddddddddd000ddddd0000000ddddd0000000ddddddddd000ddddd000000000000000000000000000000
