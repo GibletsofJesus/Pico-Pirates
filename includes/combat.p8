@@ -209,7 +209,6 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 		else
 			p.x+=p.vx
 		end
-		--p.y+=(0.125*p.t)-(5*p.vy)
 		p.y=p.y0-(p.vy*5*p.t)+(0.125*p.t^2)
 		if p.y > 102 then
 			del(comb_objs,p)
@@ -223,21 +222,20 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 			for t in all(tentacles) do --tentacle collision
 				if aabbOverlap(t,p) then
 					del(comb_objs,p)
-					del(projectiles,p)
 					hit(enemy,rrnd(6,11))
 					sfx"10"
 					sfx"11"
 				end
 			end
 			if aabbOverlap(enemy,p) then --enemy collision
-				del(comb_objs,p)del(projectiles,p)
+				del(comb_objs,p)
 				hit(enemy,rrnd(12,18))
 				sfx"10"
 				sfx"11"
 			end
 		elseif not b then
 			if aabbOverlap(comb_boat,p) then --player collision
-				del(comb_objs,p)del(projectiles,p)
+				del(comb_objs,p)
 				hit(comb_boat,rrnd(10,14))
 				sfx"10"
 				sfx"11"
@@ -256,7 +254,6 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 			p.x1,p.y1=p.x,p.y
 	end}
 	add(comb_objs,proj)
-	add(projectiles,proj)
 end
 
 function dmgFlash(e)
@@ -398,7 +395,7 @@ end
 
 
 function hit(this,dmg)
-	flip()
+	flip""
 	this.hp,this.flashing,shakeTimer=max(0,this.hp-dmg),10,1
 	if this.isPlayer then
 		morale,this.flashing,playerHpTimer=this.hp,25,2
