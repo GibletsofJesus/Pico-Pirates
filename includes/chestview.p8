@@ -11,7 +11,7 @@ function init_island_chest_view()
 	music"1"
 	sand,staticSand,chestClouds,circTrans_start,circTrans_end,sandIndex,chestPos,chestCol={},{},{},t(),0,1,53,(currentcell.treasure*2)-1
 	for i=0,15 do
-		add(chestClouds,{x=rnd(72),y=rnd(4),r=rrnd(1,4)})
+		add(chestClouds,{x=rnd"72",y=rnd"4",r=rrnd(1,4)})
 	end
 	for _x=0,8,0.5 do
 		for _y=1,3 do
@@ -47,10 +47,10 @@ function update_island_chest_view()
 			if sandIndex<#sand+1 then
 				circTrans_end=t()+2
 				local grain=sand[sandIndex]
-				grain.vy-=4+rnd(2)
-				grain.vx=.5+rnd(1)
+				grain.vy-=rrnd(4,6)
+				grain.vx=rrnd(.5,1.5)
 				grain.r-=1.5
-				if (rnd"1">.5) grain.vx*=0xffff
+				if (halfprob()) grain.vx*=0xffff
 				sandIndex+=1
 				chestPos-=0.1
 				if (flr(chestPos)==44) sfx"8"

@@ -4,7 +4,8 @@ __lua__
 --Current cart stats (2/7/18)
 -- Token count 2023
 function comb_init(timeToFightAnOctopus)
-	camx,camy,comb_objs,victory=0,0,{},false
+  comb_boat=newComb_boat()
+	camx,camy,comb_objs,victory,comb_boat.hp,comb_boat.isPlayer,boat_message,txt_timer=0,0,{},false,morale,true,"aLL HANDS\nON DECK! ",0xfffa
 	camera(0,0)
 	for j=1,0,0xffff do
 		srand"1"
@@ -12,8 +13,6 @@ function comb_init(timeToFightAnOctopus)
 			newCombCloud(rnd"127"+j*2,rrnd(8,40)+j,rrnd(4,12)+j,7-j,rnd".5")
 		end
 	end
-	comb_boat=newComb_boat()
-	comb_boat.hp,comb_boat.isPlayer,boat_message,txt_timer=morale,true,"aLL HANDS\nON DECK! ",0xfffa
 	add(comb_objs,comb_boat)
 	if timeToFightAnOctopus then
 		enemyName,enemy="sEA MONSTER",newOctopus()
@@ -102,9 +101,9 @@ function newComb_boat()
 			if b.isPlayer then
 				if (btn"0") comb_boat_move(b,-.1)
 				if (btn"1") comb_boat_move(b,.1)
-				if (btn"4" and b.firecd==0) b.aim+=0.025
-				if (btn4 and not btn"4" and b.firecd==0 or b.aim>1) comb_boat_fire_projectile(b)
-				btn4=btn"4"
+				if (btn"5" and b.firecd==0) b.aim+=0.025
+				if (btn4 and not btn"5" and b.firecd==0 or b.aim>1) comb_boat_fire_projectile(b)
+				btn4=btn"5"
 			elseif morale>0 then
 				b.flipx=true
 				if (abs(comb_boat.x-b.x) < 48) comb_boat_move(b,.1)
@@ -135,6 +134,7 @@ function newComb_boat()
 					if not b.isPlayer and b.y>103 then
 						victory,txt_timer,currentcell.type,boat_message,npcBoat,victory_time,b.update,boatCell.type=true,0,"sea","gLORIOUS\nVICTORY! ",0,time()+.01,function()end,"sea"
 						if (rnd"1">.5) boat_message="eXCELLENT\nPIRATING MEN! "
+						score+=1000
 						sfx(29,0)
 						sfx(30,1)
 						music"2"
@@ -147,19 +147,22 @@ function newComb_boat()
 					b.draw=function(b)
 						b._draw(b)
 						if b.y>100 then
+							--game over
 							print_str('47414d45204f564552',24,40,8)
 						end
 						if b.y>105 then
+							--your crew abondonded
+							--the sinking ship
 							print_str('596f75722063726577206162616e646f6e6564',8,56,7)
 							print_str('7468652073696e6b696e672073686970',20,64,7)
 						end
 						if b.y>115 then
+							--you were not so cowardly
 							print_str('596f752077657265206e6f74',28,80,7)
 							print_str('736f20636f776172646c79',32,88,7)
 						end
 					end
 				end
-				--todo: work on me!
 			end
 			b.vx*=.95
 			b.x=mid(0,b.x+b.vx,120)
@@ -314,14 +317,12 @@ function newOctopus()
 							o.stepIndex=5
 						end
 					else
-						victory=true
-						boat_message="tAKE THAT,\nFOUL BEAST! "
-						txt_timer=0
 						sfx(29,0)
 						sfx(30,1)
 						music"2"
-						victory_time,enemy=time(),null
+						victory_time,enemy,victory,boat_message,txt_timer=time(),null,true,"tAKE THAT,\nFOUL BEAST! ",0
 						victory_time+=0.01
+						score+=1500
 						del(comb_objs,o)
 					end
 				end

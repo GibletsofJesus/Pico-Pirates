@@ -103,6 +103,10 @@ function rrnd(min,max)
 	return rnd(max-min)+min
 end
 
+function halfprob()
+	return rnd"2">1
+end
+
 function weighted_rnd(array)
 	local total=0
 	for a in all(array) do
