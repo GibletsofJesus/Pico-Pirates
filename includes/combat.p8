@@ -19,7 +19,8 @@ function comb_init(timeToFightAnOctopus)
 		add(comb_objs,enemy)
 	else
 		enemyName,enemy="eNEMY VESSEL",newComb_boat()
-		enemy.isPlayer,enemy.x=false,114
+  	if (timeToFightAnOctopus==null) enemyName="tHE pIRATE kING"
+		enemy.isPlayer,enemy.x=timeToFightAnOctopus,114
 	end
 	add(comb_objs,enemy)
 
@@ -79,13 +80,16 @@ function comb_boat_fire_projectile(b)
 	sfx"9"
 	local max,traj=0,0
 	if (b.isPlayer) max = extra_canons
+	if (b.isPlayer==null) max = 1
 	for i=0,max do
 		if (i>0) traj=rrnd(-.2,.2)
 		fireProjectile(2+b.x,5+b.y,b.flipx,1,b.vx+traj,b.aim+traj,b)
 	end
 	b.aim,b.firecd=.1,1
-	b.vx-=max
-	if (b.flipx) b.vx+=max*2
+  if b.isPlayer!=null then
+    b.vx-=max
+  	if (b.flipx) b.vx+=max*2
+  end
 end
 
 --combat comb_boat--
@@ -113,6 +117,7 @@ function newComb_boat()
 				local target=(abs(comb_boat.x-b.x)-4)/80
 
 				local a=0.01
+        if (b.isPlayer==null) a*=2
 				if (b.aim>target) a*=0xffff
 				b.aim+=a
 				if (b.firecd==0 and abs(b.aim-target)<.1 and b.flipx) comb_boat_fire_projectile(b)
@@ -132,7 +137,7 @@ function newComb_boat()
 				b.update=function(b)
 					b.y+=0.1
 					if not b.isPlayer and b.y>103 then
-						victory,txt_timer,currentcell.type,boat_message,npcBoat,victory_time,b.update,boatCell.type=true,0,"sea","gLORIOUS\nVICTORY! ",0,time()+.01,function()end,"sea"
+						victory,txt_timer,currentcell.type,boat_message,npcBoat,victory_time,b.update,boatCell.type=true,0,"sea","gLORIOUS\nVICTORY! ",0,time()+.01,function()b.y+=0.1 end,"sea"
 						if (rnd"1">.5) boat_message="eXCELLENT\nPIRATING MEN! "
 						score+=1000
 						sfx(29,0)
@@ -177,7 +182,11 @@ function newComb_boat()
 			pal(1,0)
 			local s=1
 			if (b.isPlayer) s=0
-			spr(s,b.x,b.y,1,1,b.flipx,false)
+  		if b.isPlayer!=null then
+        spr(s,b.x,b.y,1,1,b.flipx,false)
+      else
+        sspr(113,72,15,16,b.x-5,b.y-7,15,16,b.flipx)
+      end
 			pal()
 			if (b.firecd>0.9 and b.firecd<1.3) _circfill(b.x+4,b.y+5,1,b.firecd*25)
 		end
@@ -398,7 +407,8 @@ end
 
 function hit(this,dmg)
 	flip""
-	this.hp,this.flashing,shakeTimer=max(0,this.hp-dmg),10,1
+  dmg*=30
+  this.hp,this.flashing,shakeTimer=max(0,this.hp-dmg),10,1
 	if this.isPlayer then
 		morale,this.flashing,playerHpTimer=this.hp,25,2
 	else

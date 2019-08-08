@@ -11,66 +11,68 @@ function print_s(_x,_y,_l,c)
 
 	--Find index of letter to print and which colour layer to look at
 	local l=_l%7
-	local layer=(_l-l)/7
 
-	set_col_layer(1,layer)
-	_sspr(7*l,16,7,7,_x,_y-6)
-	set_col_layer(c,layer)
+  if (c!=1) print_s(_x,_y+1,_l,1)
+	set_col_layer(c,(_l-l)/7)
 	_sspr(7*l,16,7,7,_x,_y-7)
 	pal()
 end
 
 function print_l(_x,_y,_l,c)
 	local l=_l%7
-	local layer=(_l-l)/7
 
-	set_col_layer(1,layer)
-	_sspr(12*l,23,12,11,_x,_y-9)
-	set_col_layer(c,layer)
+	if (c!=1) print_l(_x,_y+1,_l,1)
+	set_col_layer(c,(_l-l)/7)
 	_sspr(12*l,23,12,11,_x,_y-10)
 	pal()
 end
 
 function print_xl(_x,_y,_l,c)
 	local l=_l%3
-	local layer=(_l-l)/3
+	if (c!=13) print_xl(_x,_y+1,_l,13)
 	for x=49,61 do
-		local wiggle=sin(t()*-.33+((_x+x)*.018))*2
-		set_col_layer(13,layer)
-		_sspr((12*l)+x,0,1,22,_x+x,_y+wiggle+1)
-		set_col_layer(c,layer)
-		_sspr((12*l)+x,0,1,22,_x+x,_y+wiggle)
+		set_col_layer(c,(_l-l)/3)
+		_sspr(12*l+x,0,1,22,_x+x,_y+sin(t()*-.33+((_x+x)*.018))*2)
 	end
 	pal()
 end
 
 function print_str(_str,x,y,c)
-	local str={}
+	local str,p={},x
 	for i=1,#_str,2 do
 		add(str,('0x'..sub(_str,i,i+1))+0)
 	end
-	local p=x
+  add(str,0x20)
+  --char  hex   dec
+  --A     41     65
+  --Z     5a     90
+	--a     61     97
+	--z     7a    122
 
 	-- for each letter
-	for s=0,#str-1 do
+	for s=0,#str-2 do
 		--if ascii value > 96, lower case letter
-		if str[s+1]>96 then
-			print_s(p,y,str[s+1]-97,c)
+		local v=str[s+1]
+		if v>96 then
+			print_s(p,y,v-97,c)
 			--move cursor for x position over by slightly smaller amount
 			-- since lower case letters are smaller than upper case (duh)
 			p+=6
 		else
-			print_l(p,y,str[s+1]-65,c)
-			p+=9
-			if (str[s+1]<65)p-=6
+			print_l(p,y,v-65,c)
+			if v<65 then
+				p+=5 --this must be spacing character
+			else
+				p+=9
+				if (str[s+2]<96)p-=1 --another upper case char
+			end
 		end
 	end
 end
 
 function set_col_layer(c,b)
-	b=2^b
 	for i=0,15 do
-		if (band(shl(i),b)>0) then
+		if band(shl(i),2^b)>0 then
 			pal(i,c)
 		else
 			palt(i,true)
