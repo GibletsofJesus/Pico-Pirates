@@ -2,22 +2,12 @@ pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
 
---Current cart stats (2/7/18)
--- Token count 524
+--Current cart stats (10/8/18)
+-- Token count 473
 
 function draw_map()
 	--Draw base map
-	local _y=camy+20
-	local _x=camx-mapPos+1
-
-	local x0s=stringToArray"124,124,0,0"
-	local x1s=stringToArray""
-
-	local _y=camy+20
-	local _x=camx-mapPos+1
-
-	--draw border of map
-	local e=stringToArray"124,0,3,104,107,18,3,104,true,true,124,0,3,104,107,18,3,104,true,false,124,0,3,104,0,18,3,104,false,true,124,0,3,104,0,18,3,104,false,false,0,58,109,3,2,16,109,3,false,false,0,58,109,3,2,121,109,3,false,true,★"
+	local _y,_x,e=camy+20,camx-mapPos+1,stringToArray"124,0,3,52,107,18,3,52,true,true,124,0,3,52,107,70,3,52,true,false,124,0,3,52,0,70,3,52,false,true,124,0,3,52,0,18,3,52,false,false,0,58,109,3,2,16,109,3,false,false,0,58,109,3,2,121,109,3,false,true,★"
 	for i=1,#e,10 do
 		sspr(e[i],e[i+1],e[i+2],e[i+3],_x+e[i+4],camy+e[i+5],e[i+6],e[i+7],e[i+8],e[i+9])
 	end
@@ -64,19 +54,14 @@ end
 function draw_morale_bar()
 	--"Morale"
 	print_str('4d6f72616c65a',camx+1,camy+11,7)
-	local x=camx+42
-	local y=camy+1
-	local _x=x+57
-	local l=lerp(57,0,morale/100)
-	local _l=lerp(57,0,prevMorale/100)
-	local _y=y+10
+	local x,y=camx+42,camy+1
+	local _x,l,_l,_y=x+57,lerp(57,0,morale/100),lerp(57,0,prevMorale/100),y+10
 
 	if playerHpTimer>0 then
 		 playerHpTimer=max(0,playerHpTimer-.1)
 		 if (playerHpTimer<=1) _l=lerp(l,_l,playerHpTimer)
 	else
-		prevMorale=morale
-		_l=l
+		prevMorale,_l=morale,l
 	end
 	--Drawing morale bar
 	_rectfill(x,y,_x,_y+1,1)

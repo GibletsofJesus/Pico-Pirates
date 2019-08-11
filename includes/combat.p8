@@ -19,7 +19,7 @@ function comb_init(timeToFightAnOctopus)
 		add(comb_objs,enemy)
 	else
 		enemyName,enemy="eNEMY VESSEL",newComb_boat()
-  	if (timeToFightAnOctopus==null) enemyName="tHE pIRATE kING"
+  	if (timeToFightAnOctopus==null) enemyName,enemy.w="tHE pIRATE kING",12
 		enemy.isPlayer,enemy.x=timeToFightAnOctopus,114
 	end
 	add(comb_objs,enemy)
@@ -78,15 +78,16 @@ end
 
 function comb_boat_fire_projectile(b)
 	sfx"9"
-	local max,traj=0,0
+	local max,traj=1,0
 	if (b.isPlayer) max = extra_canons
-	if (b.isPlayer==null) max = 1
-	for i=0,max do
+	if (b.isPlayer==null) max = 2
+	for i=1,max do
 		if (i>0) traj=rrnd(-.2,.2)
 		fireProjectile(2+b.x,5+b.y,b.flipx,1,b.vx+traj,b.aim+traj,b)
 	end
 	b.aim,b.firecd=.1,1
   if b.isPlayer!=null then
+    max=max*.5+1
     b.vx-=max
   	if (b.flipx) b.vx+=max*2
   end
@@ -153,7 +154,7 @@ function newComb_boat()
 						b._draw(b)
 						if b.y>100 then
 							--game over
-							print_str('47414d45204f564552',24,40,8)
+							print_str('47414d45204f564552',30,40,8)
 						end
 						if b.y>105 then
 							--your crew abondonded
@@ -185,9 +186,9 @@ function newComb_boat()
   		if b.isPlayer!=null then
         spr(s,b.x,b.y,1,1,b.flipx,false)
       else
-        sspr(113,72,15,16,b.x-5,b.y-7,15,16,b.flipx)
+        sspr(113,72,15,16,b.x,b.y-7,15,16,b.flipx)
       end
-			pal()
+			pal()  
 			if (b.firecd>0.9 and b.firecd<1.3) _circfill(b.x+4,b.y+5,1,b.firecd*25)
 		end
 	}
@@ -407,7 +408,7 @@ end
 
 function hit(this,dmg)
 	flip""
-  dmg*=30
+  if (enemyName == "tHE pIRATE kING" and not this.isPlayer) dmg/=3
   this.hp,this.flashing,shakeTimer=max(0,this.hp-dmg),10,1
 	if this.isPlayer then
 		morale,this.flashing,playerHpTimer=this.hp,25,2
