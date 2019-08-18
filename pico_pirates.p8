@@ -9,24 +9,26 @@ __lua__
 #include includes/hud.p8
 #include includes/topdown_boat_movement.p8
 
---Current cart stats (11/8/19)
--- Token count 8103 / 8192
---	remaining tokens:	 89
+--Current cart stats (18/8/19)
+-- Token count 8123 / 8192
+--	remaining tokens:	 69
 
-state,nextState,st_t,printStats=2,1,5,false
+state,nextState,st_t,printStats=0,1,5,false
 --0 splash screen
 --1 top down exploration
 --2 screen transition
 --3 side view combat
 --4 treasure view
 
-camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,3
+camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,-1,0
 
 function _init()
 	world_init""
-	while (cells[currentcellx][currentcelly].type!="sea") do
+	while (cells[currentcellx][currentcelly].type!="island") do
 		currentcellx,currentcelly=flr(rrnd(2,30)),flr(rrnd(2,30))
 	end
+	setcell()
+	init_island_chest_view()
 	for i=0,50 do
 		local cloud={
 			x=camx+rnd"127",y=camy+rnd"127",
@@ -225,7 +227,7 @@ function _draw()
 		pal()
 
 		if victory then
-		 local vt,cols=t""-victory_time,{}
+		 vt,cols=t""-victory_time,{}
 		 if enemyName=="tHE pIRATE kING" then
 			 txt_timer=0
 			 --congratulations!
@@ -253,15 +255,15 @@ function _draw()
 				 nextState,state,st_t,boat_message=1,2,0,"" del(comb_objs,enemy)
 				end
 			end
-			if (comb_boat.y>125 or vt > 10) then
-				print_u("fINAL SCORE: "..score,32,108)
-				if (t()%1>.15) print_u("pRESS x TO PLAY AGAIN",24,116)
-				if (btn"5") run()
-			end
 		elseif morale>0 then
 		 cannonLines(2+comb_boat.x,5+comb_boat.y,comb_boat)
 		 if (tentacles==null) cannonLines(2+enemy.x,5+enemy.y,enemy)
 		 drawEnemyHP""
+		end
+		if (comb_boat.y>125 or vt > 10) then
+			print_u("fINAL SCORE: "..score,32,108)
+			if (t()%1>.15) print_u("pRESS x TO PLAY AGAIN",24,116)
+			if (btn"5") run()
 		end
 		draw_morale_bar""
 	elseif state==4 then
