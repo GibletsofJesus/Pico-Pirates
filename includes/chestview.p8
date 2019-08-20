@@ -15,6 +15,10 @@ function init_island_chest_view()
 	}
 	if (chestCol==2 and compass_chunks > 2) chestCol=3
 
+	if (chestCol==1) extra_canons+=1
+	if (chestCol==2) compass_chunks+=1
+	if (chestCol==3) morale=min(morale+20,100)
+
 	for i=0,15 do
 		add(chestClouds,{x=rnd"72",y=rnd"4",r=rrnd(1,4)})
 	end
@@ -33,8 +37,8 @@ end
 
 function circTransition(x,y,t)
 	for i=72,t-16,-1 do
-		for _a in all(stringToArray"0,1,0xffff,★") do
-			circ(x,y+_a,i,0)
+		for j=-1,1 do
+			circ(x,y+j,i,0)
 		end
 	end
 end
@@ -51,7 +55,7 @@ function update_island_chest_view()
 				if (halfprob()) grain.vx*=0xffff
 				sandIndex+=1
 				chestPos-=0.1
-				if (flr(chestPos)==44 and chestCol>1) sfx"8" score+=(chestCol-1)*350
+				if (flr(chestPos)==44 and chestCol>1) sfx"8" score+=(chestCol-1)*35
 			end
 		end
 	end
@@ -59,7 +63,6 @@ end
 
 function draw_island_chest_view()
 	cls"12"
-	pal()
 	--draw clouds
 	for c in all(chestClouds) do
 		c.x+=c.r*.05
@@ -87,14 +90,16 @@ function draw_island_chest_view()
 	if flr(chestPos)==44 then
 		sspr(32,34,18,13,23,chestPos-6,18,13)--draw open chest
 		pal()
+		firstChest=false
 		print_u(({"   yOU FOUND\nANOTHER CANNON!","yOU FOUND A BIT\n OF A COMPASS!","yOU FOUND SOME\n	 TREASURE!","   bAH! iT'S\n    empty!"})[chestCol],4,15,10,0)
 		--draw chest contents
-		if (chestCol==1) pal(11,0)_sspr(57,42,14,16,26,29)extra_canons+=1
-		if (chestCol==2) _sspr(72,40,13,14,23,29) compass_chunks+=1--compass
-	  if (chestCol==3)	_sspr(50,34,12,5,24,39) morale=min(morale+20,100)--treasure
+		if (chestCol==1) pal(11,0)_sspr(57,42,14,16,26,29)
+		if (chestCol==2) _sspr(72,40,13,14,23,29) --compass
+	  if (chestCol==3)	_sspr(50,34,12,5,24,39) --treasure
 	else
 		--draw closed chest
 		_sspr(32,47,15,11,23-sin(chestPos/1.5)*.5,chestPos-4)
+		pal()
 		--draw sand particles
 		for s in all(sand) do
 			if (s.vx!=0) s.r-=0.1 s.vy+=0.5
@@ -102,6 +107,7 @@ function draw_island_chest_view()
 			s.y+=s.vy
 			circfill(s.x,s.y,s.r,15)
 		end
+		if(t()%.5>.25 and firstChest)print_u("dIG! ❎",18,16,10)
 	end
 
 

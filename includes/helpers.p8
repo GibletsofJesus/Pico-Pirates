@@ -1,8 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
---Current cart stats (2/7/18)
--- Token count 567
+--Current cart stats (20/8/18)
+-- Token count 528
 
 function stringToArray(str)
 	local a,l={},0
@@ -23,20 +23,19 @@ function stringToArray(str)
 	return a
 end
 
-function spr_rot(sx,sy,swh,dx,dy,rot,depth)
-	local s=sin(rot)
-	local c=cos(rot)
-	local size = swh/2
-	local _b=(s*s+c*c)
-	local w = sqrt(size^2*2)
+function spr_rot(sx,sy,swh,dx,dy,rot,depth,circ)
+	local s,c,size=sin(rot),cos(rot),swh/2
+	local _b,w,spacing,r=(s*s+c*c),sqrt(size^2*2),1,0
+	if (circ) spacing,r=3,2
 	for y=-w,w do
 		for x=-w,w do
-			local ox=(s*y+c*x)/_b+size
-			local oy=(-s*x+c*y)/_b+size
+			local ox,oy=(s*y+c*x)/_b+size,(-s*x+c*y)/_b+size
 			if ox<swh and oy<swh and ox>0 and oy>0 then
 				for d=0,depth do
 					local col=sget(ox+sx+d*12,oy+sy)
-					if(col>0)_pset(dx+x,dy+y-d,col)
+					if col>0 then
+						_circfill(dx+x*spacing,dy+(y-d)*spacing,r,col)
+					end
 				end
 			end
 		end
@@ -71,17 +70,6 @@ function print_u(s,x,y,c,u)
 	if (c==nil)c,u=7,1
 	?s,x,y+1,u
 	?s,x,y,c
-end
-
-shakeX,shakeY,shakeTimer=0,0,0
-function screenShake()
-	if shakeTimer > 0 then
-		shakeX,shakeY=rrnd(0xfffc,4),rrnd(0xfffc,4)
-		shakeTimer-=.33
-	else
-		shakeX,shakeY=0,0
-	end
-	camera(shakeX,shakeY)
 end
 
 function aabbOverlap(a,b)

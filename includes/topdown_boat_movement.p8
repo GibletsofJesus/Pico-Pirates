@@ -13,8 +13,8 @@ function boat_update(b)
 	local speed,c,s=.05,cos(b.r),sin(b.r)
 	local sc=(s*s)+(c*c)
 
-		b.mx+=cellwindy*.05
-		b.my-=cellwindx*.05
+	b.mx+=cellwindy*.05
+	b.my-=cellwindx*.05
 	if b.player then
 		if(btn"0") b.r=b.r%1+.01
 		if(btn"1") b.r=b.r%1-.01
@@ -35,7 +35,7 @@ function boat_update(b)
 		-- easily exceed pico 8's max int value
 		dist=sqrt(abs(((b.y-by)/100)^2+((b.x-bx)/100)^2))
 		b.r=lerp(b.r,angle+.5,.1)
-		if dist>4 then
+		if dist>4 and compass_chunks<3 then
 			npcBoat=0
 			return
 		else
@@ -73,14 +73,14 @@ end
 
 function boat_draw(b)
 	if t()%.25==0 then
-		newWave(b.x-sin(b.r)*4,
-		b.y+cos(b.r)*4)
+		newWave(b.x-sin(b.r)*4,b.y+cos(b.r)*4)
 	end
 	pal(0,5)
 	if not b.player then
 		pal(4,2)pal(15,6)pal(7,13)pal(9,15)
-		if (dist<.25) nextState,state,st_t,boat_message,dist,npcBoat=5,2,0,"",512,0
+		if (dist<.25) nextState,state,st_t,boat_message,dist=5,2,0,"",512
 	end
-	spr_rot(-2,76,12,flr(b.x),flr(b.y),b.r,6)
+	spr_rot(-2,76,12,flr(b.x),flr(b.y),b.r,6,b.player==null)
+
 	pal()
 end

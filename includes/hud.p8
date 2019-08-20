@@ -40,15 +40,20 @@ function draw_minimap()
 	print_u(currentcellx,camx+102,camy+5)
 	print_u(currentcelly,camx+116,camy+18)
 	_rectfill(camx+111,camy,camx+127,camy+16,12)
-	_rect(camx+111,camy,camx+127,camy+16,7)
 	if (celltype=="island") _circfill(camx+119,camy+8,island_size/16,15)
 	--player indicator on minimap
-	_pset(camx+112+minimapPos(boat.x),camy+1+minimapPos(boat.y),4)
-	if (npcBoat!=0) _pset(camx+112+minimapPos(npcBoat.x),camy+1+minimapPos(npcBoat.y),2)
+	minimapPos(boat,4)
+	if (npcBoat!=0) minimapPos(npcBoat,2)
+
+	_rect(camx+111,camy,camx+127,camy+16,7)
 end
 
-function minimapPos(value)
-	return min((value+256)/512*14,111)
+function minimapPos(boat_obj,c)
+	_pset(camx+lerp(112,127,minimapLerpVal(boat_obj.x)),camy+lerp(1,15,minimapLerpVal(boat_obj.y)),c)
+end
+
+function minimapLerpVal(value)
+	return mid(0,(value+256)/512,1)
 end
 
 function draw_morale_bar()
