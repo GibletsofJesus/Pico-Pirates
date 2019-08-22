@@ -57,7 +57,7 @@ canvas{
   cursor: pointer;
   background-color: #0000;
   padding: 18px;
-  width: 550px;
+  width: 750px;
   border: none;
   text-align: center;
   outline: none;
@@ -68,17 +68,34 @@ canvas{
 	text-align: left
 }
 
-
-.active, .collapsible:hover {
-  background-color: #ccc;
-}
-
 .content {
   padding: 0px;
   max-height: 0;
   width: 535px;
   overflow: hidden;
   transition: max-height 0.2s ease-out;
+}
+.image {
+    position:relative;
+    width:400px;
+    height:400px;
+}
+.image img {
+    width:100%;
+    vertical-align:top;
+}
+.image:after {
+    content:'\A';
+    position:absolute;
+    width:100%; height:100%;
+    top:0; left:0;
+    background:rgba(0,0,0,0.6);
+    opacity:0;
+    transition: all 0.5s;
+    -webkit-transition: all 0.5s;
+}
+.image:hover:after {
+    opacity:1;
 }
 
 </STYLE>
@@ -166,12 +183,14 @@ canvas{
 	
 	<h3>⬇  FAQs ⬇ </h3>
 	
-	<button class="collapsible">What is Pico Pirates?</button>
+	
+	
+	<button class="collapsible"><img src="what is pico pirates.png" onmouseover="this.style='filter: brightness(.75)'" onmouseout="this.style='filter: brightness(1);'"/></button>
 	<div class="content">
-		<p>Pico Pirates is a exploration based pirating game featuring treasure, monsters and beautiful sandy beaches! Each encounter and island is the product procedural generation providing a huge world to explore and a fresh experience every time you play!<p>
+		<p>Pico Pirates is a exploration based pirating game featuring treasure, monsters and beautiful sandy beaches! Each encounter and island is the product of procedural generation providing a huge world to explore and a fresh experience every time you play!<p>
 		<p>This is a game I've been working on and off for about a year now. What started as a basic tech demo quickly feature-creeped it's way up to the scope of a full project and now I'm nearing Pico 8's technical limitations (namely token count) I think it's time to start seriously think about finishing this one up.</p><p>My current goal is to have everything done and dusted by the end of year. How hard can it be?</p>
 	</div>
-	<button class="collapsible">How do I play?</button>
+	<button class="collapsible"><img src="how do I play.png" onmouseover="this.style='filter: brightness(.75)'" onmouseout="this.style='filter: brightness(1);'"></button>
 	<div class="content">
 		<h4>MAIN OBJECTIVES</h4>
 		<li>Collect treasure!</li>
@@ -183,22 +202,26 @@ canvas{
 		<li>ENTER Show pause menu</li>
 		<h4>
 	</div>
-	<button class="collapsible">What's new in this version?</button>
+	<button class="collapsible"><img src="whats new.png" onmouseover="this.style='filter: brightness(.75)'" onmouseout="this.style='filter: brightness(1);'"></button>
 	<div class="content">
 		<li>Boat on boat combat!</li>
 		<li>A Dark Souls style victory screen!</li>		
 		<li>Lots of bug fixes</li>
 	</div>
-	<button class="collapsible"><img src="placeholder.png"></button>
+	<button class="collapsible"><img src="whats next.png" onmouseover="this.style='filter: brightness(.75)'" onmouseout="this.style='filter: brightness(1);'"></button>
 	<div class="content">
 		<ul>Different treasures!</ul>
 		<ul>Full morale system!</ul>		
 		<ul>Quests!</ul>
 		<ul>A big number telling you how good at video games you are!</ul>
 	</div>
-	<button class="collapsible">How can I hear about updates?</button>
+	<button class="collapsible"><img src="updates.png"  onmouseover="this.style='filter: brightness(.9)'" onmouseout="this.style='filter: brightness(1);'"></button>
 	<div class="content">
 		<p>You can follow me on <a href="http://ctinney94.itch.io">itch.io</a> to get updates on major releases or follow me on <a href="https://twitter.com/ctinney94">Twitter</a> for all minor developments as well as my more personal ramblings.</p>
+	</div>
+	<button class="collapsible"><img src="something broke.png"  onmouseover="this.style='filter: brightness(.9)'" onmouseout="this.style='filter: brightness(1);'"></button>
+	<div class="content">
+		<p>Oh no!</p><p><a href="mailto:ctinney94@gmail.com">Shoot me an email</a> or <a href="https://twitter.com/ctinney94">tweet at me</a> so I can fix it!</p>
 	</div>
 	</div>
 	</center>

@@ -1,0 +1,93 @@
+* {
+	padding:0;
+	margin:0;
+}
+
+body {
+	color: #333;
+	font: 14px Sans-Serif;
+	padding: 50px;
+	margin: auto;
+	max-width: 420px;
+	background: #eee;
+}
+
+h1 {
+	text-align: center;
+	padding: 20px 0 12px 0;
+	margin: 0;
+}
+h2 {
+	font-size: 16px;
+	text-align: center;
+	padding: 0 0 12px 0; 
+}
+
+#container {
+	box-shadow: 0 5px 10px -5px rgba(0,0,0,0.5);
+	position: center;
+	background: white; 
+}
+
+table {
+	background-color: #F3F3F3;
+	width: 100%;
+	margin: 15px 0;
+}
+
+th {
+	background-color: #FF77A8;
+	color: #FFF;
+	cursor: pointer;
+	padding: 5px 10px;
+}
+
+th small {
+	font-size: 9px; 
+}
+
+td, th {
+	text-align: center;
+}
+a {
+	text-decoration: none;
+	text-align: center;
+	font-size: 12px;
+}
+
+td a {
+	color: #663300;
+	display: block;
+	padding: 5px 10px;
+	text-decoration: none;
+}
+th a {
+	padding-left: 0;
+}
+
+td:first-of-type a {
+	padding-left: 35px;
+	text-decoration: none;
+}
+th:first-of-type {
+	padding-left: 35px;
+}
+
+td:not(:first-of-type) a {
+	background-image: none !important;
+} 
+
+tr:hover td {
+	background-color:#CACACA;
+}
+
+tr:hover td a {
+	color: #000;
+}
+
+/* directories */
+table tr.dir td:first-of-type a
+{
+	background-repeat: no-repeat;
+	background-position: 150px 3px
+}
