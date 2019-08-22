@@ -355,30 +355,6 @@ function dmgFlash(e)
 	if (t()%.01>.005 and e.flashing>0) pal_all"7"
 end
 
-function drawEnemyHP()
-	?enemyName,4,114,0
-	?enemyName,4,113,7
-	rect(4,120,123,126,0)
-	local barLength0=lerp(0,118,enemy.hp/100)
-	local barLength1=lerp(0,118,enemyPrevHp/100)
-	if enemyHpTimer>0 then
-		 enemyHpTimer=max(0,enemyHpTimer-.075)
-		 if (enemyHpTimer<=1) barLength1=lerp(barLength0,barLength1,enemyHpTimer)
-	else
-		enemyPrevHp=enemy.hp
-		barLength1=barLength0
-	end
-	_rectfill(5,119,5+barLength1,124,14)
-
-	--true hp bar
-	_rectfill(5,119,5+barLength0,124,8)
-
-	_rect(4,119,5+barLength1,124,2)
-
-	--HP bar outline
-	_rect(4,119,123,125,7)
-end
-
 function hit(this,dmg)
 	flip""
   if (enemyName == "tHE pIRATE kING" and not this.isPlayer) dmg/=3
