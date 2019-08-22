@@ -451,7 +451,7 @@ function _draw()
 		end
     if comb_boat != null then
 			if (comb_boat.y>125 or vt > 10) then
-				print_u("fINAL SCORE: "..score.."yOUR SEED WAS "..seed,32,108)
+				print_u("fINAL SCORE: "..score.."yOUR SEED WAS "..world_seed,32,108)
 				if (t()%1>.15) print_u("pRESS x TO PLAY AGAIN",24,116)
 				if (btn"5") run()
 			end
