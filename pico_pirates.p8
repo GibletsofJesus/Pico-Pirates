@@ -27,9 +27,9 @@ enemy_ship_prob=0.4
 #include includes/hud.p8
 #include includes/topdown_boat_movement.p8
 
---Current cart stats (21/8/19)
--- Token count 8092 / 8192
---	remaining tokens:	 100
+--Current cart stats (22/8/19)
+-- Token count 8185 / 8192
+--	remaining tokens:	 7
 
 -- state key
 --0 splash screen
@@ -38,8 +38,8 @@ enemy_ship_prob=0.4
 --3 side view combat
 --4 treasure view
 
-camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,seed,nextState,st_t,state=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,5,0
---     -2   -2
+camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,0xfffe,0xfffe
+--     5 0
 function _init()
 	boat.max=3
 
@@ -77,7 +77,7 @@ function _update()
 		if btnp(5) then
 			state,st_t=2,0
 			--Initialise world
-			srand(seed)
+			srand(world_seed)
 			for cx=0,31 do
 				local subcell={}
 				add(cells,subcell)
@@ -179,14 +179,20 @@ function _update()
 end
 
 function _draw()
-	cls()
+	if (state<1) cls()
 	if state==-2 then
-		print_str('412067616d65206d616465206279',24,60,7)
-		print_str('43726169672054696e6e6579',26,72,12)
+		--A game made by
+		print_str('412067616d65206d616465206279',23,60,7)
+		--Craig Tinney
+		print_str('43726169672054696e6e6579',25,72,12)
+		?"@CTINNEY94",45,75,1
 		if (t()>3) state=0xffff
-	elseif state==-1 then
-		print_u("with music by",24,60,7)
-		print_u("@gruber",26,72,12)
+	elseif state==0xffff then
+		--With music by
+		print_str('57697468206d75736963206279',24,60,7)
+		--Chris Donnelly
+		print_str('436872697320446f6e6e656c6c79',19,72,12)
+		?"@GRUBER_MUSIC",39,75,1
 		if (t()>6) state=0
 	elseif state==0 then
 		--ico
@@ -207,20 +213,18 @@ function _draw()
 		--pirates
 		for i=1,7 do
 			print_xl(stringToArray"-12,-2,11,23,31,43,55,★"[i],32,stringToArray"0,3,4,5,7,8,9,★"[i],7)
+			print_str(({'5072657373','58','746f207374617274'})[min(i,3)],stringToArray"16,52,64,64,64,64,64,★"[i],110+sin(t""*.5)*4,stringToArray"7,8,7,7,7,7,7,★"[i])
 		end
 
-		for i=1,3 do
-			print_str(({'5072657373','58','746f207374617274'})[i],stringToArray"16,52,64,★"[i],110+sin(t""*.5)*4,stringToArray"7,8,7,★"[i])
-		end
-
-		print_u("wORLD GEN SEED: ",30,72)
-		print_u(seed,96,72)
+		--world gen seed
+		print_str('576f726c642067656e2073656564',15,78,7)
+		print_u(": "..world_seed,101,72)
 		s=2
-		if (btn(2)) s=5 seed+=1
-    spr(s,94,66)s=18
-		if (btn(3)) s=21 seed-=1
-		seed=mid(0,seed,99)
-		spr(s,94,79)
+		if (btn(2)) s=5 world_seed+=1
+    spr(s,108,66)s=18
+		if (btn(3)) s=21 world_seed-=1
+		world_seed=mid(0,world_seed,99)
+		spr(s,108,79)
 	elseif state==1 then
 		camera(camx,camy)
 		cls"12"
@@ -245,10 +249,8 @@ function _draw()
 		end
 		boat_draw(boat)
 		if (npcBoat!=0) boat_draw(npcBoat)
-		if drawClouds then
-			for c in all(clouds) do
-				c.draw(c)
-			end
+		for c in all(clouds) do
+			c.draw(c)
 		end
 
 		--draw minimap
@@ -481,7 +483,6 @@ function _draw()
 		end
 	end
 
-
 	if st_t>1	and st_t < 1.5 and state!=4 then
 		st_spiral_in()
 	end
@@ -497,8 +498,7 @@ end
 
 --check land collision
 function checklandcol(x,y,r)
-	local j=stringToArray"-r*2,0,.75,.25,★"
-	local bool=false
+	local j,bool=stringToArray"-r*2,0,.75,.25,★",false
 	for i in all(j) do
 		bool=bool or pget(x-sin(r+i)*8,y+cos(r+i)*8)==15
 	end
@@ -525,7 +525,7 @@ function cell_shift(x,y)
 end
 
 function setcell()
-	currentcell=cells[currentcellx][currentcelly]
+	currentcell,	player_speed=cells[currentcellx][currentcelly],1
 	if (not currentcell.visited) score+=1
 	currentcell.visited,cellwindx,cellwindy,cellseed,celltype=true,mid(-.5,currentcell.windy,.5),mid(-.5,currentcell.windx,.5),currentcell.seed,currentcell.type
 	if celltype=="island" then
@@ -568,7 +568,7 @@ function island_draw()
 		_circfill(b.x+(b.r0*8),b.y+(b.r0*8),b.rad/15,6)
 	end
 
-	if (island_size > 8) _circfill(0,0,island_size*.8,6)
+	if (island_size > 8) _circfill(0,0,island_size*.8)
 	if (island_size > 16) _circfill(0,0,island_size*.5,4)
 
 	fillp(fillps[2],-camx,-camy)
@@ -594,7 +594,6 @@ function island_draw()
 	end
 
 	if player_draw  then
-		player_speed=1
 		local c=pget(player_x,player_y)
 		if (c==12) player_speed=.1
 		if player_fp_dist>2 then
@@ -698,8 +697,7 @@ function boat_text_process()
 			end
 		else
 			if celltype=="sea" then
-				local xs,ys,dirs=stringToArray"-1,1,0,0,★",stringToArray"0,0,1,-1,★",{"WEST","EAST","SOUTH","NORTH"}
-				boat_message,txt_timer="cLEAR HORIZONS... ",0
+				xs,ys,dirs,boat_message,txt_timer=stringToArray"-1,1,0,0,★",stringToArray"0,0,1,-1,★",{"WEST","EAST","SOUTH","NORTH"},"cLEAR HORIZONS... ",0
 				for i=1,#xs do
 					local cellToCheck=cells[flr(mid(1,currentcellx+xs[i],31))][flr(mid(1,currentcelly+ys[i],31))]
 					if not cellToCheck.visited and cellToCheck.type=="island" then
