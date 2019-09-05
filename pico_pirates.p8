@@ -4,20 +4,7 @@ __lua__
 --pico pirates
 --by craig tinney (ctinney94)
 
-fully_reveal_map_at_start=true
-
---[[
- chances for objects to be
- spawned for each world cell
-
- objects listed here in
- prority of spawning
- i.e. roll for island, then
- roll for octopus etc.
- ]]--
-island_prob=0.075
-octopus_prob=0.3
-enemy_ship_prob=0.4
+fully_reveal_map_at_start=false
 
 #include includes/font_functions.p8
 #include includes/helpers.p8
@@ -28,8 +15,8 @@ enemy_ship_prob=0.4
 #include includes/topdown_boat_movement.p8
 
 --Current cart stats (21/8/19)
--- Token count 8092 / 8192
---	remaining tokens:	 100
+-- Token count 8178 / 8192
+--	remaining tokens:	 14
 
 -- state key
 --0 splash screen
@@ -38,11 +25,10 @@ enemy_ship_prob=0.4
 --3 side view combat
 --4 treasure view
 
-camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,seed,nextState,st_t,state=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,5,0
---     -2   -2
+camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,seed,nextState,st_t,state=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,-2,-2
+ 
 function _init()
 	boat.max=3
-
 	for i=0,50 do
 		add(clouds,{
 			x=camx+rnd"127",y=camy+rnd"127",
@@ -72,6 +58,7 @@ function _init()
 	end
 end
 
+
 function _update()
 	if state==0 then
 		if btnp(5) then
@@ -89,11 +76,11 @@ function _update()
 
 					local _type="sea"
 
-					if rnd"1">1-island_prob then
+					if rnd"1">.925 then
 						 _type="island"
-					 elseif rnd"1">1-octopus_prob then
+					 elseif rnd"1">.7 then
 		 				 _type="enemy"
-		 			elseif rnd"1">1-enemy_ship_prob then
+		 			elseif rnd"1">.6 then
 						 _type="boat"
 					end
 					add(subcell,{type=_type,treasure=weighted_rnd({1,1.5,2,2.5}),seed=rnd"4096",windx=wx,windy=wy,visited=fully_reveal_map_at_start})
@@ -179,14 +166,14 @@ function _update()
 end
 
 function _draw()
-	cls()
+	if (state!=2)cls()
 	if state==-2 then
 		print_str('412067616d65206d616465206279',24,60,7)
 		print_str('43726169672054696e6e6579',26,72,12)
 		if (t()>3) state=0xffff
 	elseif state==-1 then
-		print_u("with music by",24,60,7)
-		print_u("@gruber",26,72,12)
+		print_str('57697468206d75736963206279',24,60,7)
+		print_str('477275626572',42,72,12)
 		if (t()>6) state=0
 	elseif state==0 then
 		--ico
@@ -328,7 +315,6 @@ function _draw()
 			end
 		elseif once then
 				--"Loading"
-				cls""
 				print_str('4c6f6164696e67',76,127,12)
 				flip""
 				for _x=1,#cells do
@@ -483,16 +469,14 @@ function _draw()
 
 
 	if st_t>1	and st_t < 1.5 and state!=4 then
-		st_spiral_in()
+		--st_spiral_in
+		fillp((stringToArray"0,1.5,3.5,7.5,15.5,143.5,2191.5,-30576.5,-14192.5,-6000.5,-1904.5,-1648.5,-1632.5,-1600.5,-1536.5,-512.5,★")[ceil((st_t-1)*32)])
+		_rectfill(camx,camy,camx+128,camy+128,0)
+		fillp""
 	end
 
  tempFlip=false
-end
-
-function st_spiral_in()
-	fillp((stringToArray"0,1.5,3.5,7.5,15.5,143.5,2191.5,-30576.5,-14192.5,-6000.5,-1904.5,-1648.5,-1632.5,-1600.5,-1536.5,-512.5,★")[ceil((st_t-1)*32)])
-	_rectfill(camx,camy,camx+128,camy+128,0)
-	fillp""
+  r=4 pal(r,r+128,1)
 end
 
 --check land collision
@@ -911,3 +895,4 @@ __music__
 00 23244344
 00 25244344
 02 25264344
+
