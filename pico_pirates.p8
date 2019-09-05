@@ -15,8 +15,8 @@ fully_reveal_map_at_start=false
 #include includes/topdown_boat_movement.p8
 
 --Current cart stats (21/8/19)
--- Token count 8178 / 8192
---	remaining tokens:	 14
+-- Token count 8165 / 8192
+--	remaining tokens:	 27
 
 -- state key
 --0 splash screen
@@ -25,8 +25,8 @@ fully_reveal_map_at_start=false
 --3 side view combat
 --4 treasure view
 
-camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,seed,nextState,st_t,state=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,-2,-2
- 
+camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,-2,-2
+
 function _init()
 	boat.max=3
 	for i=0,50 do
@@ -477,7 +477,6 @@ function _draw()
 	end
 
  tempFlip=false
-  r=4 pal(r,r+128,1)
 end
 
 --check land collision
@@ -893,4 +892,3 @@ __music__
 00 23244344
 00 25244344
 02 25264344
-
