@@ -11,7 +11,6 @@ end
 
 function boat_update(b)
 	local speed,c,s=.05,cos(b.r),sin(b.r)
-	local sc=(s*s)+(c*c)
 
 	b.mx+=cellwindy*.05
 	b.my-=cellwindx*.05
@@ -44,8 +43,7 @@ function boat_update(b)
 		end
 	end
 	b.mx,b.my=mid(-b.max,b.mx,b.max),mid(-b.max,b.my,b.max)
-	sc=abs(b.mx*b.my)
-	b.d+=sc
+	b.d+=abs(b.mx*b.my)
 	if (flr(b.d)>2) newWave(b.x-sin(b.r)*4,b.y+cos(b.r)*4) b.d=0
 
 	if b.player or celltype!="island" then
@@ -64,9 +62,8 @@ function boat_update(b)
 			camy=flr(b.y-72)
 		end
 		if checklandcol(b.x,b.y,b.r) and not player_draw then
-			player_draw=true
 			sfx"3"
-			player_x,player_y,b.mx,b.my=b.x+sin(b.r)*8,b.y-cos(b.r)*8,0,0
+			player_draw,player_x,player_y,b.mx,b.my=true,b.x+sin(b.r)*8,b.y-cos(b.r)*8,0,0
 		end
 	end
 end
