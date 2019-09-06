@@ -20,7 +20,7 @@ function boat_update(b)
 		if btn"2" then
 			b.mx+=s*speed
 			b.my-=c*speed
-			sfx"0"
+			sfx"44"
 		else
 			b.mx*=.99
 			b.my*=.99
@@ -62,7 +62,7 @@ function boat_update(b)
 			camy=flr(b.y-72)
 		end
 		if checklandcol(b.x,b.y,b.r) and not player_draw then
-			sfx"3"
+			sfx"47"
 			player_draw,player_x,player_y,b.mx,b.my=true,b.x+sin(b.r)*8,b.y-cos(b.r)*8,0,0
 		end
 	end
@@ -75,7 +75,7 @@ function boat_draw(b)
 	pal(0,5)
 	if not b.player then
 		pal(4,2)pal(15,6)pal(7,13)pal(9,15)
-		if (dist<.25) nextState,state,st_t,boat_message,dist=5,2,0,"",512
+		if (dist<.25) nextState,state,st_t,boat_message,dist=5,2,0,"",512 music"10"
 	end
 	spr_rot(-2,76,12,flr(b.x),flr(b.y),b.r,6,b.player==null)
 

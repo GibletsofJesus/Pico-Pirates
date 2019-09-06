@@ -46,9 +46,9 @@ function comb_init(timeToFightAnOctopus)
   							o.stepIndex=5
   						end
   					else
-  						sfx(29,0)
-  						sfx(30,1)
-  						music"2"
+        --victory jinlge
+  						sfx(52,0)
+  						music"63" --stop playing music
   						victory_time,enemy,victory,boat_message,txt_timer=time(),null,true,"tAKE THAT,\nFOUL BEAST! ",0
   						victory_time+=0.01
   						score+=150
@@ -126,8 +126,6 @@ function comb_init(timeToFightAnOctopus)
 		enemy.isPlayer,enemy.x=timeToFightAnOctopus,114
 	end
 	add(comb_objs,enemy)
-
-	music(0,0)
 end
 
 --get corrected array value for water
@@ -154,11 +152,11 @@ function comb_boat_move(obj,m)
 	obj.vx,obj.flipx,x=mid(-1.5,obj.vx+m,1.5),m<0,18
 	if (m<0) x=23
 	wpts[mid(1,flr(obj.x+x),160)]-=.7
-	sfx"0"
+	sfx"44"
 end
 
 function comb_boat_fire_projectile(b)
-	sfx"9"
+	sfx"53"
 	local max,traj,size,x,y=1,0,1,b.x,b.y
 	if (b.isPlayer) max=extra_canons
 	if (b.isPlayer==null) max,size=2,2 x+=12 y+=18
@@ -209,15 +207,15 @@ function newComb_boat()
 
 			if b.flashing<=0 and enemy!=null then
 				if b.isPlayer and enemy.hp>0 then
-					if (aabbOverlap(b,enemy)) hit(b,rrnd(12,17)) sfx"13"
+					if (aabbOverlap(b,enemy)) hit(b,rrnd(12,17)) sfx"57"
 				end
 				for t in all(tentacles) do
-					if (aabbOverlap(b,t)) hit(b,rrnd(12,17)) sfx"13"
+					if (aabbOverlap(b,t)) hit(b,rrnd(12,17)) sfx"57"
 				end
 			end
 			if b.hp<=0 then
 				sfx"27"
-				music"2"
+				music"63" --stop playing music
 				b.update=function(b)
 					b.y+=0.1
 					if not b.isPlayer and b.y>103 then
@@ -226,7 +224,7 @@ function newComb_boat()
 						score+=100
 						sfx(29,0)
 						sfx(30,1)
-						music"2"
+						music"63" --stop playing music
 					end
 				end
 
@@ -305,7 +303,7 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 		p.y=p.y0-(p.vy*5*p.t)+(.125*p.t^2)
 		if p.y > 102 then
 			del(comb_objs,p)
-			sfx"11"
+			sfx"61"
 			for i=p.x+15,p.x+17 do
 				wpts[mid(1,flr(i),160)]-=10
 			end
@@ -316,22 +314,22 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 				if aabbOverlap(t,p) then
 					del(comb_objs,p)
 					hit(enemy,rrnd(6,11))
-					sfx"10"
-					sfx"11"
+					sfx"59"
+					sfx"61"
 				end
 			end
 			if aabbOverlap(enemy,p) then --enemy collision
 				del(comb_objs,p)
 				hit(enemy,rrnd(12,18))
-				sfx"10"
-				sfx"11"
+				sfx"59"
+				sfx"61"
 			end
 		elseif not b then
 			if aabbOverlap(comb_boat,p) then --player collision
 				del(comb_objs,p)
 				hit(comb_boat,rrnd(10,14))
-				sfx"10"
-				sfx"11"
+				sfx"59"
+				sfx"61"
 			end
 		end
 	end,
