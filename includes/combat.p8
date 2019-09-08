@@ -156,7 +156,7 @@ function comb_boat_move(obj,m)
 end
 
 function comb_boat_fire_projectile(b)
-	sfx"58"
+	sfx"48"
 	local max,traj,size,x,y=1,0,1,b.x,b.y
 	if (b.isPlayer) max=extra_canons
 	if (b.isPlayer==null) max,size=2,2 x+=12 y+=18
@@ -214,20 +214,19 @@ function newComb_boat()
 				end
 			end
 			if b.hp<=0 then
-				sfx"27"
-				music"63" --stop playing music
 				b.update=function(b)
 					b.y+=0.1
 					if not b.isPlayer and b.y>103 then
 						victory,txt_timer,currentcell.type,boat_message,npcBoat,victory_time,b.update,boatCell.type=true,0,"sea","gLORIOUS\nVICTORY! ",0,time()+.01,function()b.y+=0.1 end,"sea"
 						if (rnd"1">.5) boat_message="eXCELLENT\nPIRATING MEN! "
 						score+=100
-						sfx"57"
-						music"63" --stop playing music
+						music"28"
 					end
 				end
 
 				if b.isPlayer then
+ 				sfx"58"
+  			music"63" --stop playing music
 					boat_message,txt_timer="abandon ship!",0
 					b._draw=comb_boat.draw
 					b.draw=function(b)
@@ -250,13 +249,12 @@ function newComb_boat()
 				end
 			end
 			b.vx*=.95
-			b.x=mid(0,b.x+b.vx,120)
-			local j=0
+			b.x,j=mid(0,b.x+b.vx,120),0
 			for i=3,5 do
 				j+=pt(b.x+i)
 			end
 			b.y=j/3+90
-      if (b.isPlayer==null) b.y-=20
+   if (b.isPlayer==null) b.y-=20
 		end,
 		draw=function(b)
 			dmgFlash(b)
