@@ -20,7 +20,7 @@ function boat_update(b)
 		if btn"2" then
 			b.mx+=s*speed
 			b.my-=c*speed
-			sfx"44"
+			sfx"49"
 		else
 			b.mx*=.99
 			b.my*=.99
@@ -62,7 +62,7 @@ function boat_update(b)
 			camy=flr(b.y-72)
 		end
 		if checklandcol(b.x,b.y,b.r) and not player_draw then
-			sfx"47"
+			sfx"52"
 			player_draw,player_x,player_y,b.mx,b.my=true,b.x+sin(b.r)*8,b.y-cos(b.r)*8,0,0
 		end
 	end

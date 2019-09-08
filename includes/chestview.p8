@@ -45,7 +45,7 @@ end
 
 function update_island_chest_view()
 	if flr(chestPos)>44 and btnp(5) then
-		sfx(51-rnd"2")
+		sfx(56-rnd"2")
 		for i=0,11 do
 			if sandIndex<#sand+1 then
 				circTrans_end,grain=t()+2,sand[sandIndex]
@@ -55,7 +55,7 @@ function update_island_chest_view()
 				if (halfprob()) grain.vx*=0xffff
 				sandIndex+=1
 				chestPos-=0.1
-				if (flr(chestPos)==44 and chestCol>1) sfx"52" score+=(chestCol-1)*35
+				if (flr(chestPos)==44 and chestCol>1) sfx"57" score+=(chestCol-1)*35
 			end
 		end
 	end
