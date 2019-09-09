@@ -15,8 +15,8 @@ fully_reveal_map_at_start=false
 #include includes/topdown_boat_movement.p8
 
 --Current cart stats (21/8/19)
--- Token count 8182 / 8192
---	remaining tokens:	 10
+-- Token count 8187 / 8192
+--	remaining tokens:	 5
 
 -- state key
 --0 splash screen
@@ -25,8 +25,7 @@ fully_reveal_map_at_start=false
 --3 side view combat
 --4 treasure view
 
-camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,-2,-2
-
+camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,0xfffe,0xfffe
 function _init()
 	boat.max=3
 	for i=0,50 do
@@ -299,9 +298,7 @@ function _draw()
 		end
 		if (compass_chunks>-1)_sspr(71+compass_chunks*13,40,13,16,camx+114,camy+54)
 
-		if (npcBoat!=0) rot=atan2(npcBoat.x-boat.x,npcBoat.y-boat.y)
-
-		if (compass_chunks>2) spr_rot(106,27,7,camx+120,camy+60,rot-.25,0)
+		if (compass_chunks>2 and npcBoat!=0) spr_rot(106,27,7,camx+120,camy+60,atan2(npcBoat.x-boat.x,npcBoat.y-boat.y)-.25,0)
 
 	elseif state==2 then
 		if st_t>0 and st_t<.8 then
@@ -393,10 +390,10 @@ function _draw()
        if (vt>5) print_str("596f752068617665206465666561746564",10,58,7)
 
 			 --the Pirate King!
-			 if (vt>5) print_str("74686520506972617465204b696e6721",16,68,7)
+			 if (vt>5) print_str("74686520506972617465204b696e6721",16,68,7) print_u("!",110,62)
 
 			 --Thanks for playing!
-			 if (vt>8) print_str("5468616e6b7320666f7220706c6179696e6721",12,88,10)
+			 if (vt>9) print_str("5468616e6b7320666f7220706c6179696e6721",12,88,10) print_u("!",122,82,10)
 		 else
 			 rectfill(0,48,127,64,0)
 			 pal(15,sget(min(vt*15,4),9))
@@ -441,7 +438,7 @@ function _draw()
 		 	_rect(4,119,123,125,7)
 		end
     if comb_boat != null then
-			if (comb_boat.y>125 or vt > 10) then
+			if (comb_boat.y>125 or vt > 13) then
 				print_u("fINAL SCORE: "..score.."\nyOUR SEED WAS "..world_seed,32,105)
 				if (t()%1>.15) print_u("pRESS x TO PLAY AGAIN",24,120)
 				if (btn"5") run()
@@ -913,16 +910,16 @@ __sfx__
 000400003142334453324732f4732b473254731f47317463114530d4430b4330e423124131540314403104030d4030c4030b4030e40310403104030b4030a403094030b4030b4030b40308403054030440303403
 0003000016b701db701bb6017b600ab500db5013b4019b4008b300bb3013b2018b200cb1014b102bb0022b001ab0019b0019b001ab001cb001bb0018b0014b000fb000cb0009b0007b0006b0004b0000b0000b00
 __music__
-00 0809164b
-00 0a0d164b
-00 08090e4b
-00 0a0d0f4b
-00 1011124b
-00 1718194b
-00 08090e4b
-00 0a0d0f4b
-00 1011124b
-02 1718274b
+00 0809160b
+00 0a0d160b
+00 08090e0b
+00 0a0d0f0b
+00 1011120b
+00 1718190b
+00 08090e0b
+00 0a0d0f0b
+00 1011120b
+02 1718270b
 00 1a1b1c4b
 00 1d1e4344
 00 1d1e4344

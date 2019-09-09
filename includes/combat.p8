@@ -46,9 +46,7 @@ function comb_init(timeToFightAnOctopus)
   							o.stepIndex=5
   						end
   					else
-        --victory jinlge
-  						sfx(57,0)
-  						music"63" --stop playing music
+              music"28"
   						victory_time,enemy,victory,boat_message,txt_timer=time(),null,true,"tAKE THAT,\nFOUL BEAST! ",0
   						victory_time+=0.01
   						score+=150
@@ -225,8 +223,7 @@ function newComb_boat()
 				end
 
 				if b.isPlayer then
- 				sfx"58"
-  			music"63" --stop playing music
+ 				  sfx"58"
 					boat_message,txt_timer="abandon ship!",0
 					b._draw=comb_boat.draw
 					b.draw=function(b)

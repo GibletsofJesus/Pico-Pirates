@@ -20,7 +20,7 @@ function boat_update(b)
 		if btn"2" then
 			b.mx+=s*speed
 			b.my-=c*speed
-			sfx"49"
+			sfx(49,3)
 		else
 			b.mx*=.99
 			b.my*=.99
@@ -75,7 +75,10 @@ function boat_draw(b)
 	pal(0,5)
 	if not b.player then
 		pal(4,2)pal(15,6)pal(7,13)pal(9,15)
-		if (dist<.25) nextState,state,st_t,boat_message,dist=5,2,0,"",512 music"10"
+		if dist<.25 then
+			nextState,state,st_t,boat_message,dist=5,2,0,"",512 music"10"
+			if (compass_chunks>2) music"19"
+		end
 	end
 	spr_rot(-2,76,12,flr(b.x),flr(b.y),b.r,6,b.player==null)
 
