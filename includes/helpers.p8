@@ -4,6 +4,8 @@ __lua__
 --Current cart stats (20/8/18)
 -- Token count 528
 
+menuitem(1, "do a flip()!", putAFlipInIt)
+
 function stringToArray(str)
 	local a,l={},0
 	while l<#str do
@@ -47,20 +49,13 @@ _fillp_original=fillp
 
 --local fill pattern
 function fillp(pattern,x,y)
-		local add_bits=band(pattern,0x0000.ffff)
-		pattern=band(pattern,0xffff)
-		y=flr(y)%4
+		local add_bits,pattern,y,x=band(pattern,0x0000.ffff),band(pattern,0xffff),flr(y)%4,flr(x)%4
 		if(y~=0)then
-				local r={0xfff0,0xff00,0xf000}
-				local l={0x000f,0x00ff,0x0fff}
-				pattern=bxor(lshr(band(pattern,r[y]),y*4),shl(band(pattern,l[y]),(4-y)*4))
+				r,l,pattern={0xfff0,0xff00,0xf000},{0x000f,0x00ff,0x0fff},bxor(lshr(band(pattern,r[y]),y*4),shl(band(pattern,l[y]),(4-y)*4))
 		end
 
-		x=flr(x)%4
 		if(x~=0)then
-				local r={0xeeee,0xcccc,0x8888}
-				local l={0x1111,0x3333,0x7777}
-				pattern=bxor(lshr(band(pattern,r[x]),x),shl(band(pattern,l[x]),4-x))
+				r,l,pattern={0xeeee,0xcccc,0x8888},{0x1111,0x3333,0x7777},bxor(lshr(band(pattern,r[x]),x),shl(band(pattern,l[x]),4-x))
 		end
 
 		return _fillp_original(bxor(pattern,add_bits))

@@ -27,7 +27,7 @@ function init_island_chest_view()
 			add(staticSand,{x=_x,y=_y-_x*.15})
 		end
 	end
-	srand(3)
+	srand"3"
 	for y=0,3,.5 do
 		for x=0,9,.5 do
 			add(sand,{x=25+x,y=53+y,vx=0,vy=0,r=rrnd(2,5)})

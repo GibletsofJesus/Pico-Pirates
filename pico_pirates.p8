@@ -15,8 +15,8 @@ fully_reveal_map_at_start=false
 #include includes/topdown_boat_movement.p8
 
 --Current cart stats (21/8/19)
--- Token count 8187 / 8192
---	remaining tokens:	 5
+-- Token count 8156 / 8192
+--	remaining tokens:	 36
 
 -- state key
 --0 splash screen
@@ -25,7 +25,8 @@ fully_reveal_map_at_start=false
 --3 side view combat
 --4 treasure view
 
-camx,camy,cellseed,celltype,drawClouds,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",true,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,0xfffe,0xfffe
+camx,camy,cellseed,celltype,stepIndex,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",4,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",5,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,3--[[0xffff]],0,0,0,0,{},{},0,0,100,"",true,0,1,0xfffe,0xfffe
+
 function _init()
 	boat.max=3
 	for i=0,50 do
@@ -416,16 +417,14 @@ function _draw()
 		 if (tentacles==null) cannonLines(2+enemy.x,5+enemy.y,enemy)
 		 --draw Enemy HP
 
-		   print_u(enemyName,4,113)
+		  print_u(enemyName,4,113)
 		 	rect(4,120,123,126,0)
-		 	local barLength0=lerp(0,118,enemy.hp/100)
-		 	local barLength1=lerp(0,118,enemyPrevHp/100)
+		 	local barLength0,barLength1=lerp(0,118,enemy.hp/100)lerp(0,118,enemyPrevHp/100)
 		 	if enemyHpTimer>0 then
 		 		 enemyHpTimer=max(0,enemyHpTimer-.075)
 		 		 if (enemyHpTimer<=1) barLength1=lerp(barLength0,barLength1,enemyHpTimer)
 		 	else
-		 		enemyPrevHp=enemy.hp
-		 		barLength1=barLength0
+		 		enemyPrevHp,barLength1=enemy.hp,barLength0
 		 	end
 		 	_rectfill(5,119,5+barLength1,124,14)
 
@@ -510,7 +509,7 @@ function cell_shift(x,y)
 end
 
 function setcell()
-	currentcell,	player_speed=cells[currentcellx][currentcelly],1
+	currentcell,player_speed=cells[currentcellx][currentcelly],1
 	if (not currentcell.visited) score+=1
 	currentcell.visited,cellwindx,cellwindy,cellseed,celltype=true,mid(-.5,currentcell.windy,.5),mid(-.5,currentcell.windx,.5),currentcell.seed,currentcell.type
 	if celltype=="island" then
@@ -526,8 +525,7 @@ end
 
 function island_update()
 	for t in all(island_trees) do
-		t.vx=(t.x-camx-64)*t.z
-		t.vy=(t.y-camy-64)*t.z
+		t.vx,t.vy=(t.x-camx-64)*t.z,(t.y-camy-64)*t.z
 	end
 	--drawing beach for boat colision
 	for b in all(island_beach) do
@@ -617,13 +615,11 @@ function createisland(seed)
 	if size > 24 then
 		size*=.5
 		for i=0,size/2 do
-			local r=i/(size/2)
-			sz=rrnd(8,12)
+			local r,sz=i/(size/2)rrnd(8,12)
 			newtree(rrnd(0xfffb,5)+cos(r)*size,rrnd(0xfffb,5)-sin(r)*size,sz)
 		end
 		for i=0,size/4 do
-			local r=i/(size/4)
-			sz=rnd"2"+10
+			local r,sz=i/(size/4),rrnd(2,12)
 			newtree(rrnd(0xfffb,5)+(rnd"1"-.5)*size,rrnd(0xfffb,5)-(rnd"1"-.5)*size,sz)
 		end
 
@@ -637,8 +633,6 @@ function createisland(seed)
 		end
 	end
 end
-
-menuitem(1, "do a flip()!", putAFlipInIt)
 
 function newtree(_x,_y,s)
 	local z=rrnd(1,1.5)
@@ -692,7 +686,7 @@ function boat_text_process()
 			elseif celltype!="island" then
 				txt_timer,boat_message=0,"sOMETHING ON\nTHE HORIZON... "
 				if (halfprob()) boat_message="sir! I SPY\nSOMETHING! "
-      else
+   else
 				boat_message,txt_timer="lAND AHOY!",0
 			end
 		end
@@ -706,7 +700,7 @@ function boat_text_render(x0,y0)
 		palt(12,true)
 		for y=0,_y,6 do
 		 for x=0,80,2 do
-			sspr(x,116+y,2,6,x0+x,y0+y+sin(t""+(x/#boat_message)))
+			sspr(x,116+y,2,6,x0+x,y0+y+sin(t""+x/#boat_message))
 		 end
 		end
 	end

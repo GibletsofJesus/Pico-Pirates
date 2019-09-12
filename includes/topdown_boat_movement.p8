@@ -26,14 +26,9 @@ function boat_update(b)
 			b.my*=.99
 		end
 	else
-		local bx,by=boat.x,boat.y
-		local px=bx+boat.mx*5
-		local py=by+boat.my*5
+		local px,py=boat.x+boat.mx*5,boat.y+boat.my*5
 		local angle=atan2(b.x-px,b.y-py)-.25
-		--Dividing by 100 here since big numbers squared can
-		-- easily exceed pico 8's max int value
-		dist=sqrt(abs(((b.y-by)/100)^2+((b.x-bx)/100)^2))
-		b.r=lerp(b.r,angle+.5,.1)
+		dist,b.r=sqrt(abs(((b.y-boat.y)/100)^2+((b.x-boat.x)/100)^2)),lerp(b.r,angle+.5,.1)
 		if dist>4 and compass_chunks<3 then
 			npcBoat=0
 			return
@@ -81,6 +76,5 @@ function boat_draw(b)
 		end
 	end
 	spr_rot(-2,76,12,flr(b.x),flr(b.y),b.r,6,b.player==null)
-
 	pal()
 end

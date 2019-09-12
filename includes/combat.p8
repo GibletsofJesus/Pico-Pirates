@@ -4,7 +4,7 @@ __lua__
 --Current cart stats (18/8/18)
 -- Token count 2092
 function comb_init(timeToFightAnOctopus)
-  comb_boat=newComb_boat()
+ comb_boat=newComb_boat()
 	camx,camy,comb_objs,victory,comb_boat.hp,comb_boat.isPlayer,boat_message,txt_timer=0,0,{},false,morale,true,"aLL HANDS\nON DECK! ",0xfffa
 	camera(0,0)
 	for j=1,0,0xffff do
@@ -29,7 +29,6 @@ function comb_init(timeToFightAnOctopus)
   		x=88,y=88,w=24,h=72,
   		flashing=0,
   		timer=0,
-  		stepIndex=4,
   		steps=
   		{
   			function(o) --sink below surface
@@ -40,10 +39,10 @@ function comb_init(timeToFightAnOctopus)
   				if o.y>108 then
   					if o.hp>0 then
   						enemyTimer=0
-  						if rnd"1">.5 then
-  							o.stepIndex=3
+  						if halfprob() then
+  							stepindex=3
   						else
-  							o.stepIndex=5
+  							stepindex=5
   						end
   					else
               music"28"
@@ -60,19 +59,18 @@ function comb_init(timeToFightAnOctopus)
   					t.y-=.5
   				end
   				if o.y<88 then
-  					o.stepIndex,enemyTimer=4,0
+  					stepindex,enemyTimer=4,0
   				end
   			end,
   			function(o)
-  				local target=(abs(comb_boat.x-o.x)-4)/80
-  				local ta={-rnd".2",0,rnd".2"}
+  				local target,ta=(abs(comb_boat.x-o.x)-4)/80,{-rnd".2",0,rnd".2"}
   				for i=1,3 do
   					fireProjectile(o.x,o.y-8,true,2,ta[i],target+ta[i],o)
   				end
-  				o.stepIndex=2--shoot at player
+  				stepindex=2--shoot at player
   			end,
   			function(o)--idle, exit after 5 seconds
-  				if (enemyTimer>3) o.stepIndex=1 enemyTimer=0
+  				if (enemyTimer>3) stepindex,enemyTimer=1,0
   			end,
   			function(o)--attack with tentacles
   				local noodle = tentacles[1]
@@ -84,7 +82,7 @@ function comb_init(timeToFightAnOctopus)
   					if noodle.y > 103 then
   						noodle.x,noodle.y=119,114
   						enemyTimer=0
-  						o.stepIndex=2
+  						stepindex=2
   					end
   				end
   			end,
@@ -92,8 +90,8 @@ function comb_init(timeToFightAnOctopus)
   		update=function(o)
   			enemyTimer+=0.03
   			o.y+=cos(t())*.25
-  			if (o.hp<=0) o.stepIndex=1
-  			o.steps[o.stepIndex](o)
+  			if (o.hp<=0) stepindex=1
+  			o.steps[stepindex](o)
   		end,
   		draw=function(o)
   			dmgFlash(o)
@@ -216,17 +214,16 @@ function newComb_boat()
 					b.y+=0.1
 					if not b.isPlayer and b.y>103 then
 						victory,txt_timer,currentcell.type,boat_message,npcBoat,victory_time,b.update,boatCell.type=true,0,"sea","gLORIOUS\nVICTORY! ",0,time()+.01,function()b.y+=0.1 end,"sea"
-						if (rnd"1">.5) boat_message="eXCELLENT\nPIRATING MEN! "
+						if (halfprob()) boat_message="eXCELLENT\nPIRATING MEN! "
 						score+=100
 						music"28"
+      if (enemyName=="tHE pIRATE kING") music"29"score+=2500
 					end
 				end
 
 				if b.isPlayer then
- 				  sfx"58"
-					boat_message,txt_timer="abandon ship!",0
-					b._draw=comb_boat.draw
-					b.draw=function(b)
+ 				sfx"58"
+					boat_message,txt_timer,b._draw,b.draw="abandon ship!",0,comb_boat.draw,function(b)
 						b._draw(b)
 						if b.y>100 then
 							--game over
@@ -272,7 +269,7 @@ end
 function cannonLines(x0,y0,b)
 	local c=11
 	if (b.firecd > 0)	c=5
-  if (b.isPlayer==null) x0+=12 y0+=18
+ if (b.isPlayer==null) x0+=12 y0+=18
 	for x=0,84,2 do
 		local y=y0+(x^2-b.aim*80*x)/32
 		local _x=x
@@ -282,7 +279,7 @@ function cannonLines(x0,y0,b)
 end
 
 function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
-	proj={
+ add(comb_objs,{
 		x0=_x,y0=_y,x=_x,y=_y,r=_r,owner=_owner,
 		w=_r*2,h=_r*2,
 		t=0,
@@ -338,8 +335,7 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 			_circfill(x,y,p.r,0)
 			p.x2,p.y2=x1,y1
 			p.x1,p.y1=x,y
-	end}
-	add(comb_objs,proj)
+	end})
 end
 
 function dmgFlash(e)
