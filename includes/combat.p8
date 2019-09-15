@@ -24,13 +24,12 @@ function comb_init(timeToFightAnOctopus)
 	end
 	add(comb_objs,comb_boat)
 	if timeToFightAnOctopus then
-		enemyName,vals,tentacles,enemy="sEA MONSTER",stringToArray"119,96,112,92,87,90,79,88,73,97,★",{},{
+		enemyName,vals,tentacles,enemy=({"a GHASTLY SEA MONSTER","wIGGLEY PETE","tHE DREADED OCTOKRAKEN"})[ceil(rnd"3")],stringToArray"119,96,112,92,87,90,79,88,73,97,★",{},{
   		hp=100,
   		x=88,y=88,w=24,h=72,
   		flashing=0,
   		timer=0,
-  		steps=
-  		{
+  		steps={
   			function(o) --sink below surface
   				o.y+=.5
   				for t in all(tentacles) do
@@ -40,9 +39,9 @@ function comb_init(timeToFightAnOctopus)
   					if o.hp>0 then
   						enemyTimer=0
   						if halfprob() then
-  							stepindex=3
+  							stepIndex=3
   						else
-  							stepindex=5
+  							stepIndex=5
   						end
   					else
               music"28"
@@ -59,7 +58,7 @@ function comb_init(timeToFightAnOctopus)
   					t.y-=.5
   				end
   				if o.y<88 then
-  					stepindex,enemyTimer=4,0
+  					stepIndex,enemyTimer=4,0
   				end
   			end,
   			function(o)
@@ -67,10 +66,10 @@ function comb_init(timeToFightAnOctopus)
   				for i=1,3 do
   					fireProjectile(o.x,o.y-8,true,2,ta[i],target+ta[i],o)
   				end
-  				stepindex=2--shoot at player
+  				stepIndex=2--shoot at player
   			end,
   			function(o)--idle, exit after 5 seconds
-  				if (enemyTimer>3) stepindex,enemyTimer=1,0
+  				if (enemyTimer>3) stepIndex,enemyTimer=1,0
   			end,
   			function(o)--attack with tentacles
   				local noodle = tentacles[1]
@@ -82,7 +81,7 @@ function comb_init(timeToFightAnOctopus)
   					if noodle.y > 103 then
   						noodle.x,noodle.y=119,114
   						enemyTimer=0
-  						stepindex=2
+  						stepIndex=2
   					end
   				end
   			end,
@@ -90,8 +89,8 @@ function comb_init(timeToFightAnOctopus)
   		update=function(o)
   			enemyTimer+=0.03
   			o.y+=cos(t())*.25
-  			if (o.hp<=0) stepindex=1
-  			o.steps[stepindex](o)
+  			if (o.hp<=0) stepIndex=1
+  			o.steps[stepIndex](o)
   		end,
   		draw=function(o)
   			dmgFlash(o)
@@ -117,8 +116,8 @@ function comb_init(timeToFightAnOctopus)
   	end
 		add(comb_objs,enemy)
 	else
-		enemyName,enemy="eNEMY VESSEL",newComb_boat()
-  	if (timeToFightAnOctopus==null) enemyName,enemy.w,enemy.h="tHE pIRATE kING",29,26
+		enemyName,enemy=({"eNEMY VESSEL","a LESSER PIRATE"})[ceil(rnd(1))],newComb_boat()
+  	if (timeToFightAnOctopus==null) enemyName,enemy.w,enemy.h,endGame="tHE pIRATE kING",29,26,true
 		enemy.isPlayer,enemy.x=timeToFightAnOctopus,114
 	end
 	add(comb_objs,enemy)
@@ -148,11 +147,11 @@ function comb_boat_move(obj,m)
 	obj.vx,obj.flipx,x=mid(-1.5,obj.vx+m,1.5),m<0,18
 	if (m<0) x=23
 	wpts[mid(1,flr(obj.x+x),160)]-=.7
-	sfx"49"
+	if (not endGame) sfx"49"
 end
 
 function comb_boat_fire_projectile(b)
-	sfx"48"
+	sfx(48,3)
 	local max,traj,size,x,y=1,0,1,b.x,b.y
 	if (b.isPlayer) max=extra_canons
 	if (b.isPlayer==null) max,size=2,2 x+=12 y+=18
@@ -175,7 +174,7 @@ function newComb_boat()
 	return {
 		x=16,y=62,w=8,h=8,vx=0,
 		flipx=false,aim=.1,firecd=0,
-		hp=100,flashing=0,isPlayer=false,
+		hp=rrnd(50,100),flashing=0,isPlayer=false,
 		update=function(b)
 			b.firecd=max(b.firecd-.0333,0)
 
@@ -203,10 +202,10 @@ function newComb_boat()
 
 			if b.flashing<=0 and enemy!=null then
 				if b.isPlayer and enemy.hp>0 then
-					if (aabbOverlap(b,enemy)) hit(b,rrnd(12,17)) sfx"61"
+					if (aabbOverlap(b,enemy)) hit(b,rrnd(12,17)) sfx(61,3)
 				end
 				for t in all(tentacles) do
-					if (aabbOverlap(b,t)) hit(b,rrnd(12,17)) sfx"61"
+					if (aabbOverlap(b,t)) hit(b,rrnd(12,17)) sfx(61,3)
 				end
 			end
 			if b.hp<=0 then
@@ -217,12 +216,12 @@ function newComb_boat()
 						if (halfprob()) boat_message="eXCELLENT\nPIRATING MEN! "
 						score+=100
 						music"28"
-      if (enemyName=="tHE pIRATE kING") music"29"score+=2500
+      if (endGame) music"29"score+=2500
 					end
 				end
 
 				if b.isPlayer then
- 				sfx"58"
+ 				sfx(58,3)
 					boat_message,txt_timer,b._draw,b.draw="abandon ship!",0,comb_boat.draw,function(b)
 						b._draw(b)
 						if b.y>100 then
@@ -305,22 +304,22 @@ function fireProjectile(_x,_y,_left,_r,_vx,_vy,_owner)
 				if aabbOverlap(t,p) then
 					del(comb_objs,p)
 					hit(enemy,rrnd(6,11))
-					sfx"62"
-					sfx"63"
+     sfx"62"
+     sfx"63"
 				end
 			end
 			if aabbOverlap(enemy,p) then --enemy collision
 				del(comb_objs,p)
 				hit(enemy,rrnd(12,18))
-				sfx"62"
-				sfx"63"
+    sfx"62"
+    sfx"63"
 			end
 		elseif not b then
 			if aabbOverlap(comb_boat,p) then --player collision
 				del(comb_objs,p)
 				hit(comb_boat,rrnd(10,14))
-				sfx"62"
-				sfx"63"
+    sfx"62"
+    sfx"63"
 			end
 		end
 	end,
@@ -345,7 +344,7 @@ end
 
 function hit(this,dmg)
 	flip""
-  if (enemyName == "tHE pIRATE kING" and not this.isPlayer) dmg/=3
+  if (endGame and not this.isPlayer) dmg/=3
   this.hp,this.flashing,shakeTimer=max(0,this.hp-dmg),10,1
 	if this.isPlayer then
 		morale,this.flashing,playerHpTimer=this.hp,25,2

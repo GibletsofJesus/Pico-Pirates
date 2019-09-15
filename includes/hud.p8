@@ -6,7 +6,7 @@ __lua__
 -- Token count 473
 
 function minimapPos(boat_obj,c)
-	_pset(camx+lerp(112,127,minimapLerpVal(boat_obj.x)),camy+lerp(1,15,minimapLerpVal(boat_obj.y)),c)
+	_pset(camx+lerp(111,127,minimapLerpVal(boat_obj.x)),camy+lerp(1,16,minimapLerpVal(boat_obj.y)),c)
 end
 
 function minimapLerpVal(value)

@@ -55,7 +55,14 @@ function update_island_chest_view()
 				if (halfprob()) grain.vx*=0xffff
 				sandIndex+=1
 				chestPos-=0.1
-				if (flr(chestPos)==44 and chestCol>1) sfx"57" score+=(chestCol-1)*35
+				if flr(chestPos)==44 then
+					score+=(chestCol-1)*35
+					if chestCol<4 then
+						sfx"57"
+					else
+						sfx"59"
+     end
+				end
 			end
 		end
 	end
