@@ -15,8 +15,8 @@ fully_reveal_map_at_start=false
 #include includes/topdown_boat_movement.p8
 
 --Current cart stats (21/8/19)
--- Token count 8182 / 8192
---	remaining tokens:	 10
+-- Token count 8187 / 8192
+--	remaining tokens:	 5
 
 -- state key
 --0 splash screen
@@ -94,7 +94,7 @@ function _update()
 		end
 	elseif state==1 then
 		cls""
-
+    morale = max(30,morale-0.003)
 		--check if boat is outside cell range
 		if (boat.x < 0xff00) then
 			currentcellx-=1
@@ -230,7 +230,7 @@ function _draw()
 		--draw waves from ship
 		fillp(0b0101101001011010.1)
 		for w in all(waves) do
-			_circ(w.x,w.y,w.r,7)
+			circ(w.x,w.y,w.r,7)
 			w.r+=0.2
 			if (w.r>10) del(waves,w)
 		end
@@ -256,15 +256,14 @@ function _draw()
 		_rect(camx+111,camy,camx+127,camy+16,7)
 
 		draw_morale_bar""
-		local r =atan2(cellwindx,cellwindy)
 		for c=0,1 do
 			pal(6,7^c)
-			spr_rot(26,2,12,camx+120,camy+44-c,r,0)
+			spr_rot(26,2,12,camx+120,camy+44-c,atan2(cellwindx,cellwindy),0)
 			pal""
 		end
 
 		print_u("wIND",camx+112,camy+30)
-		boat_text_render	(flr(boat.x-24),flr(boat.y-16))
+		boat_text_render(flr(boat.x-24),flr(boat.y-16))
 		if mapPos<127 then
 			 --draw map
 		 	local _y,_x,e,rot=camy+20,camx-mapPos+1,stringToArray"124,0,3,52,107,18,3,52,true,true,124,0,3,52,107,70,3,52,true,false,124,0,3,52,0,70,3,52,false,true,124,0,3,52,0,18,3,52,false,false,0,58,109,3,2,16,109,3,false,false,0,58,109,3,2,121,109,3,false,true,★",.25
@@ -519,7 +518,12 @@ function setcell()
 		createisland(cellseed)
 	elseif npcBoat==0 and celltype=="boat" then
 		npcBoat,boatCell=init_boat(false),currentcell
-    if (compass_chunks>2) npcBoat=init_boat(null)
+		enemyAngleOffset=-.25
+    if compass_chunks>2 then
+			npcBoat=init_boat(null)
+		elseif cellseed%3==0 then
+			enemyAngleOffset,npcBoat.max=.25,2
+		end
 	end
 end
 
@@ -537,7 +541,7 @@ function island_draw()
 	--white wave crest
 	local _t=(1+sin(t""*.2))*8
 	for b in all(island_beach) do
-		_circ(b.x,b.y,b.rad+_t+1,7)
+		_circfill(b.x,b.y,b.rad+_t+1,7)
 	end
 	--wet sand
 	for b in all(island_beach) do
@@ -661,9 +665,9 @@ function boat_text_process()
 		if state==3 then
 			txt_timer,boat_message=0,"cOME ON THEN PAL,\nSQUARE TAE GO LIKE! "
 			if halfprob() then
-				if enemyName=="sEA MONSTER" then
+				if enemy.steps!=null then
 					boat_message="bEGONE, GANGLY\nBEAST! "
-				else
+				elseif not endGame then
 					boat_message="fILTHY LAND\nLOVER! "
 				end
 		  end
@@ -705,6 +709,12 @@ function boat_text_render(x0,y0)
 		end
 	end
 end
+
+function putAFlipInIt()
+	tempFlip=true
+end
+
+menuitem(1, "do a flip()!",putAFlipInIt)
 __gfx__
 0040000000040000000000007000000000000007000c00000000000011000000000000000000000000000000011111000010001000000000000000000000000d
 777700000767000000070000000000000000000000ccc000000000811000000000000000000000000000000011111110001011111000000000000000000000df

@@ -4,8 +4,6 @@ __lua__
 --Current cart stats (20/8/18)
 -- Token count 528
 
-menuitem(1, "do a flip()!", putAFlipInIt)
-
 function stringToArray(str)
 	local a,l={},0
 	while l<#str do

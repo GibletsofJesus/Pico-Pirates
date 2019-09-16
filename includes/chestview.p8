@@ -17,7 +17,7 @@ function init_island_chest_view()
 
 	if (chestCol==1) extra_canons+=1
 	if (chestCol==2) compass_chunks+=1
-	if (chestCol==3) morale=min(morale+20,100)
+	if (chestCol<4) morale=min(morale+20,100)
 
 	for i=0,15 do
 		add(chestClouds,{x=rnd"72",y=rnd"4",r=rrnd(1,4)})

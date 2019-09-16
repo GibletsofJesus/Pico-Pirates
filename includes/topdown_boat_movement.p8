@@ -27,7 +27,7 @@ function boat_update(b)
 		end
 	else
 		local px,py=boat.x+boat.mx*5,boat.y+boat.my*5
-		local angle=atan2(b.x-px,b.y-py)-.25
+		local angle=atan2(b.x-px,b.y-py)+enemyAngleOffset
 		dist,b.r=sqrt(abs(((b.y-boat.y)/100)^2+((b.x-boat.x)/100)^2)),lerp(b.r,angle+.5,.1)
 		if dist>4 and compass_chunks<3 then
 			npcBoat=0

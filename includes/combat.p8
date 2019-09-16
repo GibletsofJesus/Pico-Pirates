@@ -116,7 +116,7 @@ function comb_init(timeToFightAnOctopus)
   	end
 		add(comb_objs,enemy)
 	else
-		enemyName,enemy=({"eNEMY VESSEL","a LESSER PIRATE"})[ceil(rnd(1))],newComb_boat()
+		enemyName,enemy=({"eNEMY VESSEL","a LESSER PIRATE","lAME JOHN SILVER","dAVID JONES AND CREW"})[ceil(rnd(4))],newComb_boat()
   	if (timeToFightAnOctopus==null) enemyName,enemy.w,enemy.h,endGame="tHE pIRATE kING",29,26,true
 		enemy.isPlayer,enemy.x=timeToFightAnOctopus,114
 	end
