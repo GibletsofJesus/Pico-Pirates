@@ -7,24 +7,8 @@ function comb_init(timeToFightAnOctopus)
  comb_boat=newComb_boat()
 	camx,camy,comb_objs,victory,comb_boat.hp,comb_boat.isPlayer,boat_message,txt_timer=0,0,{},false,morale,true,"aLL HANDS\nON DECK! ",0xfffa
 	camera(0,0)
-	for j=1,0,0xffff do
-    srand"1"
-		for i=0,25 do
-      	add(comb_objs,{
-      		x=rnd"127"+j*2,y=rrnd(8,40)+j,r=rrnd(4,12)+j,c=7-j,vx=rnd".5",
-      		update=function(c)
-      			c.x+=c.vx
-      		if (c.x>140) c.x -= 160
-      		end,
-      	draw=function(c)
-      		_circfill(c.x,c.y,c.r,c.c)
-      	end
-      	})
-		end
-	end
-	add(comb_objs,comb_boat)
 	if timeToFightAnOctopus then
-		enemyName,vals,tentacles,enemy=({"a GHASTLY SEA MONSTER","wIGGLEY PETE","tHE DREADED OCTOKRAKEN"})[ceil(rnd"3")],stringToArray"119,96,112,92,87,90,79,88,73,97,★",{},{
+		enemyName,vals,tentacles,enemy=stringToArray"a GHASTLY SEA MONSTER,wIGGLEY PETE,tHE DREADED OCTOKRAKEN,s"[rnd_int"3"],stringToArray"119,96,112,92,87,90,79,88,73,97,★",{},{
   		hp=100,
   		x=88,y=88,w=24,h=72,
   		flashing=0,
@@ -116,10 +100,26 @@ function comb_init(timeToFightAnOctopus)
   	end
 		add(comb_objs,enemy)
 	else
-		enemyName,enemy=({"eNEMY VESSEL","a LESSER PIRATE","lAME JOHN SILVER","dAVID JONES AND CREW"})[ceil(rnd(4))],newComb_boat()
+		enemyName,enemy=stringToArray"eNEMY VESSEL,a LESSER PIRATE,lAME JOHN SILVER,dAVID JONES AND CREW,tHE dREAD pIRARE rOBERTS,jOHN BOAT,s"[rnd_int"6"],newComb_boat()
   	if (timeToFightAnOctopus==null) enemyName,enemy.w,enemy.h,endGame="tHE pIRATE kING",29,26,true
 		enemy.isPlayer,enemy.x=timeToFightAnOctopus,114
 	end
+  for j=1,0,0xffff do
+    srand"1"
+		for i=0,25 do
+      	add(comb_objs,{
+      		x=rnd"127"+j*2,y=rrnd(8,40)+j,r=rrnd(4,12)+j,c=7-j,vx=rnd".5",
+      		update=function(c)
+      			c.x+=c.vx
+      		if (c.x>140) c.x -= 160
+      		end,
+      	draw=function(c)
+      		_circfill(c.x,c.y,c.r,c.c)
+      	end
+      	})
+		end
+	end
+	add(comb_objs,comb_boat)
 	add(comb_objs,enemy)
 end
 
@@ -212,16 +212,15 @@ function newComb_boat()
 				b.update=function(b)
 					b.y+=0.1
 					if not b.isPlayer and b.y>103 then
-						victory,txt_timer,currentcell.type,boat_message,npcBoat,victory_time,b.update,boatCell.type=true,0,"sea","gLORIOUS\nVICTORY! ",0,time()+.01,function()b.y+=0.1 end,"sea"
-						if (halfprob()) boat_message="eXCELLENT\nPIRATING MEN! "
+						victory,txt_timer,currentcell.type,boat_message,npcBoat,victory_time,b.update,boatCell.type=true,0,"sea",stringToArray"gLORIOUS\nVICTORY! ,eXCELLENT\nPIRATING MEN! ,s"[rnd_int"2"],0,time()+.01,function()b.y+=0.1 end,"sea"
 						score+=100
 						music"28"
-      if (endGame) music"29"score+=2500
+            if (endGame) music"29"score+=2500
 					end
 				end
 
 				if b.isPlayer then
- 				sfx(58,3)
+ 				  sfx(58,3)
 					boat_message,txt_timer,b._draw,b.draw="abandon ship!",0,comb_boat.draw,function(b)
 						b._draw(b)
 						if b.y>100 then

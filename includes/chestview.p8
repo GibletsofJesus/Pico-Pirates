@@ -8,7 +8,7 @@ function init_island_chest_view()
 	camera(0,0)
 	poke(0x5f2c,3)
 	music"1"
-	camx,camy,sand,staticSand,chestClouds,circTrans_start,circTrans_end,sandIndex,chestPos,chestCol,chestCols=0,0,{},{},{},t(),0,1,53,(currentcell.treasure*2)-1,{		stringToArray"8,9,10,2,4,5,1,★",--red
+	camx,camy,sand,staticSand,chestClouds,circTrans_start,circTrans_end,sandIndex,chestPos,chestCol,chestCols=0,0,{},{},{},t(),0,1,53,currentcell.treasure*2-1,{		stringToArray"8,9,10,2,4,5,1,★",--red
   stringToArray"13,4,9,1,2,2,1,★",--orange
 		stringToArray"3,9,10,1,4,5,0,★",--green
 		stringToArray"4,13,6,2,5,5,1,★"--grey
@@ -83,7 +83,7 @@ function draw_island_chest_view()
 	local w=4+sin(t()*.5)*2.5
 
 	for i=1,3 do
-		pal(15,({7,13,15})[i])
+		pal(15,stringToArray"7,13,15"[i])
 		for s in all(staticSand) do
 			_circfill(s.x,s.y,9+({w+1,w,0})[i],15)
 		end
@@ -98,7 +98,7 @@ function draw_island_chest_view()
 		sspr(32,34,18,13,23,chestPos-6,18,13)--draw open chest
 		pal()
 		firstChest=false
-		print_u(({"   yOU FOUND\nANOTHER CANNON!","yOU FOUND A BIT\n OF A COMPASS!","yOU FOUND SOME\n	 TREASURE!","   bAH! iT'S\n    empty!"})[chestCol],4,15,10,0)
+		print_u(stringToArray"   yOU FOUND\nANOTHER CANNON!,yOU FOUND A BIT\n OF A COMPASS!,yOU FOUND SOME\n	 TREASURE!,   bAH! iT'S\n    empty!,s"[chestCol],4,15,10,0)
 		--draw chest contents
 		if (chestCol==1) pal(11,0)_sspr(57,42,14,16,26,29)
 		if (chestCol==2) _sspr(72,40,13,14,23,29) --compass

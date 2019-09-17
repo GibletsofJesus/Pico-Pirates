@@ -15,8 +15,8 @@ fully_reveal_map_at_start=false
 #include includes/topdown_boat_movement.p8
 
 --Current cart stats (21/8/19)
--- Token count 8187 / 8192
---	remaining tokens:	 5
+-- Token count 8179 / 8192
+--	remaining tokens:	 13
 
 -- state key
 --0 splash screen
@@ -28,7 +28,7 @@ fully_reveal_map_at_start=false
 camx,camy,cellseed,celltype,stepIndex,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",4,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,0xfffe,0xfffe
 
 function _init()
-		boat.max=3
+	boat.max=3
 	for i=0,50 do
 		add(clouds,{
 			x=camx+rnd"127",y=camy+rnd"127",
@@ -64,7 +64,7 @@ function _update()
 		if btnp(5) then
 			state,st_t=2,0
 			--Initialise world
-			if (world_seed==0) world_seed = flr(rnd(99))
+			if (world_seed==0) world_seed = rnd_int"99"
 			srand(world_seed)
 			for cx=0,31 do
 				local subcell={}
@@ -84,7 +84,7 @@ function _update()
 		 			elseif rnd"1">.6 then
 						 _type="boat"
 					end
-					add(subcell,{type=_type,treasure=weighted_rnd({1,1.5,2,2.5}),seed=rnd"4096",windx=wx,windy=wy,visited=fully_reveal_map_at_start})
+					add(subcell,{type=_type,treasure=weighted_rnd(stringToArray"1,1.5,2,2.5"),seed=rnd"4096",windx=wx,windy=wy,visited=fully_reveal_map_at_start})
 				end
 			end
 
@@ -94,7 +94,7 @@ function _update()
 		end
 	elseif state==1 then
 		cls""
-    morale = max(30,morale-0.003)
+    morale = max(30,morale-.005)
 		--check if boat is outside cell range
 		if (boat.x < 0xff00) then
 			currentcellx-=1
@@ -213,9 +213,10 @@ function _draw()
 		end
 		s=2
 		if (btn(2)) s=5 world_seed+=1
+		if (world_seed>99) world_seed=0
     spr(s,108,66)s=18
 		if (btn(3)) s=21 world_seed-=1
-		world_seed=mid(0,world_seed,99)
+		if (world_seed<0) world_seed=99
 		spr(s,108,79)
 	elseif state==1 then
 		camera(camx,camy)
@@ -263,6 +264,8 @@ function _draw()
 		end
 
 		print_u("wIND",camx+112,camy+30)
+		--23 tokens for this :/
+		--print_u(flr(sqrt(cellwindx^2+cellwindy^2)*100)/10,camx+114,camy+50)
 		boat_text_render(flr(boat.x-24),flr(boat.y-16))
 		if mapPos<127 then
 			 --draw map
@@ -481,11 +484,9 @@ end
 
 --check land collision
 function checklandcol(x,y,r)
-	local j,bool=stringToArray"-r*2,0,.75,.25,★",false
-	for i in all(j) do
-		bool=bool or pget(x-sin(r+i)*8,y+cos(r+i)*8)==15
+	for i in all({-r*2,0,.75,.25}) do
+		if (pget(x-sin(r+i)*8,y+cos(r+i)*8)==15) return true
 	end
-	return bool
 end
 
 function newWave(_x,_y)
@@ -521,7 +522,7 @@ function setcell()
 		enemyAngleOffset=-.25
     if compass_chunks>2 then
 			npcBoat=init_boat(null)
-		elseif cellseed%3==0 then
+		elseif flr(cellseed)%3==0 then
 			enemyAngleOffset,npcBoat.max=.25,2
 		end
 	end
@@ -672,15 +673,13 @@ function boat_text_process()
 				end
 		  end
 			if morale<70 and morale>33 then
-				boat_message="nO SLACKING YOU\nLAZY SEA DOGS! "
-				if (halfprob()) boat_message="yOU'LL HAVE TO DO\nBETTER THAN THAT! "
+				boat_message=stringToArray"nO SLACKING YOU\nLAZY SEA DOGS! ,yOU'LL HAVE TO DO\nBETTER THAN THAT! ,s"[rnd_int"2"]
 			elseif morale<33 and morale>1 then
-				boat_message="mAYBE I SHOULDN'T OF\nBEEN A PIRATE... "
-				if (halfprob()) boat_message="dON'T GIVE\nUP MEN! "
+				boat_message=stringToArray"dON'T GIVE\nUP MEN! ,mAYBE I SHOULDN'T OF\nBEEN A PIRATE... ,s"[rnd_int"2"]
 			end
 		else
 			if celltype=="sea" then
-				xs,ys,dirs,boat_message,txt_timer=stringToArray"-1,1,0,0,★",stringToArray"0,0,1,-1,★",{"WEST","EAST","SOUTH","NORTH"},"cLEAR HORIZONS... ",0
+				xs,ys,dirs,boat_message,txt_timer=stringToArray"-1,1,0,0,★",stringToArray"0,0,1,-1,★",stringToArray"WEST,EAST,SOUTH,NORTH,s","cLEAR HORIZONS... ",0
 				for i=1,#xs do
 					local cellToCheck=cells[flr(mid(1,currentcellx+xs[i],31))][flr(mid(1,currentcelly+ys[i],31))]
 					if not cellToCheck.visited and cellToCheck.type=="island" then
@@ -688,9 +687,8 @@ function boat_text_process()
 					end
 				end
 			elseif celltype!="island" then
-				txt_timer,boat_message=0,"sOMETHING ON\nTHE HORIZON... "
-				if (halfprob()) boat_message="sir! I SPY\nSOMETHING! "
-   else
+				txt_timer,boat_message=0,stringToArray"sOMETHING ON\nTHE HORIZON... ,sir! I SPY\nSOMETHING! ,s"[rnd_int"2"]
+      else
 				boat_message,txt_timer="lAND AHOY!",0
 			end
 		end

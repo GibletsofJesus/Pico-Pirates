@@ -15,7 +15,12 @@ function stringToArray(str)
 			elseif s=="false" then
 				add(a,false)
 			else
-			add(a,tonum(s))
+			n=tonum(s)
+			if n==null then
+				add(a,s)
+			else
+				add(a,n)
+			end
 			end
 		str,l=sub(str,l+1),0
 		end
@@ -88,6 +93,10 @@ end
 
 function halfprob()
 	return rnd"2">1
+end
+
+function rnd_int(num)
+   return ceil(rnd(num))
 end
 
 function weighted_rnd(array)
