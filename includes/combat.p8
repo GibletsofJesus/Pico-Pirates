@@ -8,7 +8,7 @@ function comb_init(timeToFightAnOctopus)
 	camx,camy,comb_objs,victory,comb_boat.hp,comb_boat.isPlayer,boat_message,txt_timer=0,0,{},false,morale,true,"aLL HANDS\nON DECK! ",0xfffa
 	camera(0,0)
 	if timeToFightAnOctopus then
-		enemyName,vals,tentacles,enemy=stringToArray"a GHASTLY SEA MONSTER,wIGGLEY PETE,tHE DREADED OCTOKRAKEN,s"[rnd_int"3"],stringToArray"119,96,112,92,87,90,79,88,73,97,★",{},{
+		enemyName,vals,tentacles,enemy=stringToArray"a GHASTLY SEA MONSTER,wIGGLEY PETE,tHE DREADED OCTOKRAKEN,aN UNGODLY ABOMINATION,s"[rnd_int"3"],stringToArray"119,96,112,92,87,90,79,88,73,97,★",{},{
   		hp=100,
   		x=88,y=88,w=24,h=72,
   		flashing=0,
@@ -100,7 +100,7 @@ function comb_init(timeToFightAnOctopus)
   	end
 		add(comb_objs,enemy)
 	else
-		enemyName,enemy=stringToArray"eNEMY VESSEL,a LESSER PIRATE,lAME JOHN SILVER,dAVID JONES AND CREW,tHE dREAD pIRARE rOBERTS,jOHN BOAT,s"[rnd_int"6"],newComb_boat()
+		enemyName,enemy=stringToArray"743 pARROTS,aNOTHER FRANKLY LESSER PIRATE,lAME JOHN SILVER,dAVID JONES AND CREW,tHE dREAD pIRATE rOBERTS,jOHN BOAT,the FLYING TAXMAN,hms eGG,a GOAT AT SEA,lITTLE wET mAN,dAVID jASON'S gHOST bOAT,s"[rnd_int"11"],newComb_boat()
   	if (timeToFightAnOctopus==null) enemyName,enemy.w,enemy.h,endGame="tHE pIRATE kING",29,26,true
 		enemy.isPlayer,enemy.x=timeToFightAnOctopus,114
 	end
