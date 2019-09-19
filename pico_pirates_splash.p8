@@ -6,11 +6,9 @@ __lua__
 
 fully_reveal_map_at_start=false
 
-#include includes/font_functions.p8
 #include includes/helpers.p8
 #include includes/api_functions_with_flip.p8
 #include includes/combat.p8
-#include includes/chestview.p8
 #include includes/hud.p8
 #include includes/topdown_boat_movement.p8
 
@@ -25,7 +23,7 @@ fully_reveal_map_at_start=false
 --3 side view combat
 --4 treasure view
 
-camx,camy,cellseed,celltype,stepIndex,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",4,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,0xfffe,0xfffe
+camx,camy,cellseed,celltype,stepIndex,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",4,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,0,0
 
 function _init()
 	boat.max=3
@@ -64,8 +62,7 @@ function _update()
 		if btnp(5) then
 			state,st_t=2,0
 			--Initialise world
-			if (world_seed==0) world_seed = rnd_int"99"
-			srand(world_seed)
+			srand(2)
 			for cx=0,31 do
 				local subcell={}
 				add(cells,subcell)
@@ -141,8 +138,8 @@ function _update()
 			end
 			if player_y < camy+56 then
 				camy=player_y-56
-			elseif player_y > camy+72 then
-				camy=player_y-72
+			elseif player_y > camy+88 then
+				camy=player_y-88
 			end
 		end
 		map=btn"5"
@@ -167,7 +164,7 @@ function _update()
 end
 
 function _draw()
-	if (state<1) cls()
+	if (state<1) cls(12)
 	if state==-2 then
 		--A game made by
 		print_str('412067616d65206d616465206279',23,60,7)
@@ -182,42 +179,6 @@ function _draw()
 		print_str('436872697320446f6e6e656c6c79',19,72,12)
 		?"@GRUBER_MUSIC",39,75,1
 		if (t()>6) state=0 music"29"
-	elseif state==0 then
-		--ico
-		for i=1,3 do
-			print_xl(stringToArray"10,20,32,★"[i],5,i-1,7)
-		end
-
-		local vals=stringToArray"-71,33,13,-71,32,7,-49,5,13,-49,4,7,★"
-		--big Ps
-		for i=1,12,3 do
-			for x=86,109 do
-				pal(1,vals[i+2])
-				local a=x+vals[i]
-				_sspr(x,0,1,26,a,vals[i+1]+sin(t""*-.33+(a*.018))*2)
-			end
-		end
-
-		--pirates
-		for i=1,7 do
-			print_xl(stringToArray"-12,-2,11,23,31,43,55,★"[i],32,stringToArray"0,3,4,5,7,8,9,★"[i],7)
-			print_str(({'5072657373','58','746f207374617274'})[min(i,3)],stringToArray"16,52,64,64,64,64,64,★"[i],110+sin(t""*.5)*4,stringToArray"7,8,7,7,7,7,7,★"[i])
-		end
-
-		--world gen seed
-		print_str('576f726c642067656e2073656564',15,78,7)
-		if world_seed==0 then
-			print_u(": RND",101,72)
-		else
-			print_u(": "..world_seed,101,72)
-		end
-		s=2
-		if (btn(2)) s=5 world_seed+=1
-		if (world_seed>99) world_seed=0
-    spr(s,108,66)s=18
-		if (btn(3)) s=21 world_seed-=1
-		if (world_seed<0) world_seed=99
-		spr(s,108,79)
 	elseif state==1 then
 		camera(camx,camy)
 		cls"12"
@@ -245,64 +206,6 @@ function _draw()
 		for c in all(clouds) do
 			c.draw(c)
 		end
-
-		--draw minimap
-		print_u(currentcellx,camx+102,camy+5)
-		print_u(currentcelly,camx+116,camy+18)
-		_rectfill(camx+111,camy,camx+127,camy+16,12)
-		if (celltype=="island") _circfill(camx+119,camy+8,island_size/16,15)
-		--player indicator on minimap
-		minimapPos(boat,4)
-		if (npcBoat!=0) minimapPos(npcBoat,2)
-		_rect(camx+111,camy,camx+127,camy+16,7)
-
-		draw_morale_bar""
-		for c=0,1 do
-			pal(6,7^c)
-			spr_rot(26,2,12,camx+120,camy+44-c,atan2(cellwindx,cellwindy),0)
-			pal""
-		end
-
-		print_u("wIND",camx+112,camy+30)
-		--23 tokens for this :/
-		--print_u(flr(sqrt(cellwindx^2+cellwindy^2)*100)/10,camx+114,camy+50)
-		boat_text_render(flr(boat.x-24),flr(boat.y-16))
-		if mapPos<127 then
-			 --draw map
-		 	local _y,_x,e,rot=camy+20,camx-mapPos+1,stringToArray"124,0,3,52,107,18,3,52,true,true,124,0,3,52,107,70,3,52,true,false,124,0,3,52,0,70,3,52,false,true,124,0,3,52,0,18,3,52,false,false,0,58,109,3,2,16,109,3,false,false,0,58,109,3,2,121,109,3,false,true,★",.25
-
-		 	for i=1,#e,10 do
-		 		sspr(e[i],e[i+1],e[i+2],e[i+3],_x+e[i+4],camy+e[i+5],e[i+6],e[i+7],e[i+8],e[i+9])
-		 	end
-
-		 	rectfill(_x+3,_y-2,_x+106,_y+100,15)
-		 	_x+=4
-
-		 	--Fill map in with discovered areas
-		 	for c=12,13 do
-		 		for x=1,32 do
-		 			for y=1,32 do
-		 				if cells[x][y].visited then
-		 					_circfill(_x+x*3,_y+y*3,15-c,9-c)
-		 				end
-		 			end
-		 		end
-		 	end
-		 	for x=1,32 do
-		 		for y=1,32 do
-		 			local c,r=15,1
-		 			if (cells[x][y].type=="island") _circfill(_x+x*3,_y+y*3,r,c)
-		 		end
-		 	end
-		 	_x+=boat.x/128
-		 	_y+=boat.y/128
-		 	if (flr(t()*4)%2>0) _pset(_x+currentcellx*3,_y+currentcelly*3,4)
-
-		end
-		if (compass_chunks>-1)_sspr(71+compass_chunks*13,40,13,16,camx+114,camy+54)
-
-		if (compass_chunks>2 and npcBoat!=0) spr_rot(106,27,7,camx+120,camy+60,atan2(npcBoat.x-boat.x,npcBoat.y-boat.y)-.25,0)
-
 	elseif state==2 then
 		if st_t>0 and st_t<.8 then
 			--1.2s duration
@@ -478,8 +381,54 @@ function _draw()
 		_rectfill(camx,camy,camx+128,camy+128,0)
 		fillp""
 	end
+	if btn(4) then
+		--ico
+		camera(-8,-16)
+	for i=1,3 do
+		print_xl(stringToArray"10,20,32,★"[i],5,i-1,7)
+	end
 
- tempFlip=false
+	local vals=stringToArray"-71,33,13,-71,32,7,-49,5,13,-49,4,7,★"
+	--big Ps
+	for x=86,109 do
+  	pal(1,0)
+		local a=x-49
+	 _sspr(x,0,1,26,a+1,4+sin(t""*-.33+(a*.018))*2)
+	 _sspr(x,0,1,26,a-1,4+sin(t""*-.33+(a*.018))*2)
+	 _sspr(x,0,1,26,a+1,3+sin(t""*-.33+(a*.018))*2)
+	 _sspr(x,0,1,26,a-1,3+sin(t""*-.33+(a*.018))*2)
+   _sspr(x,0,1,26,a,2+sin(t""*-.33+(a*.018))*2)
+   _sspr(x,0,1,26,a,5+sin(t""*-.33+(a*.018))*2)
+	 a=x-71
+	 _sspr(x,0,1,26,a+1,33+sin(t""*-.33+(a*.018))*2)
+	 _sspr(x,0,1,26,a-1,33+sin(t""*-.33+(a*.018))*2)
+	 _sspr(x,0,1,26,a+1,32+sin(t""*-.33+(a*.018))*2)
+	 _sspr(x,0,1,26,a-1,32+sin(t""*-.33+(a*.018))*2)
+	 _sspr(x,0,1,26,a,34+sin(t""*-.33+(a*.018))*2)
+	 _sspr(x,0,1,26,a,31+sin(t""*-.33+(a*.018))*2)
+	end
+	for x=86,109 do
+		pal(1,13)
+		local a=x-49
+		_sspr(x,0,1,26,a,4+sin(t""*-.33+(a*.018))*2)
+		pal(1,7)
+		_sspr(x,0,1,26,a,3+sin(t""*-.33+(a*.018))*2)
+
+
+	  pal(1,13)
+	 	local a=x-71
+		_sspr(x,0,1,26,a,33+sin(t""*-.33+(a*.018))*2)
+		pal(1,7)
+		local a=x-71
+		_sspr(x,0,1,26,a,32+sin(t""*-.33+(a*.018))*2)
+	end
+
+
+	--pirates
+	for i=1,7 do
+		print_xl(stringToArray"-12,-2,11,23,31,43,55,★"[i],32,stringToArray"0,3,4,5,7,8,9,★"[i],7)
+	end
+end tempFlip=false
 end
 
 --check land collision
@@ -708,6 +657,92 @@ function boat_text_render(x0,y0)
 		end
 	end
 end
+
+
+function print_s(_x,_y,_l,c)
+	--total_layers=4
+	--letters_per_layer=7
+	--letter size, 7*7
+
+	--Find index of letter to print and which colour layer to look at
+	local l=_l%7
+
+  if (c!=1) print_s(_x,_y+1,_l,1)
+	set_col_layer(c,(_l-l)/7)
+	_sspr(7*l,16,7,7,_x,_y-7)
+	pal()
+end
+
+function print_l(_x,_y,_l,c)
+	local l=_l%7
+
+	if (c!=1) print_l(_x,_y+1,_l,1)
+	set_col_layer(c,(_l-l)/7)
+	_sspr(12*l,23,12,11,_x,_y-10)
+	pal()
+end
+
+function print_xl(_x,_y,_l,c)
+	local l=_l%3
+	if c!=13 and c!=0 then
+		print_xl(_x+1,_y,_l,0)
+		print_xl(_x-1,_y,_l,0)
+			print_xl(_x+1,_y+1,_l,0)
+			print_xl(_x-1,_y+1,_l,0)
+		print_xl(_x,_y+2,_l,0)
+		print_xl(_x,_y-1,_l,0)
+		print_xl(_x,_y+1,_l,13)
+	end
+	for x=49,61 do
+		set_col_layer(c,(_l-l)/3)
+		_sspr(12*l+x,0,1,22,_x+x,_y+sin(t()*-.33+((_x+x)*.018))*2)
+	end
+	pal()
+end
+
+function print_str(_str,x,y,c)
+	local str,p={},x
+	for i=1,#_str,2 do
+		add(str,('0x'..sub(_str,i,i+1))+0)
+	end
+  add(str,0x20)
+  --char  hex   dec
+  --A     41     65
+  --Z     5a     90
+	--a     61     97
+	--z     7a    122
+
+	-- for each letter
+	for s=0,#str-2 do
+		--if ascii value > 96, lower case letter
+		local v=str[s+1]
+		if v>96 then
+			print_s(p,y,v-97,c)
+			--move cursor for x position over by slightly smaller amount
+			-- since lower case letters are smaller than upper case (duh)
+			p+=6
+		else
+			print_l(p,y,v-65,c)
+			if v<65 then
+				p+=5 --this must be spacing character
+			else
+				p+=9
+				if (str[s+2]<96)p-=1 --another upper case char
+			end
+		end
+	end
+end
+
+function set_col_layer(c,b)
+	for i=0,15 do
+		if band(shl(i),2^b)>0 then
+			pal(i,c)
+		else
+			palt(i,true)
+		end
+	end
+end
+
 
 function putAFlipInIt()
 	tempFlip=true
