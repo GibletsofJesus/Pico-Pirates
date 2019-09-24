@@ -1,0 +1,51 @@
+Reactive water demo, first getting to grips with Pico 8 in late November 2017
+
+Left this demo alone and went on to other projects for a while, made a small arcade game.
+
+What I love the most about Pico 8 (and there is a lot to love) is the artistic style that comes about as part of the color palette. I jumped around between a number of different ideas earlier on experimenting with various art tests. One of these tests was a set of isometric sprites that I intended to form part of a farming simulator which went down much better than I was expecting on Twitter.
+
+After a few weeks of iteration I began to realise a few unfortunate things;
+ 1) My method of putting together iso assets was completely wacky
+ 2) I had no idea or plan for any game mechanics moving forward
+ 3) I wasn't actually enjoying development
+ 
+To counter this, I began to break down what I would need to make this project a success and how I could move forward. One of aspects of note was world generation. How do you generate an isometric world?
+
+To answer this, I booted up a fresh cartridge and began what would become the over-world section of Pico Pirates. 
+[https://twitter.com/ctinney94/status/955942854265851904]
+
+This early prototype had no relation to an isometric layout, so it served a nice breath of fresh air from all the nasty maths I managed to get myself tangled up in. On top of this, my placeholder art proved to be very pleasing to myself and folks on Twitter. I began refining what I had and started adding more features. A boat with more realistic waves, beaches with waves the lapped calmly over the surface, a generic text box and string rendering system. Doodles became sprites with numerous palettes and soon enough it become apparent this simple cartridge was developing a life of it's own.
+
+This progress would soon fizzle out however. During this period of development I'd been going through a spell of unemployment which thankfully came to an end in February of 2018.
+My free time became more restricted and as a result, my Pico 8 output dropped significantly. 
+
+Skip forward a few months and my work-life balance became a lot more manageable. I was getting better at self management as successfully released a number of smaller cartridges in the interim. Instead of starting with art assets, I instead focused on smaller, technical challenges such as implementing the complex mathematics of a double pendulum (https://ctinney94.itch.io/double-pendulm).
+
+My appetite was growing for a larger project and I remembered two of my previous projects, the top down island generation and the reactive water demo. They're both games about boats, what if you could explore islands and get into random encounters with sea monsters?
+
+Starting breaking project down into individual pieces, thinking about overall design.
+
+Still didn't really have a solid vision how this would all work out. What's the objective of this game? What motives the player?
+
+These were awkward questions which certainly needed to be answered to make a compelling game, but ones I didn't feel comfortable answering. To me Pico 8 was an escape from the challenges of working life. To answer these questions would mean undoing what had already been put together, destroying something which had once made me happy. It's a natural part of any development process, but one I put off for far too long, to the detriment of the finished product.
+
+In October of the same year, I ended up switching job roles to a more remote location requiring a significantly longer commute. Despite this consuming more of my time, this resulted in a huge improvement to my Pico 8 output. Now I had a pair of 1 hour blocks of time with no interruptions or distractions, the perfect time for hobby development!
+
+Quick shout out to this piece of shit laptop
+
+Didn't immediately get back on the pirate bandwagon. This new format of work greatly influenced the type of games I started making. Tweet carts are the coolest thing in the world, ended up making a fair few of those.
+
+Eventually though I started running out of ideas for Tweet carts and low scope games and my thoughts turned back to my old pirate game. Tasks I'd been putting off such as merging multiple feature cartridges together into a single, master cartridge became harder to delay.
+
+Token limit.
+Each new feature added had to be offset by cutting out unnecessary code elsewhere or heavily optimizing existing features. Whilst this did delay development, a did make me confront the issue of what this final game was going to look like. At some point, I would reach a point where my existing code couldn't be optimized further and important design decisions would have to be made.
+
+At this point, I decided on a number of key points which would be core to the gameplay experience;
+ + Exploration in an open world
+ + A reason to explore in the form of treasure on islands
+ + Something to force back on the player to make this process challenging such as random enemy encounters
+ + An end goal
+ 
+This end goal had yet to be decided upon
+
+
