@@ -1,13 +1,35 @@
-Reactive water demo, first getting to grips with Pico 8 in late November 2017
+On international Talk Like A Pirate Day 2019, I released a Pico 8 game that's seen more attention than any of my previous projects, Pico Pirates.
 
-Left this demo alone and went on to other projects for a while, made a small arcade game.
+In this post, I'd like to break down the development of this game and discuss a few specific points, namely;
 
-What I love the most about Pico 8 (and there is a lot to love) is the artistic style that comes about as part of the color palette. I jumped around between a number of different ideas earlier on experimenting with various art tests. One of these tests was a set of isometric sprites that I intended to form part of a farming simulator which went down much better than I was expecting on Twitter.
++ Why did this game take almost 2 years to complete?
++ How did the design of the game come about and mature over time?
++ How does the final product shape up? Was it worth the time and energy?
+
+So with this in mind, let's stat at the beginning.
+
+--------------------------------
+ Craig's first Pico 8 cartridge, falling in love
+---------------------------------
+
+I first started experimenting with Pico 8 in November of 2017. The first cartridge I put any significant time into was a dynamic fluid system adapted from a project I completed as part of my degree. This was partly to test the technical capabilities of the engine and partly to accustom myself to LUA, a language I'd not previously had any experience with.
+
+Once I had a functional interactive fluid system up and running I began adding additional features. I already had a boat that I could move around to create waves so the next logical step was to add a cannon to make even more waves. But what's the point of a cannon if there's nothing to shoot? A sea monster sprite was created and wiggling tentacles added to create even more interaction with the fluid system. Now we needed to make shooting a sea monster feel nice and juicy and so the feature creep continued.
+
+This iterative process was rather addicting and I soon fell in love with Pico 8. It felt like no other engine I'd ever used before. With Unity, Unreal or even Game Maker it's easy to become lost in seemingly endless UI windows for features that would certain be useful at some point in a larger project but to begin with can feel rather daunting. Pico 8 was much more akin to a children's sand box, full of endless possibilities and devoid of any desire for commercial viability. Everything from the boot jingle to the stripped down code editor was meant to feel different from other engines, to feel more playful and less stressful.
+
+It was this feeling of playfulness that made me comfortable enough not to continue work on this cartridge as the joy of development was a far bigger allure than the idea of releasing a polished product and going through the process of balancing, play-testing and refinement of what I already had.
+
+-------------------------------------------
+ My next project
+-------------------------------------------
+
+Over the next couple of months I developed a simple arcade game (Super Funky Ball) and prototyped a series of other ideas. One of these ideas grew out of an art test with isometric sprites; a set of small buildings, trees and patches of land which I envisioned would one day form part of a farming simulator. I posted these onto my Twitter feed and was bowled over by the positive reception, it only seemed sensible to continue working and turn this art test into a full fledged game.
 
 After a few weeks of iteration I began to realise a few unfortunate things;
- 1) My method of putting together iso assets was completely wacky
+ 1) My method of putting together iso assets was completely wack
  2) I had no idea or plan for any game mechanics moving forward
- 3) I wasn't actually enjoying development
+ 3) I wasn't actually enjoying development (primarily due to working with an iso camera)
  
 To counter this, I began to break down what I would need to make this project a success and how I could move forward. One of aspects of note was world generation. How do you generate an isometric world?
 
@@ -21,24 +43,74 @@ My free time became more restricted and as a result, my Pico 8 output dropped si
 
 Skip forward a few months and my work-life balance became a lot more manageable. I was getting better at self management as successfully released a number of smaller cartridges in the interim. Instead of starting with art assets, I instead focused on smaller, technical challenges such as implementing the complex mathematics of a double pendulum (https://ctinney94.itch.io/double-pendulm).
 
-My appetite was growing for a larger project and I remembered two of my previous projects, the top down island generation and the reactive water demo. They're both games about boats, what if you could explore islands and get into random encounters with sea monsters?
-
-Starting breaking project down into individual pieces, thinking about overall design.
-
-Still didn't really have a solid vision how this would all work out. What's the objective of this game? What motives the player?
+My appetite was growing for a larger project and I remembered two of my previous projects, the top down island generation and the reactive water demo. They're both games about boats, what if you could explore islands and get into random encounters with sea monsters? At this point I still didn't really have a solid vision how this would all work out. What's the objective of this game? What motives the player?
 
 These were awkward questions which certainly needed to be answered to make a compelling game, but ones I didn't feel comfortable answering. To me Pico 8 was an escape from the challenges of working life. To answer these questions would mean undoing what had already been put together, destroying something which had once made me happy. It's a natural part of any development process, but one I put off for far too long, to the detriment of the finished product.
 
-In October of the same year, I ended up switching job roles to a more remote location requiring a significantly longer commute. Despite this consuming more of my time, this resulted in a huge improvement to my Pico 8 output. Now I had a pair of 1 hour blocks of time with no interruptions or distractions, the perfect time for hobby development!
+-----------
+ Train dev
+-----------
 
-Quick shout out to this piece of shit laptop
+In October of the same year, I ended up switching job roles to a more remote location requiring a significantly longer commute. Despite this consuming more of my time, this resulted in a huge improvement to my Pico 8 output. Now I had a pair of 1 hour blocks of time on the train with no interruptions or distractions (minus my fellow commuters, obviously), the perfect time for casual game development!
 
-Didn't immediately get back on the pirate bandwagon. This new format of work greatly influenced the type of games I started making. Tweet carts are the coolest thing in the world, ended up making a fair few of those.
+Before I could start making use of this time however, I would need a new development machine...
 
-Eventually though I started running out of ideas for Tweet carts and low scope games and my thoughts turned back to my old pirate game. Tasks I'd been putting off such as merging multiple feature cartridges together into a single, master cartridge became harder to delay.
+Until this point I'd exclusively been using my desktop computer for all my game development, but that clearly wouldn't be suitable on the train. I decided to spare no expense and took a trip down the local cash converters and bought the lowest spec netbook I could possibly find. Pico 8 runs quite comfortably on a Raspberry Pi I assumed any modern windows machine would do me just fine. For the most part, I was right, this machine proved to be adequate for the task at hand but it undoubtedly had an influence of the development process of Pico Pirates.
 
-Token limit.
-Each new feature added had to be offset by cutting out unnecessary code elsewhere or heavily optimizing existing features. Whilst this did delay development, a did make me confront the issue of what this final game was going to look like. At some point, I would reach a point where my existing code couldn't be optimized further and important design decisions would have to be made.
+Something I hadn't anticipated was the lack of a high speed internet browsing capabilities. Granted I had access to a connection for the majority of my 1 hour train dev sessions, but it often unreliable and trying to load more than a single browser tab resulted in progress grinding to a halt as my netbook struggled to switch between tasks. This resulted in a substantially lower reliance on online resources for finding technical solutions to problems and made posting content to social media much more difficult. Before this project, I would've said both these factors could only ever decrease my efficiency but this turned out to be completely false.
+
+Without access to the usual quick google-copy-paste solutions I was used to, I was instead forced to take my time, seriously consider what I was doing and actually think through solutions to my problems. As someone who grew up in the online age and started programming in my late teens, this was maybe one of the most important shifts in my own, personal development during this project.
+
+After about a month of daily 1 hour game jams and experimenting with Tweet Carts, I finally settled back into regular Pico Pirates development.
+
+------------------
+ Later pirate dev
+------------------
+
+The first major hurdle I had to overcome at this point was merging the already bloated cartridges I'd previously put together for top-down exploration and side-scrolling combat. Whilst not the most technically demanding challenge, it did result in a lot of busy work shifting sprites around, making sure variable names weren't shared across each mode and generally smushing my existing work together in a less than glamorous fashion. Whilst having multiple cartridges did allow for quick testing early on, this time saved was most certainly offset by the work previously described and my own procrastination for delaying a rather laborious task. A more elegant solution for future projects would definitely involve a state based system early on to quickly switch between parts of development (such a feature was eventually implemented for this project, but substantially later than what would've been the most efficient time to do so). 
+
+At some point a new challenge emerged which had not previously been a problem in my previous Pico 8 projects. The token limit.
+
+For those unaware, Pico 8 has a fixed limit on the number of chunks of code that can be used in a given cartridge.
+
+ for i=0,10 do
+  print("Hello world!")
+ end
+
+In the example above you'll see that each syntax keyword counts as one token. You may also notice that values such as numbers or strings are one token regardless of content, keep that in mind for later.
+
+After my two main bodies of work where now merged together, the token limit became an ever encroaching challenge always on the horizon. A number of features I had yet to fully flesh out were removed for fear of over running this limit, the largest of which being whirlpools randomly placed around the world. The idea was these whirlpools would teleport the player do another whirlpool somewhere completely different and feature a few neat visual effects to keep the game feeling juicy. The visual effects were developed specifically with this feature in mind and had no use outside of this feature which made them easy to cull.
+
+Other features had to be drastically optimized and forced my to examine to existing algorithms and processes. This proved to be invaluable in keeping myself familiar with many parts of the project as each time a new feature was added or I learned a new method of trimming down token use (such as replacing -1 with 0xffff, saving exactly one token) it would mean re-examining everything I'd written previous to this point. This undoubtedly added to development time as whole train trips would be spent squeezing surplus tokens out of use but was ultimately a necessary process.
+
+This process also resulted in code become significantly more dirty. Some of you might be familiar with the principles of Clean Code [put a link here] and how useful it is when dealing with larger teams and projects. Basically every major tenant of clean code had to be ignored to meet the technical limitations of Pico 8. Fully descriptive variable names? Takes up too many characters. Simple, single use functions? Functions take tokens to create, if only used once, the logic would need be where this original call is made. Separate exceptions and classes for individual cases? I could only dream of these things!
+
+Stringifying many variables become a prevalent part of the code base. Remember when I mentioned variables such as string could only ever be one token? Turns out, if you want to store more unique variables but don't want to spend any extra tokens, building arrays from strings is a great way of accomplishing this.
+
+Take the following as example;
+
+ // Draw part of the HuD on screen
+ spr(32,40+x,67+y,true,false)
+ 
+ // Draw another part of the HuD
+ spr(16,8+x.67+y,false,false)
+ 
+ ...
+ 
+A fully fleshed out HuD could feature dozens of sprites all requiring specific placement and sprite values which would all require additional token consumption.
+
+Now let's see a stringified version of the same tasks;
+
+ local a = stringToArray("32,40,67,true,false,16,8,67,false,true,...")
+ for i=0,[number of things to draw],5 do
+  spr(a[i],a[i+1],a[i+2],a[i+3],a[i+4])
+ end
+
+Absolutely disgusting. But ultimately worth it from a token usage standpoint. Still, I can't help but look a snippets like this and feel a certain level of disgust. My once beautifully simple instructions reduced to a set of obtuse array entries.
+
+Without this mess literally my code base, Pico Pirates wouldn't even have half of the features it ended up with. [Maybe get some dirty facts about how much I've saved here]
+
+This is certainly my least favorite thing about Pico 8, the butchering of clean code to meet arbitrary technical limitations.
 
 At this point, I decided on a number of key points which would be core to the gameplay experience;
  + Exploration in an open world
