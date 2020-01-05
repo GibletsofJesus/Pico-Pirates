@@ -4,8 +4,6 @@ __lua__
 --pico pirates
 --by craig tinney (ctinney94)
 
-fully_reveal_map_at_start=false
-
 #include includes/font_functions.p8
 #include includes/helpers.p8
 #include includes/api_functions_with_flip.p8
@@ -25,7 +23,7 @@ fully_reveal_map_at_start=false
 --3 side view combat
 --4 treasure view
 
-camx,camy,cellseed,celltype,stepIndex,morale,tempFlip,playerHpTimer,prevMorale,mapPos,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,first_comb,first_topdown,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",4,100,false,0,100,127,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},true,true,"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,0xfffe,0xfffe
+camx,camy,cellseed,celltype,stepIndex,morale,tempFlip,playerHpTimer,prevMorale,once,dist,fps,currentcell,projectiles,fillps,extra_canons,wpts,prevwpts,btn4,boat,npcBoat,currentcellx,currentcelly,clouds,boat_message,txt_timer,score,player_x,player_y,player_draw,player_speed,player_fp_dist,compass_chunks,vt,shakeX,shakeY,shakeTimer,cells,waves,enemyTimer,enemyHpTimer,enemyPrevHp,enemyName,firstChest,world_seed,nextState,st_t,state=0,0,0,"",4,100,false,0,100,true,999,{},{},{},stringToArray"0b0101101001011010.1,0b111111111011111.1,0b1010010110100101.1,★",1,{},{},false,init_boat(true),0,15,16,{},"aH, THE OPEN SEA!",0xffee,0,0,0,false,1,0,0xffff,0,0,0,0,{},{},0,0,100,"",true,0,1,0xfffe,0xfffe
 
 function _init()
 	boat.max=3
@@ -84,7 +82,7 @@ function _update()
 		 			elseif rnd"1">.6 then
 						 _type="boat"
 					end
-					add(subcell,{type=_type,treasure=weighted_rnd(stringToArray"1,1.5,2,2.5"),seed=rnd"4096",windx=wx,windy=wy,visited=fully_reveal_map_at_start})
+					add(subcell,{type=_type,treasure=weighted_rnd(stringToArray"1,1.5,2,2.5"),seed=rnd"4096",windx=wx,windy=wy,visited=false})
 				end
 			end
 
@@ -145,14 +143,8 @@ function _update()
 				camy=player_y-72
 			end
 		end
-		map=btn"5"
 		for c in all(clouds) do
 			c.update(c)
-		end
-		if map then
-			mapPos=max(mapPos-16,0)
-		else
-			mapPos=min(mapPos+16,127)
 		end
 		if (not player_draw) boat_update(boat)
 		if (npcBoat!=0) boat_update(npcBoat)
@@ -252,6 +244,8 @@ function _draw()
 		_rectfill(camx+111,camy,camx+127,camy+16,12)
 		if (celltype=="island") _circfill(camx+119,camy+8,island_size/16,15)
 		--player indicator on minimap
+
+		if(player_draw)minimapPos({y=player_y,x=player_x},0)
 		minimapPos(boat,4)
 		if (npcBoat!=0) minimapPos(npcBoat,2)
 		_rect(camx+111,camy,camx+127,camy+16,7)
@@ -267,38 +261,6 @@ function _draw()
 		--23 tokens for this :/
 		--print_u(flr(sqrt(cellwindx^2+cellwindy^2)*100)/10,camx+114,camy+50)
 		boat_text_render(flr(boat.x-24),flr(boat.y-16))
-		if mapPos<127 then
-			 --draw map
-		 	local _y,_x,e,rot=camy+20,camx-mapPos+1,stringToArray"124,0,3,52,107,18,3,52,true,true,124,0,3,52,107,70,3,52,true,false,124,0,3,52,0,70,3,52,false,true,124,0,3,52,0,18,3,52,false,false,0,58,109,3,2,16,109,3,false,false,0,58,109,3,2,121,109,3,false,true,★",.25
-
-		 	for i=1,#e,10 do
-		 		sspr(e[i],e[i+1],e[i+2],e[i+3],_x+e[i+4],camy+e[i+5],e[i+6],e[i+7],e[i+8],e[i+9])
-		 	end
-
-		 	rectfill(_x+3,_y-2,_x+106,_y+100,15)
-		 	_x+=4
-
-		 	--Fill map in with discovered areas
-		 	for c=12,13 do
-		 		for x=1,32 do
-		 			for y=1,32 do
-		 				if cells[x][y].visited then
-		 					_circfill(_x+x*3,_y+y*3,15-c,9-c)
-		 				end
-		 			end
-		 		end
-		 	end
-		 	for x=1,32 do
-		 		for y=1,32 do
-		 			local c,r=15,1
-		 			if (cells[x][y].type=="island") _circfill(_x+x*3,_y+y*3,r,c)
-		 		end
-		 	end
-		 	_x+=boat.x/128
-		 	_y+=boat.y/128
-		 	if (flr(t()*4)%2>0) _pset(_x+currentcellx*3,_y+currentcelly*3,4)
-
-		end
 		if (compass_chunks>-1)_sspr(71+compass_chunks*13,40,13,16,camx+114,camy+54)
 
 		if (compass_chunks>2 and npcBoat!=0) spr_rot(106,27,7,camx+120,camy+60,atan2(npcBoat.x-boat.x,npcBoat.y-boat.y)-.25,0)
@@ -448,28 +410,6 @@ function _draw()
 		draw_morale_bar""
 	elseif state==4 then
 		draw_island_chest_view""
-	end
-
-	--draw controls
-	if ((state==3 and first_comb) or  (state==1 and first_topdown)) and txt_timer>0 then
-		local txt_pos = 10
-		if (txt_timer<10) txt_pos=txt_timer%10
-		if (txt_timer>50) txt_pos=-txt_timer%15
-		txt_pos=-sin(txt_pos/30)*48+camy
-		a=stringToArray"35,26,93,1,1,35,26,93,2,15,36,25,92,3,2,egg!"
-		--18, 2
-		--18, 3
-		--17, 4
-		for i=1,15,5 do
-			rectfill(a[i]+camx,txt_pos-a[i+1],a[i+2]+camx,txt_pos-a[i+3]-state*3,a[i+4])
-		end
-		if first_topdown then
-			first_topdown=txt_timer<60
-			print_u(" tURN: ⬅️/➡️\nmOVE: HOLD ⬆️\n sHOW MAP: ❎",camx+39,txt_pos-24,15,4)
-		elseif first_comb then
-			first_comb=txt_timer<60
-			print_u(" mOVE: ⬅️/➡️\nsHOOT: HOLD ❎",camx+37,txt_pos-24,15,4)
-		end
 	end
 
 	if st_t>1	and st_t < 1.5 and state!=4 then
